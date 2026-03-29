@@ -141,11 +141,11 @@ export default function ChatScreen({ user }: ChatScreenProps) {
       </header>
 
       {/* Main Content */}
-        <main className="flex flex-1 flex-col items-center justify-center p-5">
+      <main className="flex flex-1 flex-col items-center justify-center p-5">
         <div className="-mt-16 flex w-full max-w-[650px] flex-col items-center">
           {/* Logo */}
-          <div className="mb-5 h-[90px] w-[90px] rounded-full overflow-hidden shadow-lg shadow-indigo-500/15">
-          <img src="/logo.png" alt="Grozl" className="w-full h-full object-cover mix-blend-multiply" />
+          <div className="mb-5 h-[90px] w-[90px]">
+            <img src="/logo.png" alt="Grozl" className="w-full h-full object-contain" />
           </div>
 
           {/* Headline */}
@@ -166,7 +166,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
 
             {/* Bottom Actions */}
             <div className="mt-3.5 flex items-center justify-between">
-              {/* Feature Chips - Premium Style */}
+              {/* Feature Chips */}
               <div className="flex gap-2.5">
                 <button
                   onClick={() => toggleChip('think')}
@@ -176,14 +176,13 @@ export default function ChatScreen({ user }: ChatScreenProps) {
                       : 'border-gray-200 bg-white/80 text-gray-500 hover:border-gray-300 hover:bg-white hover:text-gray-600 hover:shadow-sm'
                   }`}
                 >
-                  {/* Lightbulb/Brain Icon for Think */}
-                  <svg 
-                    className="h-[15px] w-[15px]" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="1.75" 
-                    strokeLinecap="round" 
+                  <svg
+                    className="h-[15px] w-[15px]"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
                     strokeLinejoin="round"
                   >
                     <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" />
@@ -201,14 +200,13 @@ export default function ChatScreen({ user }: ChatScreenProps) {
                       : 'border-gray-200 bg-white/80 text-gray-500 hover:border-gray-300 hover:bg-white hover:text-gray-600 hover:shadow-sm'
                   }`}
                 >
-                  {/* Globe/Browser Icon for Search */}
-                  <svg 
-                    className="h-[15px] w-[15px]" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="1.75" 
-                    strokeLinecap="round" 
+                  <svg
+                    className="h-[15px] w-[15px]"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
                     strokeLinejoin="round"
                   >
                     <circle cx="12" cy="12" r="10" />
@@ -240,4 +238,5 @@ export default function ChatScreen({ user }: ChatScreenProps) {
       </main>
     </div>
   )
-}
+        }
+            

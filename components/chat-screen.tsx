@@ -13,6 +13,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const [activeChips, setActiveChips] = useState<Set<string>>(new Set())
+  const [activeMenuItem, setActiveMenuItem] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const supabase = createClient()
@@ -67,14 +68,28 @@ export default function ChatScreen({ user }: ChatScreenProps) {
 
         {/* Menu Items */}
         <button
-          onClick={newChat}
-          className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 px-4 py-3 text-left text-[15px] font-medium text-white shadow-md shadow-indigo-500/20 transition hover:from-indigo-600 hover:to-indigo-700"
+          onClick={() => {
+            setActiveMenuItem(activeMenuItem === 'newchat' ? null : 'newchat')
+            newChat()
+          }}
+          className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all duration-200 ease-out ${
+            activeMenuItem === 'newchat'
+              ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10'
+              : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700'
+          }`}
         >
-          <MessageSquarePlus className="h-5 w-5" />
+          <MessageSquarePlus className={`h-5 w-5 ${activeMenuItem === 'newchat' ? 'text-[#4D6BFE]' : 'text-gray-400'}`} />
           New Chat
         </button>
-        <button className="flex items-center gap-3 rounded-xl px-4 py-3 text-left text-[15px] font-medium text-gray-600 transition hover:bg-indigo-50 hover:text-indigo-600">
-          <FolderOpen className="h-5 w-5 text-gray-400" />
+        <button
+          onClick={() => setActiveMenuItem(activeMenuItem === 'projects' ? null : 'projects')}
+          className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all duration-200 ease-out ${
+            activeMenuItem === 'projects'
+              ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10'
+              : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700'
+          }`}
+        >
+          <FolderOpen className={`h-5 w-5 ${activeMenuItem === 'projects' ? 'text-[#4D6BFE]' : 'text-gray-400'}`} />
           Projects
         </button>
 

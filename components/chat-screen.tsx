@@ -111,7 +111,6 @@ export default function ChatScreen({ user }: ChatScreenProps) {
     setMessages(newMessages)
     setInputValue('')
     setAttachedFiles([])
-    setShowInput(false)
     setIsFocused(false)
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
     setIsLoading(true)
@@ -343,14 +342,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
         {hasMessages && (
           <div className="w-full px-4 pb-4">
             <div className="mx-auto w-full max-w-[650px]">
-              {showInput ? InputBox : (
-                <button
-                  onClick={() => { setShowInput(true); setTimeout(() => textareaRef.current?.focus(), 50) }}
-                  className="w-full rounded-3xl border border-[#4D6BFE]/40 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] py-3.5 text-center text-[15px] font-medium text-[#4D6BFE] shadow-sm transition hover:shadow-md"
-                >
-                  Ask a follow-up...
-                </button>
-              )}
+              {InputBox}
             </div>
           </div>
         )}
@@ -358,4 +350,5 @@ export default function ChatScreen({ user }: ChatScreenProps) {
     </div>
   )
             }
-        
+
+    

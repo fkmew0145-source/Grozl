@@ -142,7 +142,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
 
       {/* Main Content */}
       <main className="flex flex-1 flex-col items-center justify-center p-5">
-        <div className="-mt-16 flex w-full max-w-[650px] flex-col items-center">
+        <div className="-mt-40 flex w-full max-w-[650px] flex-col items-center">
           {/* Logo */}
           <div className="mb-5 h-[90px] w-[90px]">
             <img src="/logo.png" alt="Grozl" className="w-full h-full object-contain" />

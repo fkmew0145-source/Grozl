@@ -51,7 +51,8 @@ export default function LoginScreen({ onGuestContinue }: LoginScreenProps) {
       <div className="w-full max-w-md text-center">
         {/* Logo */}
         <div className="mx-auto mb-5 flex h-[90px] w-[90px] items-center justify-center rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 shadow-lg shadow-indigo-500/15">
-          <span className="text-xs font-medium text-indigo-500">Logo</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="Grozl" className="h-14 w-14 object-contain" />
         </div>
 
         {/* Title */}
@@ -118,4 +119,5 @@ export default function LoginScreen({ onGuestContinue }: LoginScreenProps) {
       </div>
     </div>
   )
-}
+        }
+          

@@ -151,51 +151,54 @@ export default function ChatScreen({ user }: ChatScreenProps) {
 
             {/* Bottom Actions */}
             <div className="mt-3.5 flex items-center justify-between">
-              {/* Feature Chips - DeepSeek Style */}
-              <div className="flex gap-2">
+              {/* Feature Chips - Premium Style */}
+              <div className="flex gap-2.5">
                 <button
                   onClick={() => toggleChip('think')}
-                  className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition-all duration-200 ${
+                  className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-medium transition-all duration-250 ease-out ${
                     activeChips.has('think')
-                      ? 'border-[#4D6BFE] bg-[#EEF2FF] text-[#4D6BFE]'
-                      : 'border-gray-300 bg-transparent text-gray-500 hover:border-gray-400 hover:text-gray-600'
+                      ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10'
+                      : 'border-gray-200 bg-white/80 text-gray-500 hover:border-gray-300 hover:bg-white hover:text-gray-600 hover:shadow-sm'
                   }`}
                 >
+                  {/* Lightbulb/Brain Icon for Think */}
                   <svg 
-                    className="h-4 w-4" 
+                    className="h-[15px] w-[15px]" 
                     viewBox="0 0 24 24" 
                     fill="none" 
                     stroke="currentColor" 
-                    strokeWidth="2" 
+                    strokeWidth="1.75" 
                     strokeLinecap="round" 
                     strokeLinejoin="round"
                   >
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-                    <line x1="4.93" y1="19.07" x2="19.07" y2="4.93" />
+                    <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" />
+                    <path d="M9 21h6" />
+                    <path d="M12 6v1" />
+                    <path d="M9.5 9h5" />
                   </svg>
                   Think
                 </button>
                 <button
                   onClick={() => toggleChip('search')}
-                  className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition-all duration-200 ${
+                  className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-medium transition-all duration-250 ease-out ${
                     activeChips.has('search')
-                      ? 'border-[#4D6BFE] bg-[#EEF2FF] text-[#4D6BFE]'
-                      : 'border-gray-300 bg-transparent text-gray-500 hover:border-gray-400 hover:text-gray-600'
+                      ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10'
+                      : 'border-gray-200 bg-white/80 text-gray-500 hover:border-gray-300 hover:bg-white hover:text-gray-600 hover:shadow-sm'
                   }`}
                 >
+                  {/* Globe/Browser Icon for Search */}
                   <svg 
-                    className="h-4 w-4" 
+                    className="h-[15px] w-[15px]" 
                     viewBox="0 0 24 24" 
                     fill="none" 
                     stroke="currentColor" 
-                    strokeWidth="2" 
+                    strokeWidth="1.75" 
                     strokeLinecap="round" 
                     strokeLinejoin="round"
                   >
                     <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="16" />
-                    <line x1="8" y1="12" x2="16" y2="12" />
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                    <path d="M2 12h20" />
                   </svg>
                   Search
                 </button>

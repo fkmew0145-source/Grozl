@@ -66,16 +66,16 @@ export default function ChatScreen({ user }: ChatScreenProps) {
         </div>
 
         {/* Menu Items */}
-        <button className="flex items-center gap-2.5 rounded-xl px-4 py-3 text-left text-[15px] font-medium text-gray-600 transition hover:bg-indigo-50 hover:text-indigo-600">
-          <FolderOpen className="h-4 w-4 text-gray-400" />
-          Projects
-        </button>
         <button
           onClick={newChat}
-          className="flex items-center gap-2.5 rounded-xl px-4 py-3 text-left text-[15px] font-medium text-gray-600 transition hover:bg-indigo-50 hover:text-indigo-600"
+          className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 px-4 py-3 text-left text-[15px] font-medium text-white shadow-md shadow-indigo-500/20 transition hover:from-indigo-600 hover:to-indigo-700"
         >
-          <MessageSquarePlus className="h-4 w-4 text-gray-400" />
+          <MessageSquarePlus className="h-5 w-5" />
           New Chat
+        </button>
+        <button className="flex items-center gap-3 rounded-xl px-4 py-3 text-left text-[15px] font-medium text-gray-600 transition hover:bg-indigo-50 hover:text-indigo-600">
+          <FolderOpen className="h-5 w-5 text-gray-400" />
+          Projects
         </button>
 
         {/* Recent Chats Label */}

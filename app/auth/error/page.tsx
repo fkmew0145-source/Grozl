@@ -1,6 +1,13 @@
-import Link from 'next/link'
+'use client'
 
-export default function AuthErrorPage() {
+import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
+
+function AuthErrorContent() {
+  const searchParams = useSearchParams()
+  const errorMessage = searchParams.get('error')
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-indigo-50 p-4">
       <div className="w-full max-w-md text-center">
@@ -23,7 +30,7 @@ export default function AuthErrorPage() {
           Authentication Error
         </h1>
         <p className="mb-6 text-gray-600">
-          Something went wrong during sign in. Please try again.
+          {errorMessage || 'Something went wrong during sign in. Please try again.'}
         </p>
         <Link
           href="/"
@@ -33,5 +40,17 @@ export default function AuthErrorPage() {
         </Link>
       </div>
     </div>
+  )
+}
+
+export default function AuthErrorPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-indigo-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-indigo-600" />
+      </div>
+    }>
+      <AuthErrorContent />
+    </Suspense>
   )
 }

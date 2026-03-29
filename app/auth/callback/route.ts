@@ -6,8 +6,18 @@ import type { NextRequest } from 'next/server'
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
+  const error = requestUrl.searchParams.get('error')
+  const errorDescription = requestUrl.searchParams.get('error_description')
   const next = requestUrl.searchParams.get('next') ?? '/'
   const origin = requestUrl.origin
+
+  // Handle OAuth errors from provider
+  if (error) {
+    console.error('[v0] OAuth error from provider:', error, errorDescription)
+    const errorUrl = new URL('/auth/error', origin)
+    errorUrl.searchParams.set('error', errorDescription || error)
+    return NextResponse.redirect(errorUrl)
+  }
 
   if (code) {
     const cookieStore = await cookies()
@@ -29,12 +39,19 @@ export async function GET(request: NextRequest) {
       }
     )
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-
-    if (!error) {
-      return NextResponse.redirect(new URL(next, origin))
+    const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+    
+    if (exchangeError) {
+      console.error('[v0] Code exchange error:', exchangeError)
+      const errorUrl = new URL('/auth/error', origin)
+      errorUrl.searchParams.set('error', exchangeError.message)
+      return NextResponse.redirect(errorUrl)
     }
+
+    console.log('[v0] Successfully authenticated user:', data.user?.email)
+    return NextResponse.redirect(new URL(next, origin))
   }
 
+  console.error('[v0] No code or error in callback')
   return NextResponse.redirect(new URL('/auth/error', origin))
 }

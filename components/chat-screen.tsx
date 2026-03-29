@@ -155,10 +155,10 @@ export default function ChatScreen({ user }: ChatScreenProps) {
               <div className="flex gap-2">
                 <button
                   onClick={() => toggleChip('think')}
-                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-all duration-200 ${
+                  className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition-all duration-200 ${
                     activeChips.has('think')
-                      ? 'bg-[#4D6BFE] text-white shadow-sm'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'border-[#4D6BFE] bg-[#EEF2FF] text-[#4D6BFE]'
+                      : 'border-gray-300 bg-transparent text-gray-500 hover:border-gray-400 hover:text-gray-600'
                   }`}
                 >
                   <svg 
@@ -178,10 +178,10 @@ export default function ChatScreen({ user }: ChatScreenProps) {
                 </button>
                 <button
                   onClick={() => toggleChip('search')}
-                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-all duration-200 ${
+                  className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition-all duration-200 ${
                     activeChips.has('search')
-                      ? 'bg-[#4D6BFE] text-white shadow-sm'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'border-[#4D6BFE] bg-[#EEF2FF] text-[#4D6BFE]'
+                      : 'border-gray-300 bg-transparent text-gray-500 hover:border-gray-400 hover:text-gray-600'
                   }`}
                 >
                   <svg 

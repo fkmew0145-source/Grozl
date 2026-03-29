@@ -50,13 +50,10 @@ export default function LoginScreen({ onGuestContinue }: LoginScreenProps) {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-indigo-50 p-4">
       <div className="w-full max-w-md text-center">
         {/* Logo */}
-        <div className="mx-auto mb-5 h-[90px] w-[90px] rounded-full overflow-hidden shadow-lg shadow-indigo-500/15">
-  <img
-    src="/logo.png"
-    alt="Grozl"
-    className="w-full h-full object-cover rounded-full"
-  />
-</div>
+        <div className="mx-auto mb-5 h-[90px] w-[90px]">
+          <img src="/logo.png" alt="Grozl" className="w-full h-full object-contain" />
+        </div>
+
         {/* Title */}
         <h1 className="mb-1.5 text-2xl font-semibold text-gray-900">Grozl AI</h1>
         <p className="mb-8 text-sm text-gray-500">
@@ -79,7 +76,6 @@ export default function LoginScreen({ onGuestContinue }: LoginScreenProps) {
           {isLoading ? (
             <div className="h-[18px] w-[18px] animate-spin rounded-full border-2 border-gray-300 border-t-indigo-600" />
           ) : (
-            /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src="https://cdn-icons-png.flaticon.com/512/300/300221.png"
               width={18}
@@ -121,5 +117,5 @@ export default function LoginScreen({ onGuestContinue }: LoginScreenProps) {
       </div>
     </div>
   )
-        }
+                  }
           

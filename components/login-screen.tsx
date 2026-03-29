@@ -51,7 +51,6 @@ export default function LoginScreen({ onGuestContinue }: LoginScreenProps) {
       <div className="w-full max-w-md text-center">
         {/* Logo */}
         <div className="mx-auto mb-5 h-[90px] w-[90px] rounded-full overflow-hidden shadow-lg shadow-indigo-500/15"
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.png" alt="Grozl" className="w-full h-full object-cover rounded-full" />
         </div>
 

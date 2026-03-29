@@ -1,16 +1,29 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import {
   Menu, Plus, Search, FolderOpen, MessageSquarePlus,
-  LogOut, Mic, Send, Camera, Image, FileText, Loader2,
+  LogOut, Mic, MicOff, Send, Camera, Image, FileText, Loader2, MessageSquare,
 } from 'lucide-react'
+
+interface ContentPart {
+  type: 'text' | 'image_url'
+  text?: string
+  image_url?: { url: string }
+}
 
 interface Message {
   role: 'user' | 'assistant'
-  content: string
+  content: string | ContentPart[]
+}
+
+interface ChatSession {
+  id: string
+  title: string
+  messages: Message[]
+  timestamp: number
 }
 
 interface ChatScreenProps {
@@ -26,21 +39,60 @@ export default function ChatScreen({ user }: ChatScreenProps) {
   const [isRecording, setIsRecording] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isStreaming, setIsStreaming] = useState(false)
   const [attachedFiles, setAttachedFiles] = useState<File[]>([])
   const [isFocused, setIsFocused] = useState(false)
-  const [showInput, setShowInput] = useState(true)
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([])
+  const [currentSessionId, setCurrentSessionId] = useState<string>(() => crypto.randomUUID())
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const photoInputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const recognitionRef = useRef<SpeechRecognition | null>(null)
 
   const supabase = createClient()
+
+  // Load chat sessions from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('grozl_chat_sessions')
+    if (stored) {
+      try { setChatSessions(JSON.parse(stored)) } catch { /* ignore */ }
+    }
+  }, [])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Save session after each AI response completes
+  useEffect(() => {
+    if (!isLoading && messages.length >= 2) {
+      saveSession(messages, currentSessionId)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading])
+
+  const saveSession = useCallback((msgs: Message[], sessionId: string) => {
+    const firstUser = msgs.find(m => m.role === 'user')
+    const rawContent = firstUser?.content
+    const rawTitle = typeof rawContent === 'string'
+      ? rawContent
+      : Array.isArray(rawContent)
+        ? (rawContent.find(p => p.type === 'text')?.text || 'Chat')
+        : 'Chat'
+    const title = rawTitle.slice(0, 45) + (rawTitle.length > 45 ? '...' : '')
+
+    const session: ChatSession = { id: sessionId, title, messages: msgs, timestamp: Date.now() }
+
+    setChatSessions(prev => {
+      const filtered = prev.filter(s => s.id !== sessionId)
+      const updated = [session, ...filtered].slice(0, 25)
+      localStorage.setItem('grozl_chat_sessions', JSON.stringify(updated))
+      return updated
+    })
+  }, [])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -56,15 +108,24 @@ export default function ChatScreen({ user }: ChatScreenProps) {
   }
 
   const newChat = () => {
+    if (messages.length >= 2) saveSession(messages, currentSessionId)
     setMessages([])
     setInputValue('')
     setAttachedFiles([])
     setActiveChips(new Set())
     setSidebarOpen(false)
     setShowAttachMenu(false)
-    setShowInput(true)
     setIsFocused(false)
+    setCurrentSessionId(crypto.randomUUID())
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
+  }
+
+  const loadSession = (session: ChatSession) => {
+    setMessages(session.messages)
+    setCurrentSessionId(session.id)
+    setSidebarOpen(false)
+    setInputValue('')
+    setAttachedFiles([])
   }
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -85,28 +146,90 @@ export default function ChatScreen({ user }: ChatScreenProps) {
     setAttachedFiles(prev => prev.filter((_, i) => i !== index))
   }
 
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+
+  // ── Mic: Web Speech API ──────────────────────────────────────────────
   const handleMicClick = () => {
     if (isRecording) {
+      recognitionRef.current?.stop()
       setIsRecording(false)
-    } else {
-      if (navigator.mediaDevices?.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ audio: true })
-          .then(() => setIsRecording(true))
-          .catch(() => alert('Microphone permission denied'))
-      } else {
-        alert('Microphone not supported on this device')
+      return
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+
+    if (!SpeechRecognitionAPI) {
+      alert('Speech recognition is not supported. Please use Chrome or Edge.')
+      return
+    }
+
+    const recognition = new SpeechRecognitionAPI()
+    recognition.lang = 'hi-IN'       // Hindi + English dono support
+    recognition.continuous = false
+    recognition.interimResults = true
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = Array.from(event.results)
+        .map((r: SpeechRecognitionResult) => r[0].transcript)
+        .join('')
+      setInputValue(transcript)
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto'
+        textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'
       }
     }
+
+    recognition.onend = () => setIsRecording(false)
+
+    recognition.onerror = (e: SpeechRecognitionErrorEvent) => {
+      setIsRecording(false)
+      if (e.error === 'not-allowed') alert('Microphone permission denied. Please allow mic access.')
+    }
+
+    recognitionRef.current = recognition
+    recognition.start()
+    setIsRecording(true)
   }
 
+  // ── Send ─────────────────────────────────────────────────────────────
   const handleSend = async () => {
     const text = inputValue.trim()
-    if (!text || isLoading) return
+    if ((!text && attachedFiles.length === 0) || isLoading) return
 
-    const fileNames = attachedFiles.map(f => `[Attached: ${f.name}]`).join(' ')
-    const fullText = fileNames ? `${text}\n\n${fileNames}` : text
+    // Build multimodal content if files are attached
+    let userContent: string | ContentPart[]
 
-    const userMessage: Message = { role: 'user', content: fullText }
+    if (attachedFiles.length > 0) {
+      const parts: ContentPart[] = []
+      if (text) parts.push({ type: 'text', text })
+
+      for (const file of attachedFiles) {
+        if (file.type.startsWith('image/')) {
+          const base64 = await fileToBase64(file)
+          parts.push({ type: 'image_url', image_url: { url: base64 } })
+        } else {
+          try {
+            const fileContent = await file.text()
+            parts.push({ type: 'text', text: `[File: ${file.name}]\n${fileContent}` })
+          } catch {
+            parts.push({ type: 'text', text: `[Attached file: ${file.name}]` })
+          }
+        }
+      }
+
+      userContent = parts
+    } else {
+      userContent = text
+    }
+
+    const userMessage: Message = { role: 'user', content: userContent }
     const newMessages = [...messages, userMessage]
     setMessages(newMessages)
     setInputValue('')
@@ -114,6 +237,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
     setIsFocused(false)
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
     setIsLoading(true)
+    setIsStreaming(true)
 
     const assistantPlaceholder: Message = { role: 'assistant', content: '' }
     setMessages([...newMessages, assistantPlaceholder])
@@ -147,7 +271,40 @@ export default function ChatScreen({ user }: ChatScreenProps) {
       setMessages([...newMessages, { role: 'assistant', content: 'Network error. Please check your connection.' }])
     } finally {
       setIsLoading(false)
+      setIsStreaming(false)
     }
+  }
+
+  // ── Render message content (supports text + images) ──────────────────
+  const renderContent = (content: string | ContentPart[], isAssistant: boolean, isLast: boolean) => {
+    if (typeof content === 'string') {
+      return (
+        <span style={{ whiteSpace: 'pre-wrap' }}>
+          {content}
+          {isAssistant && isLast && isStreaming && (
+            <span className="ml-0.5 inline-block animate-pulse font-light text-gray-400">▌</span>
+          )}
+        </span>
+      )
+    }
+    return (
+      <div className="flex flex-col gap-2">
+        {content.map((part, i) => {
+          if (part.type === 'text' && part.text)
+            return <span key={i} style={{ whiteSpace: 'pre-wrap' }}>{part.text}</span>
+          if (part.type === 'image_url' && part.image_url?.url)
+            return (
+              <img
+                key={i}
+                src={part.image_url.url}
+                alt="Attached image"
+                className="max-h-[200px] max-w-full rounded-xl object-contain"
+              />
+            )
+          return null
+        })}
+      </div>
+    )
   }
 
   const hasText = inputValue.trim().length > 0
@@ -174,13 +331,14 @@ export default function ChatScreen({ user }: ChatScreenProps) {
 
       <textarea
         ref={textareaRef}
-        placeholder="Ask Grozl anything..."
+        placeholder={isRecording ? '🎙️ Bol raha hoon...' : 'Ask Grozl anything...'}
         rows={1}
         value={inputValue}
         onChange={handleInput}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         disabled={isLoading}
+        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
         className="w-full resize-none bg-transparent text-base text-gray-800 outline-none placeholder:text-gray-400 disabled:opacity-50"
       />
 
@@ -232,9 +390,14 @@ export default function ChatScreen({ user }: ChatScreenProps) {
             </button>
           </div>
 
-          {!hasText ? (
-            <button onClick={handleMicClick} className={`transition ${isRecording ? 'animate-pulse text-red-500' : 'text-gray-500 hover:text-gray-700'}`}>
-              <Mic className="h-5 w-5" />
+          {/* Mic shows only when no text typed and no files; else shows Send */}
+          {!hasText && attachedFiles.length === 0 ? (
+            <button
+              onClick={handleMicClick}
+              title={isRecording ? 'Recording band karo' : 'Voice input shuru karo'}
+              className={`transition ${isRecording ? 'animate-pulse text-red-500' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
             </button>
           ) : (
             <button onClick={handleSend} disabled={isLoading} className="text-indigo-600 transition hover:text-indigo-700 disabled:opacity-50">
@@ -273,11 +436,30 @@ export default function ChatScreen({ user }: ChatScreenProps) {
           <FolderOpen className={`h-5 w-5 ${activeMenuItem === 'projects' ? 'text-[#4D6BFE]' : 'text-gray-400'}`} />
           Projects
         </button>
-        <span className="ml-4 mt-5 text-xs font-semibold uppercase tracking-wide text-gray-400">Recent Chats</span>
-        <button className="rounded-xl px-4 py-3 text-left text-[15px] font-medium text-gray-600 transition hover:bg-indigo-50 hover:text-indigo-600">About Grozl AI</button>
-        <button className="rounded-xl px-4 py-3 text-left text-[15px] font-medium text-gray-600 transition hover:bg-indigo-50 hover:text-indigo-600">My First Project</button>
+
+        {/* ── Recent Chats from localStorage ── */}
+        <span className="ml-1 mt-5 text-xs font-semibold uppercase tracking-wide text-gray-400">Recent Chats</span>
+        <div className="flex flex-1 flex-col gap-1 overflow-y-auto">
+          {chatSessions.length === 0 ? (
+            <p className="px-2 py-3 text-[13px] text-gray-400 italic">No recent chats yet</p>
+          ) : (
+            chatSessions.map((session) => (
+              <button
+                key={session.id}
+                onClick={() => loadSession(session)}
+                className={`flex items-start gap-2.5 rounded-xl px-3 py-2.5 text-left text-[14px] text-gray-600 transition hover:bg-indigo-50 hover:text-indigo-600 ${session.id === currentSessionId ? 'bg-indigo-50 text-indigo-600' : ''}`}
+              >
+                <MessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
+                <span className="line-clamp-2 leading-snug">{session.title}</span>
+              </button>
+            ))
+          )}
+        </div>
+
         {user && (
-          <button onClick={handleSignOut} className="mt-auto flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-left text-sm font-medium text-rose-600 transition hover:bg-red-100">
+          
+        {user && (
+          <button onClick={handleSignOut} className="mt-2 flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-left text-sm font-medium text-rose-600 transition hover:bg-red-100">
             <LogOut className="h-4 w-4" />
             Sign Out ({user.email?.split('@')[0]})
           </button>
@@ -329,7 +511,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
                     {msg.content === '' && msg.role === 'assistant' ? (
                       <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
                     ) : (
-                      <span style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</span>
+                      renderContent(msg.content, msg.role === 'assistant', i === messages.length - 1)
                     )}
                   </div>
                 </div>
@@ -349,6 +531,4 @@ export default function ChatScreen({ user }: ChatScreenProps) {
       </main>
     </div>
   )
-            }
-
-    
+}

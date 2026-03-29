@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
   } catch {
     // ── Groq failed → Gemini text fallback ───────────────────────────
     try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
 
       const prompt = groqMessages
         .map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)

@@ -27,6 +27,8 @@ export default function ChatScreen({ user }: ChatScreenProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [attachedFiles, setAttachedFiles] = useState<File[]>([])
+  const [isFocused, setIsFocused] = useState(false)
+  const [showInput, setShowInput] = useState(true)
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
@@ -60,6 +62,8 @@ export default function ChatScreen({ user }: ChatScreenProps) {
     setActiveChips(new Set())
     setSidebarOpen(false)
     setShowAttachMenu(false)
+    setShowInput(true)
+    setIsFocused(false)
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
   }
 
@@ -70,8 +74,6 @@ export default function ChatScreen({ user }: ChatScreenProps) {
       textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'
     }
   }
-
-  // FIX 2: handleKeyDown removed — Enter = newline, send only via button
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -109,6 +111,8 @@ export default function ChatScreen({ user }: ChatScreenProps) {
     setMessages(newMessages)
     setInputValue('')
     setAttachedFiles([])
+    setShowInput(false)
+    setIsFocused(false)
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
     setIsLoading(true)
 
@@ -149,11 +153,14 @@ export default function ChatScreen({ user }: ChatScreenProps) {
 
   const hasText = inputValue.trim().length > 0
   const hasMessages = messages.length > 0
+  const isActive = isFocused || hasText || attachedFiles.length > 0
 
-  // Reusable input box JSX
   const InputBox = (
-    <div className="rounded-3xl border border-gray-200 bg-white p-4 shadow-sm transition focus-within:border-indigo-200 focus-within:shadow-lg focus-within:shadow-indigo-500/5">
-      {/* FIX 3: File preview chips */}
+    <div className={`w-full rounded-3xl border p-4 shadow-sm transition-all duration-200 ${
+      isActive
+        ? 'border-[#4D6BFE]/60 bg-gradient-to-b from-[#EEF2FF] to-[#F0F4FF] shadow-lg shadow-[#4D6BFE]/10'
+        : 'border-gray-200 bg-white'
+    }`}>
       {attachedFiles.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-2">
           {attachedFiles.map((file, i) => (
@@ -172,7 +179,8 @@ export default function ChatScreen({ user }: ChatScreenProps) {
         rows={1}
         value={inputValue}
         onChange={handleInput}
-        // FIX 2: No onKeyDown — Enter creates newline naturally
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
         disabled={isLoading}
         className="w-full resize-none bg-transparent text-base text-gray-800 outline-none placeholder:text-gray-400 disabled:opacity-50"
       />
@@ -203,37 +211,24 @@ export default function ChatScreen({ user }: ChatScreenProps) {
         </div>
 
         <div className="flex items-center gap-4">
-          {/* FIX 3: Attach menu with onChange handlers */}
           <div className="relative">
             {showAttachMenu && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowAttachMenu(false)} />
                 <div className="absolute bottom-9 right-0 z-50 w-[160px] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl">
-                  <button
-                    onClick={() => { cameraInputRef.current?.click(); setShowAttachMenu(false) }}
-                    className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-[14px] font-medium text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-600"
-                  >
+                  <button onClick={() => { cameraInputRef.current?.click(); setShowAttachMenu(false) }} className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-[14px] font-medium text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-600">
                     <Camera className="h-5 w-5" /> Camera
                   </button>
-                  <button
-                    onClick={() => { photoInputRef.current?.click(); setShowAttachMenu(false) }}
-                    className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-[14px] font-medium text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-600"
-                  >
+                  <button onClick={() => { photoInputRef.current?.click(); setShowAttachMenu(false) }} className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-[14px] font-medium text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-600">
                     <Image className="h-5 w-5" /> Photos
                   </button>
-                  <button
-                    onClick={() => { fileInputRef.current?.click(); setShowAttachMenu(false) }}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-[14px] font-medium text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-600"
-                  >
+                  <button onClick={() => { fileInputRef.current?.click(); setShowAttachMenu(false) }} className="flex w-full items-center gap-3 px-4 py-3 text-[14px] font-medium text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-600">
                     <FileText className="h-5 w-5" /> Files
                   </button>
                 </div>
               </>
             )}
-            <button
-              onClick={() => setShowAttachMenu(!showAttachMenu)}
-              className="text-gray-500 transition hover:text-gray-700"
-            >
+            <button onClick={() => setShowAttachMenu(!showAttachMenu)} className="text-gray-500 transition hover:text-gray-700">
               <Plus className="h-5 w-5" />
             </button>
           </div>
@@ -243,11 +238,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
               <Mic className="h-5 w-5" />
             </button>
           ) : (
-            <button
-              onClick={handleSend}
-              disabled={isLoading}
-              className="text-indigo-600 transition hover:text-indigo-700 disabled:opacity-50"
-            >
+            <button onClick={handleSend} disabled={isLoading} className="text-indigo-600 transition hover:text-indigo-700 disabled:opacity-50">
               {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
             </button>
           )}
@@ -259,7 +250,6 @@ export default function ChatScreen({ user }: ChatScreenProps) {
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-gradient-to-b from-slate-50 to-indigo-50">
 
-      {/* FIX 3: Hidden File Inputs with onChange */}
       <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
       <input ref={photoInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
       <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileChange} />
@@ -310,7 +300,6 @@ export default function ChatScreen({ user }: ChatScreenProps) {
       {/* Main Content */}
       <main className="flex flex-1 flex-col overflow-hidden">
 
-        {/* FIX 1: Empty state — input box headline ke niche center mein */}
         {!hasMessages ? (
           <div className="flex flex-1 flex-col items-center justify-center px-4 pb-8">
             <div className="flex w-full max-w-[650px] flex-col items-center">
@@ -320,12 +309,10 @@ export default function ChatScreen({ user }: ChatScreenProps) {
               <h1 className="mb-7 text-center text-[28px] font-semibold tracking-tight text-gray-900">
                 Your Mind, Amplified By Grozl
               </h1>
-              {/* Input inline — headline ke bilkul neeche */}
               {InputBox}
             </div>
           </div>
         ) : (
-          /* Messages area */
           <div className="flex-1 overflow-y-auto px-4 pb-4 pt-16">
             <div className="mx-auto flex w-full max-w-[700px] flex-col gap-5">
               {messages.map((msg, i) => (
@@ -335,13 +322,11 @@ export default function ChatScreen({ user }: ChatScreenProps) {
                       <img src="/logo.png" alt="Grozl" className="h-full w-full object-contain" />
                     </div>
                   )}
-                  <div
-                    className={`max-w-[85%] rounded-2xl px-4 py-3 text-[15px] leading-relaxed ${
-                      msg.role === 'user'
-                        ? 'bg-[#4D6BFE] text-white'
-                        : 'bg-white text-gray-800 shadow-sm border border-gray-100'
-                    }`}
-                  >
+                  <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-[15px] leading-relaxed ${
+                    msg.role === 'user'
+                      ? 'bg-[#4D6BFE] text-white'
+                      : 'bg-white text-gray-800 shadow-sm border border-gray-100'
+                  }`}>
                     {msg.content === '' && msg.role === 'assistant' ? (
                       <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
                     ) : (
@@ -355,16 +340,22 @@ export default function ChatScreen({ user }: ChatScreenProps) {
           </div>
         )}
 
-        {/* Input Box — chat mode mein neeche fixed */}
         {hasMessages && (
           <div className="w-full px-4 pb-4">
             <div className="mx-auto w-full max-w-[650px]">
-              {InputBox}
+              {showInput ? InputBox : (
+                <button
+                  onClick={() => { setShowInput(true); setTimeout(() => textareaRef.current?.focus(), 50) }}
+                  className="w-full rounded-3xl border border-[#4D6BFE]/40 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] py-3.5 text-center text-[15px] font-medium text-[#4D6BFE] shadow-sm transition hover:shadow-md"
+                >
+                  Ask a follow-up...
+                </button>
+              )}
             </div>
           </div>
         )}
       </main>
     </div>
   )
-    }
-    
+            }
+        

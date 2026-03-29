@@ -444,7 +444,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
       {/* Textarea — Enter = newline, send only via button */}
       <textarea
         ref={textareaRef}
-        placeholder={isRecording ? '🎙️ Bol raha hoon...' : 'Ask Grozl anything...'}
+        placeholder={isRecording ? 'Grozl Is Listening...' : 'Ask Grozl anything...'}
         rows={1}
         value={inputValue}
         onChange={handleInput}

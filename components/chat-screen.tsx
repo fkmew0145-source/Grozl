@@ -152,7 +152,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
 
       {/* Attach Menu Popup */}
       {showAttachMenu && (
-        <div className="fixed bottom-28 left-1/2 z-50 w-[300px] -translate-x-1/2 rounded-2xl bg-white shadow-2xl p-5">
+        <div className="fixed bottom-[80px] right-4 z-50 w-[260px] rounded-2xl bg-white shadow-2xl p-5">
           <div className="flex items-center justify-between mb-4">
             <span className="text-[15px] font-semibold text-gray-700">Add to chat</span>
             <button onClick={() => setShowAttachMenu(false)}>

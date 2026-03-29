@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
-import { Menu, Plus, Search, FolderOpen, MessageSquarePlus, LogOut, Mic, Send } from 'lucide-react'
+import { Menu, Plus, Search, FolderOpen, MessageSquarePlus, LogOut, Mic, Send, Camera, Image, FileText, X } from 'lucide-react'
 
 interface ChatScreenProps {
   user: User | null
@@ -14,7 +14,13 @@ export default function ChatScreen({ user }: ChatScreenProps) {
   const [inputValue, setInputValue] = useState('')
   const [activeChips, setActiveChips] = useState<Set<string>>(new Set())
   const [activeMenuItem, setActiveMenuItem] = useState<string | null>(null)
+  const [showAttachMenu, setShowAttachMenu] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
+
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+  const photoInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const supabase = createClient()
 
@@ -35,6 +41,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
     setInputValue('')
     setActiveChips(new Set())
     setSidebarOpen(false)
+    setShowAttachMenu(false)
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
   }
 
@@ -46,17 +53,36 @@ export default function ChatScreen({ user }: ChatScreenProps) {
     }
   }
 
+  const handleMicClick = () => {
+    if (isRecording) {
+      setIsRecording(false)
+    } else {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(() => setIsRecording(true))
+          .catch(() => alert('Microphone permission denied'))
+      } else {
+        alert('Microphone not supported on this device')
+      }
+    }
+  }
+
   const hasText = inputValue.trim().length > 0
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-gradient-to-b from-slate-50 to-indigo-50">
+
+      {/* Hidden File Inputs */}
+      <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" />
+      <input ref={photoInputRef} type="file" accept="image/*" multiple className="hidden" />
+      <input ref={fileInputRef} type="file" multiple className="hidden" />
+
       {/* Sidebar */}
       <div
         className={`fixed left-0 top-0 z-50 flex h-full w-72 -translate-x-full flex-col gap-2 border-r border-gray-200 bg-white p-6 shadow-xl transition-transform duration-300 ${
           sidebarOpen ? 'translate-x-0' : ''
         }`}
       >
-        {/* Search */}
         <div className="relative mb-5">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
@@ -66,7 +92,6 @@ export default function ChatScreen({ user }: ChatScreenProps) {
           />
         </div>
 
-        {/* Menu Items */}
         <button
           onClick={() => {
             setActiveMenuItem(activeMenuItem === 'newchat' ? null : 'newchat')
@@ -81,6 +106,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
           <MessageSquarePlus className={`h-5 w-5 ${activeMenuItem === 'newchat' ? 'text-[#4D6BFE]' : 'text-gray-400'}`} />
           New Chat
         </button>
+
         <button
           onClick={() => setActiveMenuItem(activeMenuItem === 'projects' ? null : 'projects')}
           className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all duration-200 ease-out ${
@@ -93,7 +119,6 @@ export default function ChatScreen({ user }: ChatScreenProps) {
           Projects
         </button>
 
-        {/* Recent Chats Label */}
         <span className="ml-4 mt-5 text-xs font-semibold uppercase tracking-wide text-gray-400">
           Recent Chats
         </span>
@@ -104,7 +129,6 @@ export default function ChatScreen({ user }: ChatScreenProps) {
           My First Project
         </button>
 
-        {/* Sign Out */}
         {user && (
           <button
             onClick={handleSignOut}
@@ -116,26 +140,57 @@ export default function ChatScreen({ user }: ChatScreenProps) {
         )}
       </div>
 
-      {/* Overlay */}
+      {/* Sidebar Overlay */}
       {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/10"
-          onClick={() => setSidebarOpen(false)}
-        />
+        <div className="fixed inset-0 z-40 bg-black/10" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      {/* Attach Menu Overlay */}
+      {showAttachMenu && (
+        <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setShowAttachMenu(false)} />
+      )}
+
+      {/* Attach Menu Popup */}
+      {showAttachMenu && (
+        <div className="fixed bottom-28 left-1/2 z-50 w-[300px] -translate-x-1/2 rounded-2xl bg-white shadow-2xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-[15px] font-semibold text-gray-700">Add to chat</span>
+            <button onClick={() => setShowAttachMenu(false)}>
+              <X className="h-5 w-5 text-gray-400" />
+            </button>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <button
+              onClick={() => { cameraInputRef.current?.click(); setShowAttachMenu(false) }}
+              className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-4 text-[13px] font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition"
+            >
+              <Camera className="h-6 w-6" />
+              Camera
+            </button>
+            <button
+              onClick={() => { photoInputRef.current?.click(); setShowAttachMenu(false) }}
+              className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-4 text-[13px] font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition"
+            >
+              <Image className="h-6 w-6" />
+              Photos
+            </button>
+            <button
+              onClick={() => { fileInputRef.current?.click(); setShowAttachMenu(false) }}
+              className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-4 text-[13px] font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition"
+            >
+              <FileText className="h-6 w-6" />
+              Files
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Header */}
       <header className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between p-4">
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="text-gray-500 transition hover:text-gray-700"
-        >
+        <button onClick={() => setSidebarOpen(true)} className="text-gray-500 transition hover:text-gray-700">
           <Menu className="h-6 w-6" />
         </button>
-        <button
-          onClick={newChat}
-          className="text-gray-500 transition hover:text-gray-700"
-        >
+        <button onClick={newChat} className="text-gray-500 transition hover:text-gray-700">
           <Plus className="h-6 w-6" />
         </button>
       </header>
@@ -166,7 +221,6 @@ export default function ChatScreen({ user }: ChatScreenProps) {
 
             {/* Bottom Actions */}
             <div className="mt-3.5 flex items-center justify-between">
-              {/* Feature Chips */}
               <div className="flex gap-2.5">
                 <button
                   onClick={() => toggleChip('think')}
@@ -176,15 +230,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
                       : 'border-gray-200 bg-white/80 text-gray-500 hover:border-gray-300 hover:bg-white hover:text-gray-600 hover:shadow-sm'
                   }`}
                 >
-                  <svg
-                    className="h-[15px] w-[15px]"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.75"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
+                  <svg className="h-[15px] w-[15px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" />
                     <path d="M9 21h6" />
                     <path d="M12 6v1" />
@@ -200,15 +246,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
                       : 'border-gray-200 bg-white/80 text-gray-500 hover:border-gray-300 hover:bg-white hover:text-gray-600 hover:shadow-sm'
                   }`}
                 >
-                  <svg
-                    className="h-[15px] w-[15px]"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.75"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
+                  <svg className="h-[15px] w-[15px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10" />
                     <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
                     <path d="M2 12h20" />
@@ -217,13 +255,19 @@ export default function ChatScreen({ user }: ChatScreenProps) {
                 </button>
               </div>
 
-              {/* Right Controls */}
               <div className="flex items-center gap-4">
-                <button className="text-gray-500 transition hover:text-gray-700">
+                <button
+                  onClick={() => setShowAttachMenu(true)}
+                  className="text-gray-500 transition hover:text-gray-700"
+                >
                   <Plus className="h-5 w-5" />
                 </button>
+
                 {!hasText ? (
-                  <button className="text-gray-500 transition hover:text-gray-700">
+                  <button
+                    onClick={handleMicClick}
+                    className={`transition ${isRecording ? 'text-red-500 animate-pulse' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
                     <Mic className="h-5 w-5" />
                   </button>
                 ) : (
@@ -238,5 +282,5 @@ export default function ChatScreen({ user }: ChatScreenProps) {
       </main>
     </div>
   )
-        }
+          }
             

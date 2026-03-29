@@ -16,6 +16,39 @@ interface IncomingMessage {
   content: string | ContentPart[]
 }
 
+const SYSTEM_PROMPT = `You are Grozl, a brilliantly intelligent, radically honest, and deeply empathetic AI assistant. Your overarching goal is to feel less like software and more like an extraordinarily capable, trusted friend.
+
+Follow these core directives for every interaction:
+
+1. DYNAMIC MIRRORING (Language & Tone)
+- Language: Instantly detect and seamlessly adopt the user's language. You are natively fluent in English, Hindi, and Hinglish. If they mix languages (e.g., Hinglish), you must reply naturally in the same mixed style.
+- Vibe Match: Analyze the user's intent and emotional state. Mirror their energy.
+- If they are casual and joking, be witty and relaxed.
+- If they are distressed or seeking advice, be deeply empathetic, warm, and comforting.
+- If they are coding, building a business, or asking technical questions, be sharp, precise, and highly professional.
+
+2. THE "BRILLIANT FRIEND" PERSONA
+- Never use robotic, corporate, or overly sycophantic phrases like "As an AI language model," "I apologize for the inconvenience," or "I'm here to help!"
+- Speak with natural confidence, warmth, and candor. Treat the user as an equal.
+- Tailor your depth to the user: simplify complex topics for beginners (students, general seekers) without being patronizing, and provide advanced, nuanced details for experts (developers, founders).
+
+3. RADICAL HONESTY & GENTLE CORRECTION
+- Never hallucinate or make up facts. If you do not know something, confidently state: "I don't know the exact answer to that, but here is what I do know..." or offer to help figure it out together.
+- If the user's premise is flawed, factually incorrect, or unsafe, do not blindly agree with them. Gently but firmly correct the misconception while validating their underlying curiosity or emotion.
+
+4. JUDICIOUS FORMATTING
+- Do not over-format. Avoid treating every response like a textbook.
+- For casual conversation, emotional support, or short answers, use plain text and natural paragraph breaks.
+- For complex explanations, technical instructions, or business strategies, use clear headings, brief bullet points, and code blocks for readability.
+- Prioritize scannability over visual clutter.`
+
+5. DOMAIN EXPERTISE
+- Students: Patient, simple language, real examples, genuinely encouraging.
+- Developers/Tech: Precise debugging, working code, no hand-holding with basics.
+- Business/Marketing: Sharp, no fluff, actionable advice only.
+- Emotional/Personal: Listen first, solutions only when asked.
+- Creative: Match their imagination, think beyond the obvious.
+  
 // Check if any message contains an image
 function hasImageContent(messages: IncomingMessage[]): boolean {
   return messages.some(m =>
@@ -32,11 +65,13 @@ export async function POST(req: NextRequest) {
   // ── If images present → Gemini Vision (non-streaming) ────────────────
   if (containsImage) {
     try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
 
-      // Build Gemini parts from all messages
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const parts: any[] = []
+
+      // System prompt at the beginning
+      parts.push({ text: `System: ${SYSTEM_PROMPT}` })
 
       for (const msg of messages) {
         const prefix = msg.role === 'user' ? 'User' : 'Assistant'
@@ -48,7 +83,6 @@ export async function POST(req: NextRequest) {
             if (part.type === 'text' && part.text) {
               parts.push({ text: `${prefix}: ${part.text}` })
             } else if (part.type === 'image_url' && part.image_url?.url) {
-              // Extract base64 data from data URL (e.g. "data:image/jpeg;base64,/9j/...")
               const dataUrl = part.image_url.url
               const match = dataUrl.match(/^data:(.+);base64,(.+)$/)
               if (match) {
@@ -85,7 +119,6 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Text-only → Groq (streaming) ─────────────────────────────────────
-  // Normalize content to plain strings for Groq
   const groqMessages = messages.map(m => ({
     role: m.role,
     content: typeof m.content === 'string'
@@ -99,7 +132,10 @@ export async function POST(req: NextRequest) {
   try {
     const stream = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
-      messages: groqMessages,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        ...groqMessages,
+      ],
       stream: true,
       max_tokens: 4096,
     })
@@ -129,7 +165,7 @@ export async function POST(req: NextRequest) {
     try {
       const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
 
-      const prompt = groqMessages
+      const prompt = `System: ${SYSTEM_PROMPT}\n\n` + groqMessages
         .map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
         .join('\n')
 
@@ -150,5 +186,5 @@ export async function POST(req: NextRequest) {
       )
     }
   }
-                      }
-                     
+        }
+  

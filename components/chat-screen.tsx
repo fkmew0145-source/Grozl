@@ -26,6 +26,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
   const [isRecording, setIsRecording] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([])
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
@@ -55,6 +56,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
   const newChat = () => {
     setMessages([])
     setInputValue('')
+    setAttachedFiles([])
     setActiveChips(new Set())
     setSidebarOpen(false)
     setShowAttachMenu(false)
@@ -69,11 +71,16 @@ export default function ChatScreen({ user }: ChatScreenProps) {
     }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
+  // FIX 2: handleKeyDown removed — Enter = newline, send only via button
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length) setAttachedFiles(prev => [...prev, ...files])
+    e.target.value = ''
+  }
+
+  const removeFile = (index: number) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index))
   }
 
   const handleMicClick = () => {
@@ -94,14 +101,17 @@ export default function ChatScreen({ user }: ChatScreenProps) {
     const text = inputValue.trim()
     if (!text || isLoading) return
 
-    const userMessage: Message = { role: 'user', content: text }
+    const fileNames = attachedFiles.map(f => `[Attached: ${f.name}]`).join(' ')
+    const fullText = fileNames ? `${text}\n\n${fileNames}` : text
+
+    const userMessage: Message = { role: 'user', content: fullText }
     const newMessages = [...messages, userMessage]
     setMessages(newMessages)
     setInputValue('')
+    setAttachedFiles([])
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
     setIsLoading(true)
 
-    // Placeholder for streaming assistant reply
     const assistantPlaceholder: Message = { role: 'assistant', content: '' }
     setMessages([...newMessages, assistantPlaceholder])
 
@@ -118,7 +128,6 @@ export default function ChatScreen({ user }: ChatScreenProps) {
         return
       }
 
-      // Stream the response
       const reader = res.body?.getReader()
       const decoder = new TextDecoder()
       let assistantText = ''
@@ -141,13 +150,119 @@ export default function ChatScreen({ user }: ChatScreenProps) {
   const hasText = inputValue.trim().length > 0
   const hasMessages = messages.length > 0
 
+  // Reusable input box JSX
+  const InputBox = (
+    <div className="rounded-3xl border border-gray-200 bg-white p-4 shadow-sm transition focus-within:border-indigo-200 focus-within:shadow-lg focus-within:shadow-indigo-500/5">
+      {/* FIX 3: File preview chips */}
+      {attachedFiles.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-2">
+          {attachedFiles.map((file, i) => (
+            <div key={i} className="flex items-center gap-1.5 rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-1.5 text-[13px] text-indigo-700">
+              {file.type.startsWith('image/') ? <Image className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
+              <span className="max-w-[120px] truncate">{file.name}</span>
+              <button onClick={() => removeFile(i)} className="ml-1 text-indigo-400 hover:text-indigo-600">✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <textarea
+        ref={textareaRef}
+        placeholder="Ask Grozl anything..."
+        rows={1}
+        value={inputValue}
+        onChange={handleInput}
+        // FIX 2: No onKeyDown — Enter creates newline naturally
+        disabled={isLoading}
+        className="w-full resize-none bg-transparent text-base text-gray-800 outline-none placeholder:text-gray-400 disabled:opacity-50"
+      />
+
+      <div className="mt-3.5 flex items-center justify-between">
+        <div className="flex gap-2.5">
+          <button
+            onClick={() => toggleChip('think')}
+            className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-medium transition-all duration-250 ease-out ${activeChips.has('think') ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10' : 'border-gray-200 bg-white/80 text-gray-500 hover:border-gray-300 hover:bg-white hover:text-gray-600 hover:shadow-sm'}`}
+          >
+            <svg className="h-[15px] w-[15px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" />
+              <path d="M9 21h6" /><path d="M12 6v1" /><path d="M9.5 9h5" />
+            </svg>
+            Think
+          </button>
+          <button
+            onClick={() => toggleChip('search')}
+            className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-medium transition-all duration-250 ease-out ${activeChips.has('search') ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10' : 'border-gray-200 bg-white/80 text-gray-500 hover:border-gray-300 hover:bg-white hover:text-gray-600 hover:shadow-sm'}`}
+          >
+            <svg className="h-[15px] w-[15px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+              <path d="M2 12h20" />
+            </svg>
+            Search
+          </button>
+        </div>
+
+        <div className="flex items-center gap-4">
+          {/* FIX 3: Attach menu with onChange handlers */}
+          <div className="relative">
+            {showAttachMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowAttachMenu(false)} />
+                <div className="absolute bottom-9 right-0 z-50 w-[160px] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl">
+                  <button
+                    onClick={() => { cameraInputRef.current?.click(); setShowAttachMenu(false) }}
+                    className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-[14px] font-medium text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-600"
+                  >
+                    <Camera className="h-5 w-5" /> Camera
+                  </button>
+                  <button
+                    onClick={() => { photoInputRef.current?.click(); setShowAttachMenu(false) }}
+                    className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-[14px] font-medium text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-600"
+                  >
+                    <Image className="h-5 w-5" /> Photos
+                  </button>
+                  <button
+                    onClick={() => { fileInputRef.current?.click(); setShowAttachMenu(false) }}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-[14px] font-medium text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-600"
+                  >
+                    <FileText className="h-5 w-5" /> Files
+                  </button>
+                </div>
+              </>
+            )}
+            <button
+              onClick={() => setShowAttachMenu(!showAttachMenu)}
+              className="text-gray-500 transition hover:text-gray-700"
+            >
+              <Plus className="h-5 w-5" />
+            </button>
+          </div>
+
+          {!hasText ? (
+            <button onClick={handleMicClick} className={`transition ${isRecording ? 'animate-pulse text-red-500' : 'text-gray-500 hover:text-gray-700'}`}>
+              <Mic className="h-5 w-5" />
+            </button>
+          ) : (
+            <button
+              onClick={handleSend}
+              disabled={isLoading}
+              className="text-indigo-600 transition hover:text-indigo-700 disabled:opacity-50"
+            >
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-gradient-to-b from-slate-50 to-indigo-50">
 
-      {/* Hidden File Inputs */}
-      <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" />
-      <input ref={photoInputRef} type="file" accept="image/*" multiple className="hidden" />
-      <input ref={fileInputRef} type="file" multiple className="hidden" />
+      {/* FIX 3: Hidden File Inputs with onChange */}
+      <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
+      <input ref={photoInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+      <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileChange} />
 
       {/* Sidebar */}
       <div className={`fixed left-0 top-0 z-50 flex h-full w-72 -translate-x-full flex-col gap-2 border-r border-gray-200 bg-white p-6 shadow-xl transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : ''}`}>
@@ -195,16 +310,18 @@ export default function ChatScreen({ user }: ChatScreenProps) {
       {/* Main Content */}
       <main className="flex flex-1 flex-col overflow-hidden">
 
-        {/* Empty state — centered logo + headline */}
+        {/* FIX 1: Empty state — input box headline ke niche center mein */}
         {!hasMessages ? (
-          <div className="flex flex-1 flex-col items-center justify-center p-5">
-            <div className="-mt-20 flex w-full max-w-[650px] flex-col items-center">
+          <div className="flex flex-1 flex-col items-center justify-center px-4 pb-8">
+            <div className="flex w-full max-w-[650px] flex-col items-center">
               <div className="mb-5 h-[90px] w-[90px]">
                 <img src="/logo.png" alt="Grozl" className="h-full w-full object-contain" />
               </div>
-              <h1 className="mb-9 text-center text-[28px] font-semibold tracking-tight text-gray-900">
+              <h1 className="mb-7 text-center text-[28px] font-semibold tracking-tight text-gray-900">
                 Your Mind, Amplified By Grozl
               </h1>
+              {/* Input inline — headline ke bilkul neeche */}
+              {InputBox}
             </div>
           </div>
         ) : (
@@ -238,107 +355,16 @@ export default function ChatScreen({ user }: ChatScreenProps) {
           </div>
         )}
 
-        {/* Input Box — always at bottom */}
-        <div className={`w-full px-4 ${hasMessages ? 'pb-4' : 'pb-8'}`}>
-          <div className="mx-auto w-full max-w-[650px]">
-            <div className="rounded-3xl border border-gray-200 bg-white p-4 shadow-sm transition focus-within:border-indigo-200 focus-within:shadow-lg focus-within:shadow-indigo-500/5">
-              <textarea
-                ref={textareaRef}
-                placeholder="Ask Grozl anything..."
-                rows={1}
-                value={inputValue}
-                onChange={handleInput}
-                onKeyDown={handleKeyDown}
-                disabled={isLoading}
-                className="w-full resize-none bg-transparent text-base text-gray-800 outline-none placeholder:text-gray-400 disabled:opacity-50"
-              />
-
-              {/* Bottom Actions */}
-              <div className="mt-3.5 flex items-center justify-between">
-                <div className="flex gap-2.5">
-                  <button
-                    onClick={() => toggleChip('think')}
-                    className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-medium transition-all duration-250 ease-out ${activeChips.has('think') ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10' : 'border-gray-200 bg-white/80 text-gray-500 hover:border-gray-300 hover:bg-white hover:text-gray-600 hover:shadow-sm'}`}
-                  >
-                    <svg className="h-[15px] w-[15px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" />
-                      <path d="M9 21h6" /><path d="M12 6v1" /><path d="M9.5 9h5" />
-                    </svg>
-                    Think
-                  </button>
-                  <button
-                    onClick={() => toggleChip('search')}
-                    className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-medium transition-all duration-250 ease-out ${activeChips.has('search') ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10' : 'border-gray-200 bg-white/80 text-gray-500 hover:border-gray-300 hover:bg-white hover:text-gray-600 hover:shadow-sm'}`}
-                  >
-                    <svg className="h-[15px] w-[15px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                      <path d="M2 12h20" />
-                    </svg>
-                    Search
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  {/* Attach menu */}
-                  <div className="relative">
-                    {showAttachMenu && (
-                      <>
-                        <div className="fixed inset-0 z-40" onClick={() => setShowAttachMenu(false)} />
-                        <div className="absolute bottom-9 right-0 z-50 w-[160px] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl">
-                          <button
-                            onClick={() => { cameraInputRef.current?.click(); setShowAttachMenu(false) }}
-                            className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-[14px] font-medium text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-600"
-                          >
-                            <Camera className="h-5 w-5" /> Camera
-                          </button>
-                          <button
-                            onClick={() => { photoInputRef.current?.click(); setShowAttachMenu(false) }}
-                            className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-[14px] font-medium text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-600"
-                          >
-                            <Image className="h-5 w-5" /> Photos
-                          </button>
-                          <button
-                            onClick={() => { fileInputRef.current?.click(); setShowAttachMenu(false) }}
-                            className="flex w-full items-center gap-3 px-4 py-3 text-[14px] font-medium text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-600"
-                          >
-                            <FileText className="h-5 w-5" /> Files
-                          </button>
-                        </div>
-                      </>
-                    )}
-                    <button
-                      onClick={() => setShowAttachMenu(!showAttachMenu)}
-                      className="text-gray-500 transition hover:text-gray-700"
-                    >
-                      <Plus className="h-5 w-5" />
-                    </button>
-                  </div>
-
-                  {/* Mic / Send */}
-                  {!hasText ? (
-                    <button onClick={handleMicClick} className={`transition ${isRecording ? 'animate-pulse text-red-500' : 'text-gray-500 hover:text-gray-700'}`}>
-                      <Mic className="h-5 w-5" />
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleSend}
-                      disabled={isLoading}
-                      className="text-indigo-600 transition hover:text-indigo-700 disabled:opacity-50"
-                    >
-                      {isLoading
-                        ? <Loader2 className="h-5 w-5 animate-spin" />
-                        : <Send className="h-5 w-5" />
-                      }
-                    </button>
-                  )}
-                </div>
-              </div>
+        {/* Input Box — chat mode mein neeche fixed */}
+        {hasMessages && (
+          <div className="w-full px-4 pb-4">
+            <div className="mx-auto w-full max-w-[650px]">
+              {InputBox}
             </div>
           </div>
-        </div>
+        )}
       </main>
     </div>
   )
     }
-            
+    

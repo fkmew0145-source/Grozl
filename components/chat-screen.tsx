@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
-import { Menu, Plus, Search, FolderOpen, MessageSquarePlus, LogOut, Mic, Send, Camera, Image, FileText, X } from 'lucide-react'
+import { Menu, Plus, Search, FolderOpen, MessageSquarePlus, LogOut, Mic, Send, Camera, Image, FileText } from 'lucide-react'
 
 interface ChatScreenProps {
   user: User | null
@@ -78,62 +78,30 @@ export default function ChatScreen({ user }: ChatScreenProps) {
       <input ref={fileInputRef} type="file" multiple className="hidden" />
 
       {/* Sidebar */}
-      <div
-        className={`fixed left-0 top-0 z-50 flex h-full w-72 -translate-x-full flex-col gap-2 border-r border-gray-200 bg-white p-6 shadow-xl transition-transform duration-300 ${
-          sidebarOpen ? 'translate-x-0' : ''
-        }`}
-      >
+      <div className={`fixed left-0 top-0 z-50 flex h-full w-72 -translate-x-full flex-col gap-2 border-r border-gray-200 bg-white p-6 shadow-xl transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : ''}`}>
         <div className="relative mb-5">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search chats..."
-            className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-indigo-300"
-          />
+          <input type="text" placeholder="Search chats..." className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-indigo-300" />
         </div>
-
         <button
-          onClick={() => {
-            setActiveMenuItem(activeMenuItem === 'newchat' ? null : 'newchat')
-            newChat()
-          }}
-          className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all duration-200 ease-out ${
-            activeMenuItem === 'newchat'
-              ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10'
-              : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700'
-          }`}
+          onClick={() => { setActiveMenuItem(activeMenuItem === 'newchat' ? null : 'newchat'); newChat() }}
+          className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all duration-200 ease-out ${activeMenuItem === 'newchat' ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700'}`}
         >
           <MessageSquarePlus className={`h-5 w-5 ${activeMenuItem === 'newchat' ? 'text-[#4D6BFE]' : 'text-gray-400'}`} />
           New Chat
         </button>
-
         <button
           onClick={() => setActiveMenuItem(activeMenuItem === 'projects' ? null : 'projects')}
-          className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all duration-200 ease-out ${
-            activeMenuItem === 'projects'
-              ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10'
-              : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700'
-          }`}
+          className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all duration-200 ease-out ${activeMenuItem === 'projects' ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700'}`}
         >
           <FolderOpen className={`h-5 w-5 ${activeMenuItem === 'projects' ? 'text-[#4D6BFE]' : 'text-gray-400'}`} />
           Projects
         </button>
-
-        <span className="ml-4 mt-5 text-xs font-semibold uppercase tracking-wide text-gray-400">
-          Recent Chats
-        </span>
-        <button className="rounded-xl px-4 py-3 text-left text-[15px] font-medium text-gray-600 transition hover:bg-indigo-50 hover:text-indigo-600">
-          About Grozl AI
-        </button>
-        <button className="rounded-xl px-4 py-3 text-left text-[15px] font-medium text-gray-600 transition hover:bg-indigo-50 hover:text-indigo-600">
-          My First Project
-        </button>
-
+        <span className="ml-4 mt-5 text-xs font-semibold uppercase tracking-wide text-gray-400">Recent Chats</span>
+        <button className="rounded-xl px-4 py-3 text-left text-[15px] font-medium text-gray-600 transition hover:bg-indigo-50 hover:text-indigo-600">About Grozl AI</button>
+        <button className="rounded-xl px-4 py-3 text-left text-[15px] font-medium text-gray-600 transition hover:bg-indigo-50 hover:text-indigo-600">My First Project</button>
         {user && (
-          <button
-            onClick={handleSignOut}
-            className="mt-auto flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-left text-sm font-medium text-rose-600 transition hover:bg-red-100"
-          >
+          <button onClick={handleSignOut} className="mt-auto flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-left text-sm font-medium text-rose-600 transition hover:bg-red-100">
             <LogOut className="h-4 w-4" />
             Sign Out ({user.email?.split('@')[0]})
           </button>
@@ -141,49 +109,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
       </div>
 
       {/* Sidebar Overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-40 bg-black/10" onClick={() => setSidebarOpen(false)} />
-      )}
-
-      {/* Attach Menu Overlay */}
-      {showAttachMenu && (
-        <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setShowAttachMenu(false)} />
-      )}
-
-      {/* Attach Menu Popup */}
-      {showAttachMenu && (
-        <div className="fixed bottom-[80px] right-4 z-50 w-[260px] rounded-2xl bg-white shadow-2xl p-5">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-[15px] font-semibold text-gray-700">Add to chat</span>
-            <button onClick={() => setShowAttachMenu(false)}>
-              <X className="h-5 w-5 text-gray-400" />
-            </button>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <button
-              onClick={() => { cameraInputRef.current?.click(); setShowAttachMenu(false) }}
-              className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-4 text-[13px] font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition"
-            >
-              <Camera className="h-6 w-6" />
-              Camera
-            </button>
-            <button
-              onClick={() => { photoInputRef.current?.click(); setShowAttachMenu(false) }}
-              className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-4 text-[13px] font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition"
-            >
-              <Image className="h-6 w-6" />
-              Photos
-            </button>
-            <button
-              onClick={() => { fileInputRef.current?.click(); setShowAttachMenu(false) }}
-              className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-4 text-[13px] font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition"
-            >
-              <FileText className="h-6 w-6" />
-              Files
-            </button>
-          </div>
-        </div>
-      )}
+      {sidebarOpen && <div className="fixed inset-0 z-40 bg-black/10" onClick={() => setSidebarOpen(false)} />}
 
       {/* Header */}
       <header className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between p-4">
@@ -198,6 +124,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
       {/* Main Content */}
       <main className="flex flex-1 flex-col items-center justify-center p-5">
         <div className="-mt-40 flex w-full max-w-[650px] flex-col items-center">
+
           {/* Logo */}
           <div className="mb-5 h-[90px] w-[90px]">
             <img src="/logo.png" alt="Grozl" className="w-full h-full object-contain" />
@@ -224,27 +151,17 @@ export default function ChatScreen({ user }: ChatScreenProps) {
               <div className="flex gap-2.5">
                 <button
                   onClick={() => toggleChip('think')}
-                  className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-medium transition-all duration-250 ease-out ${
-                    activeChips.has('think')
-                      ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10'
-                      : 'border-gray-200 bg-white/80 text-gray-500 hover:border-gray-300 hover:bg-white hover:text-gray-600 hover:shadow-sm'
-                  }`}
+                  className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-medium transition-all duration-250 ease-out ${activeChips.has('think') ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10' : 'border-gray-200 bg-white/80 text-gray-500 hover:border-gray-300 hover:bg-white hover:text-gray-600 hover:shadow-sm'}`}
                 >
                   <svg className="h-[15px] w-[15px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" />
-                    <path d="M9 21h6" />
-                    <path d="M12 6v1" />
-                    <path d="M9.5 9h5" />
+                    <path d="M9 21h6" /><path d="M12 6v1" /><path d="M9.5 9h5" />
                   </svg>
                   Think
                 </button>
                 <button
                   onClick={() => toggleChip('search')}
-                  className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-medium transition-all duration-250 ease-out ${
-                    activeChips.has('search')
-                      ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10'
-                      : 'border-gray-200 bg-white/80 text-gray-500 hover:border-gray-300 hover:bg-white hover:text-gray-600 hover:shadow-sm'
-                  }`}
+                  className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-medium transition-all duration-250 ease-out ${activeChips.has('search') ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10' : 'border-gray-200 bg-white/80 text-gray-500 hover:border-gray-300 hover:bg-white hover:text-gray-600 hover:shadow-sm'}`}
                 >
                   <svg className="h-[15px] w-[15px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10" />
@@ -256,41 +173,44 @@ export default function ChatScreen({ user }: ChatScreenProps) {
               </div>
 
               <div className="flex items-center gap-4">
-  <div className="relative">
-    {showAttachMenu && (
-      <div className="absolute bottom-10 right-0 z-50 w-[260px] rounded-2xl bg-white shadow-2xl p-5">
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-[15px] font-semibold text-gray-700">Add to chat</span>
-          <button onClick={() => setShowAttachMenu(false)}>
-            <X className="h-5 w-5 text-gray-400" />
-          </button>
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          <button onClick={() => { cameraInputRef.current?.click(); setShowAttachMenu(false) }} className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-4 text-[13px] font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition">
-            <Camera className="h-6 w-6" />Camera
-          </button>
-          <button onClick={() => { photoInputRef.current?.click(); setShowAttachMenu(false) }} className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-4 text-[13px] font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition">
-            <Image className="h-6 w-6" />Photos
-          </button>
-          <button onClick={() => { fileInputRef.current?.click(); setShowAttachMenu(false) }} className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-4 text-[13px] font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition">
-            <FileText className="h-6 w-6" />Files
-          </button>
-        </div>
-      </div>
-    )}
-    <button
-      onClick={() => setShowAttachMenu(!showAttachMenu)}
-      className="text-gray-500 transition hover:text-gray-700"
-    >
-      <Plus className="h-5 w-5" />
-    </button>
-  </div>
-
-                {!hasText ? (
+                {/* + Button — popup ONLY here, vertical list */}
+                <div className="relative">
+                  {showAttachMenu && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowAttachMenu(false)} />
+                      <div className="absolute bottom-9 right-0 z-50 w-[160px] rounded-2xl bg-white shadow-2xl overflow-hidden border border-gray-100">
+                        <button
+                          onClick={() => { cameraInputRef.current?.click(); setShowAttachMenu(false) }}
+                          className="flex w-full items-center gap-3 px-4 py-3 text-[14px] font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition border-b border-gray-100"
+                        >
+                          <Camera className="h-5 w-5" /> Camera
+                        </button>
+                        <button
+                          onClick={() => { photoInputRef.current?.click(); setShowAttachMenu(false) }}
+                          className="flex w-full items-center gap-3 px-4 py-3 text-[14px] font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition border-b border-gray-100"
+                        >
+                          <Image className="h-5 w-5" /> Photos
+                        </button>
+                        <button
+                          onClick={() => { fileInputRef.current?.click(); setShowAttachMenu(false) }}
+                          className="flex w-full items-center gap-3 px-4 py-3 text-[14px] font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition"
+                        >
+                          <FileText className="h-5 w-5" /> Files
+                        </button>
+                      </div>
+                    </>
+                  )}
                   <button
-                    onClick={handleMicClick}
-                    className={`transition ${isRecording ? 'text-red-500 animate-pulse' : 'text-gray-500 hover:text-gray-700'}`}
+                    onClick={() => setShowAttachMenu(!showAttachMenu)}
+                    className="text-gray-500 transition hover:text-gray-700"
                   >
+                    <Plus className="h-5 w-5" />
+                  </button>
+                </div>
+
+                {/* Mic / Send */}
+                {!hasText ? (
+                  <button onClick={handleMicClick} className={`transition ${isRecording ? 'text-red-500 animate-pulse' : 'text-gray-500 hover:text-gray-700'}`}>
                     <Mic className="h-5 w-5" />
                   </button>
                 ) : (
@@ -305,5 +225,5 @@ export default function ChatScreen({ user }: ChatScreenProps) {
       </main>
     </div>
   )
-          }
-            
+    }
+    

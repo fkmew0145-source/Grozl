@@ -150,7 +150,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
 
           {/* Headline */}
           <h1 className="mb-9 text-center text-[28px] font-semibold tracking-tight text-gray-900">
-            How can i help you?
+            Your Mind, Amplified By Grozl
           </h1>
 
           {/* Prompt Box */}

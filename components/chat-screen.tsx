@@ -346,6 +346,14 @@ export default function ChatScreen({ user }: ChatScreenProps) {
     } finally {
       setIsLoading(false)
       setIsStreaming(false)
+      // Update Grozl memory in background after each response
+      try {
+        fetch('/api/memory/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: newMessages }),
+        })
+      } catch { /* ignore memory update errors */ }
     }
   }
 
@@ -745,4 +753,4 @@ export default function ChatScreen({ user }: ChatScreenProps) {
       </main>
     </div>
   )
-                      }
+}

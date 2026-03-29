@@ -256,12 +256,35 @@ export default function ChatScreen({ user }: ChatScreenProps) {
               </div>
 
               <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setShowAttachMenu(true)}
-                  className="text-gray-500 transition hover:text-gray-700"
-                >
-                  <Plus className="h-5 w-5" />
-                </button>
+  <div className="relative">
+    {showAttachMenu && (
+      <div className="absolute bottom-10 right-0 z-50 w-[260px] rounded-2xl bg-white shadow-2xl p-5">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-[15px] font-semibold text-gray-700">Add to chat</span>
+          <button onClick={() => setShowAttachMenu(false)}>
+            <X className="h-5 w-5 text-gray-400" />
+          </button>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <button onClick={() => { cameraInputRef.current?.click(); setShowAttachMenu(false) }} className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-4 text-[13px] font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition">
+            <Camera className="h-6 w-6" />Camera
+          </button>
+          <button onClick={() => { photoInputRef.current?.click(); setShowAttachMenu(false) }} className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-4 text-[13px] font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition">
+            <Image className="h-6 w-6" />Photos
+          </button>
+          <button onClick={() => { fileInputRef.current?.click(); setShowAttachMenu(false) }} className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-4 text-[13px] font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition">
+            <FileText className="h-6 w-6" />Files
+          </button>
+        </div>
+      </div>
+    )}
+    <button
+      onClick={() => setShowAttachMenu(!showAttachMenu)}
+      className="text-gray-500 transition hover:text-gray-700"
+    >
+      <Plus className="h-5 w-5" />
+    </button>
+  </div>
 
                 {!hasText ? (
                   <button

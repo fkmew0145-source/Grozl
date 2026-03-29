@@ -455,9 +455,6 @@ export default function ChatScreen({ user }: ChatScreenProps) {
             ))
           )}
         </div>
-
-        {user && (
-          
         {user && (
           <button onClick={handleSignOut} className="mt-2 flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-left text-sm font-medium text-rose-600 transition hover:bg-red-100">
             <LogOut className="h-4 w-4" />

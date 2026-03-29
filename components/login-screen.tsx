@@ -50,9 +50,9 @@ export default function LoginScreen({ onGuestContinue }: LoginScreenProps) {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-indigo-50 p-4">
       <div className="w-full max-w-md text-center">
         {/* Logo */}
-        <div className="mx-auto mb-5 flex h-[90px] w-[90px] items-center justify-center rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 shadow-lg shadow-indigo-500/15">
+        <div className="mx-auto mb-5 h-[90px] w-[90px] rounded-full overflow-hidden shadow-lg shadow-indigo-500/15"
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="Grozl" className="h-14 w-14 object-contain" />
+          <img src="/logo.png" alt="Grozl" className="w-full h-full object-cover rounded-full" />
         </div>
 
         {/* Title */}

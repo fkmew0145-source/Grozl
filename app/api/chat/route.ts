@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Groq from 'groq-sdk'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { createClient } from '@/lib/supabase/server'
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
@@ -22,8 +23,6 @@ Follow these core directives for every interaction:
 
 1. DYNAMIC MIRRORING (Language & Tone)
 - Language: Instantly detect and seamlessly adopt the user's language. You are natively fluent in English, Hindi, and Hinglish. If they mix languages (e.g., Hinglish), you must reply naturally in the same mixed style.
-- CRITICAL: If the user writes in English, ALWAYS reply in English — no exceptions.
-- If the user writes in Hindi, reply in Hindi. Hinglish in Hinglish. Never mix unless they do.
 - Vibe Match: Analyze the user's intent and emotional state. Mirror their energy.
 - If they are casual and joking, be witty and relaxed.
 - If they are distressed or seeking advice, be deeply empathetic, warm, and comforting.
@@ -43,7 +42,6 @@ Follow these core directives for every interaction:
 - For casual conversation, emotional support, or short answers, use plain text and natural paragraph breaks.
 - For complex explanations, technical instructions, or business strategies, use clear headings, brief bullet points, and code blocks for readability.
 - Prioritize scannability over visual clutter.
-- For students or simple questions, skip headers and bold — plain paragraphs are enough.
 
 5. DOMAIN EXPERTISE
 - Students: Patient, simple language, real examples, genuinely encouraging.
@@ -51,7 +49,6 @@ Follow these core directives for every interaction:
 - Business/Marketing: Sharp, no fluff, actionable advice only.
 - Emotional/Personal: Listen first, solutions only when asked.
 - Creative: Match their imagination, think beyond the obvious.`
-
 // Check if any message contains an image
 function hasImageContent(messages: IncomingMessage[]): boolean {
   return messages.some(m =>
@@ -62,6 +59,30 @@ function hasImageContent(messages: IncomingMessage[]): boolean {
 
 export async function POST(req: NextRequest) {
   const { messages }: { messages: IncomingMessage[] } = await req.json()
+
+  // ── Fetch user memory from Supabase ──────────────────────────────────
+  let userMemory = ''
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data } = await supabase
+        .from('user_memories')
+        .select('memory')
+        .eq('user_id', user.id)
+        .single()
+      userMemory = data?.memory || ''
+    }
+  } catch {
+    // Memory fetch failed — continue without it
+  }
+
+  const SYSTEM_PROMPT_WITH_MEMORY = userMemory
+    ? SYSTEM_PROMPT + `
+
+## What You Know About This User
+${userMemory}`
+    : SYSTEM_PROMPT
 
   const containsImage = hasImageContent(messages)
 
@@ -74,7 +95,7 @@ export async function POST(req: NextRequest) {
       const parts: any[] = []
 
       // System prompt at the beginning
-      parts.push({ text: `System: ${SYSTEM_PROMPT}` })
+      parts.push({ text: `System: ${SYSTEM_PROMPT_WITH_MEMORY}` })
 
       for (const msg of messages) {
         const prefix = msg.role === 'user' ? 'User' : 'Assistant'
@@ -89,10 +110,18 @@ export async function POST(req: NextRequest) {
               const dataUrl = part.image_url.url
               const match = dataUrl.match(/^data:(.+);base64,(.+)$/)
               if (match) {
+                const base64Data = match[2]
+                const sizeInMB = (base64Data.length * 0.75) / (1024 * 1024)
+                if (sizeInMB > 4) {
+                  return NextResponse.json(
+                    { error: 'Image is too large. Please use an image under 4MB.' },
+                    { status: 400 }
+                  )
+                }
                 parts.push({
                   inlineData: {
                     mimeType: match[1],
-                    data: match[2],
+                    data: base64Data,
                   },
                 })
               }
@@ -112,10 +141,11 @@ export async function POST(req: NextRequest) {
           'X-Provider': 'gemini-vision',
         },
       })
-    } catch (err) {
-      console.error('Gemini Vision error:', err)
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      console.error('Gemini Vision error:', errorMessage)
       return NextResponse.json(
-        { error: 'Could not process image. Please try again.' },
+        { error: `Image processing failed: ${errorMessage}` },
         { status: 503 }
       )
     }
@@ -136,7 +166,7 @@ export async function POST(req: NextRequest) {
     const stream = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: SYSTEM_PROMPT_WITH_MEMORY },
         ...groqMessages,
       ],
       stream: true,
@@ -189,5 +219,4 @@ export async function POST(req: NextRequest) {
       )
     }
   }
-        }
-  
+}

@@ -905,5 +905,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
           }}
         />
       )}
+      </div>
+    </div>
   )
-}
+                        }

@@ -888,6 +888,23 @@ export default function ChatScreen({ user }: ChatScreenProps) {
 </>
 )}
 
-</>
-)
+      {/* ── Settings Screen ───────────────────────────────────────── */}
+      {showSettings && (
+        <SettingsScreen
+          user={user}
+          chatCount={chatSessions.length}
+          onClose={() => setShowSettings(false)}
+          onClearChats={() => {
+            setChatSessions([])
+            localStorage.removeItem('grozl_chat_sessions')
+            newChat()
+          }}
+          onLogout={() => {
+            localStorage.removeItem('grozl_user_profile')
+            window.location.reload()
+          }}
+        />
+      )}
+    </>
+  )
 }

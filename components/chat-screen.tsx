@@ -875,18 +875,19 @@ export default function ChatScreen({ user }: ChatScreenProps) {
           <X className="h-5 w-5" />
         </button>
       </div>
-
-      <div className="flex-1 overflow-hidden">
-        <ArtifactPanel
-          artifact={activeArtifact}
-          onClose={() => {
-            setActiveArtifact(null)
-            setShowArtifactModal(false)
-          }}
-        />
-      </div>
-    </div>
-  </>
+<div className="flex-1 overflow-hidden">
+  <ArtifactPanel
+    artifact={activeArtifact}
+    onClose={() => {
+      setActiveArtifact(null)
+      setShowArtifactModal(false)
+    }}
+  />
+</div>
+</div>
+</>
 )}
+
+</>
 )
 }

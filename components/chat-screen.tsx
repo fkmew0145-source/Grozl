@@ -770,98 +770,121 @@ export default function ChatScreen({ user }: ChatScreenProps) {
           )}
 
           {/* ── Bottom user bar ─────────────────────────────────────────── */}
-          <div className="flex items-center justify-between border-t border-gray-100 px-5 py-4">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-900 text-[13px] font-bold text-white">
-                {initials}
-              </div>
-              <span className="truncate text-[15px] font-medium text-gray-800">{displayName}</span>
-            </div>
-            <button
-              onClick={() => { setSidebarOpen(false); setShowSettings(true) }}
-              className="ml-3 shrink-0 rounded-xl p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
-            >
-              <Settings className="h-5 w-5" />
-            </button>
-          </div>
+<div className="flex items-center justify-between border-t border-gray-100 px-5 py-4">
+  <div className="flex min-w-0 items-center gap-3">
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-900 text-[13px] font-bold text-white">
+      {initials}
+    </div>
+    <span className="truncate text-[15px] font-medium text-gray-800">{displayName}</span>
+  </div>
+  <button
+    onClick={() => { setSidebarOpen(false); setShowSettings(true) }}
+    className="ml-3 shrink-0 rounded-xl p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+  >
+    <Settings className="h-5 w-5" />
+  </button>
+</div>
+</div>
+
+{sidebarOpen && <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setSidebarOpen(false)} />}
+
+{/* ── Header ───────────────────────────────────────────────────── */}
+<header className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between p-4">
+  <button onClick={() => setSidebarOpen(true)} className="text-gray-500 transition hover:text-gray-700">
+    <Menu className="h-6 w-6" />
+  </button>
+  <button onClick={newChat} className="text-gray-500 transition hover:text-gray-700">
+    <Plus className="h-6 w-6" />
+  </button>
+</header>
+
+{/* ── Main Content ─────────────────────────────────────────────── */}
+<main className="flex flex-1 flex-col overflow-hidden">
+  {!hasMessages ? (
+    <div className="flex flex-1 flex-col items-center justify-center px-4 pb-8">
+      <div className="flex w-full max-w-[650px] flex-col items-center">
+        <div className="mb-5 h-[90px] w-[90px]">
+          <img src="/logo.png" alt="Grozl" className="h-full w-full object-contain" />
         </div>
-
-        {sidebarOpen && <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setSidebarOpen(false)} />}
-
-        {/* ── Header ───────────────────────────────────────────────────── */}
-        <header className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between p-4">
-          <button onClick={() => setSidebarOpen(true)} className="text-gray-500 transition hover:text-gray-700">
-            <Menu className="h-6 w-6" />
-          </button>
-          <button onClick={newChat} className="text-gray-500 transition hover:text-gray-700">
-            <Plus className="h-6 w-6" />
-          </button>
-        </header>
-
-        {/* ── Main Content ─────────────────────────────────────────────── */}
-        <main className="flex flex-1 flex-col overflow-hidden">
-          {!hasMessages ? (
-            <div className="flex flex-1 flex-col items-center justify-center px-4 pb-8">
-              <div className="flex w-full max-w-[650px] flex-col items-center">
-                <div className="mb-5 h-[90px] w-[90px]">
-                  <img src="/logo.png" alt="Grozl" className="h-full w-full object-contain" />
-                </div>
-                <h1 className="mb-7 text-center text-[28px] font-semibold tracking-tight text-gray-900">
-                  Your Mind, Amplified By Grozl
-                </h1>
-                {InputBox}
+        <h1 className="mb-7 text-center text-[28px] font-semibold tracking-tight text-gray-900">
+          Your Mind, Amplified By Grozl
+        </h1>
+        {InputBox}
+      </div>
+    </div>
+  ) : (
+    <div className="flex-1 overflow-y-auto px-4 pb-4 pt-16">
+      <div className="mx-auto flex w-full max-w-[700px] flex-col gap-5">
+        {messages.map((msg, i) => (
+          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            {msg.role === 'assistant' && (
+              <div className="mr-2.5 mt-1 h-7 w-7 shrink-0 overflow-hidden rounded-full">
+                <img src="/logo.png" alt="Grozl" className="h-full w-full object-contain" />
               </div>
+            )}
+            <div
+              className={`max-w-[85%] rounded-2xl px-4 py-3 text-[15px] leading-relaxed ${
+                msg.role === 'user'
+                  ? 'bg-[#4D6BFE] text-white'
+                  : 'border border-gray-100 bg-white text-gray-800 shadow-sm'
+              }`}
+            >
+              {renderContent(msg.content, msg.role === 'assistant', i === messages.length - 1)}
             </div>
-          ) : (
-            <div className="flex-1 overflow-y-auto px-4 pb-4 pt-16">
-              <div className="mx-auto flex w-full max-w-[700px] flex-col gap-5">
-                {messages.map((msg, i) => (
-                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    {msg.role === 'assistant' && (
-                      <div className="mr-2.5 mt-1 h-7 w-7 shrink-0 overflow-hidden rounded-full">
-                        <img src="/logo.png" alt="Grozl" className="h-full w-full object-contain" />
-                      </div>
-                    )}
-                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-[15px] leading-relaxed ${
-                      msg.role === 'user'
-                        ? 'bg-[#4D6BFE] text-white'
-                        : 'border border-gray-100 bg-white text-gray-800 shadow-sm'
-                    }`}>
-                      {renderContent(msg.content, msg.role === 'assistant', i === messages.length - 1)}
-                    </div>
-                  </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
-            </div>
-          )}
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+    </div>
+  )}
 
-          {hasMessages && (
-            <div className="w-full px-4 pb-4">
-              <div className="mx-auto w-full max-w-[650px]">{InputBox}</div>
-            </div>
-          )}
-        </main>
+  {hasMessages && (
+    <div className="w-full px-4 pb-4">
+      <div className="mx-auto w-full max-w-[650px]">{InputBox}</div>
+    </div>
+  )}
+</main>
+</div>
+
+{/* ── Artifact Modal ───────────────────────────────────────────────── */}
+{activeArtifact && showArtifactModal && (
+  <>
+    <div className="hidden md:block md:w-1/2 shrink-0">
+      <ArtifactPanel
+        artifact={activeArtifact}
+        onClose={() => {
+          setActiveArtifact(null)
+          setShowArtifactModal(false)
+        }}
+      />
+    </div>
+
+    <div className="fixed inset-0 z-50 flex flex-col md:hidden">
+      <div className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
+        <div className="flex items-center gap-2">
+          <Code2 className="h-4 w-4 text-indigo-500" />
+          <span className="text-sm font-semibold text-gray-800">{activeArtifact.title}</span>
+        </div>
+        <button
+          onClick={() => {
+            setActiveArtifact(null)
+            setShowArtifactModal(false)
+          }}
+          className="text-gray-400 hover:text-gray-600"
+        >
+          <X className="h-5 w-5" />
+        </button>
       </div>
 
-      {/* ── Artifact Modal ───────────────────────────────────────────────── */}
-      {activeArtifact && showArtifactModal && (
-        <>
-          <div className="hidden md:block md:w-1/2 shrink-0">
-            <ArtifactPanel artifact={activeArtifact} onClose={() => { setActiveArtifact(null); setShowArtifactModal(false) }} />
-          </div>
-          <div className="fixed inset-0 z-50 flex flex-col md:hidden">
-            <div className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
-              <div className="flex items-center gap-2">
-                <Code2 className="h-4 w-4 text-indigo-500" />
-                <span className="text-sm font-semibold text-gray-800">{activeArtifact.title}</span>
-              </div>
-              <button onClick={() => { setActiveArtifact(null); setShowArtifactModal(false) }} className="text-gray-400 hover:text-gray-600">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <ArtifactPanel artifact={activeArtifact} onClose={() => { setActiveArtifact(null); setShowArtifactModal(false) }} />
-            </div>
-          </div>
-        </>
+      <div className="flex-1 overflow-hidden">
+        <ArtifactPanel
+          artifact={activeArtifact}
+          onClose={() => {
+            setActiveArtifact(null)
+            setShowArtifactModal(false)
+          }}
+        />
+      </div>
+    </div>
+  </>
+)}

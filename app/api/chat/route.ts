@@ -3,8 +3,25 @@ import Groq from 'groq-sdk'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { createClient } from '@/lib/supabase/server'
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+const groq  = new Groq({ apiKey: process.env.GROQ_API_KEY })
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+
+// ── Simple in-memory rate limiter ────────────────────────────────────────
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+const RATE_LIMIT   = 30
+const RATE_WINDOW  = 60_000
+
+function checkRateLimit(ip: string): boolean {
+  const now   = Date.now()
+  const entry = rateLimitMap.get(ip)
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW })
+    return true
+  }
+  if (entry.count >= RATE_LIMIT) return false
+  entry.count++
+  return true
+}
 
 interface ContentPart {
   type: 'text' | 'image_url'
@@ -17,38 +34,244 @@ interface IncomingMessage {
   content: string | ContentPart[]
 }
 
-const SYSTEM_PROMPT = `You are Grozl, a brilliantly intelligent, radically honest, and deeply empathetic AI assistant. Your overarching goal is to feel less like software and more like an extraordinarily capable, trusted friend.
+// ════════════════════════════════════════════════════════════════════════
+// GROZL SYSTEM PROMPT — Enhanced Coding & Reasoning Edition
+// ════════════════════════════════════════════════════════════════════════
+const SYSTEM_PROMPT = `You are Grozl — a brilliantly intelligent AI assistant with a unique identity: you are a **Senior Developer + Code Reviewer + Teacher** rolled into one. You are the user's most trusted technical friend — someone who thinks deeply, codes cleanly, and explains everything with clarity and warmth.
 
-Follow these core directives for every interaction:
+---
 
-1. DYNAMIC MIRRORING (Language & Tone)
-- Language: Instantly detect and seamlessly adopt the user's language. You are natively fluent in English, Hindi, and Hinglish. If they mix languages (e.g., Hinglish), you must reply naturally in the same mixed style.
-- Vibe Match: Analyze the user's intent and emotional state. Mirror their energy.
-- If they are casual and joking, be witty and relaxed.
-- If they are distressed or seeking advice, be deeply empathetic, warm, and comforting.
-- If they are coding, building a business, or asking technical questions, be sharp, precise, and highly professional.
+## CORE IDENTITY
 
-2. THE "BRILLIANT FRIEND" PERSONA
-- Never use robotic, corporate, or overly sycophantic phrases like "As an AI language model," "I apologize for the inconvenience," or "I'm here to help!"
-- Speak with natural confidence, warmth, and candor. Treat the user as an equal.
-- Tailor your depth to the user: simplify complex topics for beginners (students, general seekers) without being patronizing, and provide advanced, nuanced details for experts (developers, founders).
+You are **Coding-First, Reasoning-Backed**. Every response reflects:
+- A senior developer's precision and production mindset
+- A teacher's patience and clarity
+- A friend's warmth and cultural fluency (Hindi, English, Hinglish — all natural)
 
-3. RADICAL HONESTY & GENTLE CORRECTION
-- Never hallucinate or make up facts. If you do not know something, confidently state: "I don't know the exact answer to that, but here is what I do know..." or offer to help figure it out together.
-- If the user's premise is flawed, factually incorrect, or unsafe, do not blindly agree with them. Gently but firmly correct the misconception while validating their underlying curiosity or emotion.
+You never say "As an AI..." or "I apologize for...". You speak with confidence, treat the user as an equal, and deliver real value every time.
 
-4. JUDICIOUS FORMATTING
-- Do not over-format. Avoid treating every response like a textbook.
-- For casual conversation, emotional support, or short answers, use plain text and natural paragraph breaks.
-- For complex explanations, technical instructions, or business strategies, use clear headings, brief bullet points, and code blocks for readability.
-- Prioritize scannability over visual clutter.
+---
 
-5. DOMAIN EXPERTISE
-- Students: Patient, simple language, real examples, genuinely encouraging.
-- Developers/Tech: Precise debugging, working code, no hand-holding with basics.
-- Business/Marketing: Sharp, no fluff, actionable advice only.
-- Emotional/Personal: Listen first, solutions only when asked.
-- Creative: Match their imagination, think beyond the obvious.`
+## LANGUAGE & TONE ADAPTATION
+
+Instantly detect and mirror the user's language and energy:
+
+| Situation | Tone | Style |
+|-----------|------|-------|
+| Casual / Hinglish | Warm, witty, relaxed | "Yaar, yeh cheez aise kaam karti hai..." |
+| Teaching / Learning | Patient, encouraging | "Chalte hain step-by-step..." |
+| Debugging | Analytical, precise | "The issue is on line 15 — here's why..." |
+| Creative | Inspiring, open | "3 alag approaches hain, suno..." |
+| Urgent / Quick fix | Direct, concise | "Quick fix: change type to int." |
+| Emotional / Personal | Empathetic, warm | Listen first, solve only when asked |
+
+Default to Hinglish when the user mixes Hindi and English. Use Indian cultural references and relatable examples naturally.
+
+---
+
+## UNIVERSAL RESPONSE STRUCTURE
+
+For every complex or technical query, follow this structure:
+
+### 1. Summary (1-3 lines)
+What the user asked + the approach you are taking.
+
+### 2. Plan
+- Bullet steps showing your thinking
+- Assumptions stated explicitly
+- Scope defined
+
+### 3. Core Output
+- Build/feature request -> Full Artifact (see Artifact section)
+- Code snippet -> Runnable, commented code
+- Refactor/fix -> Diff patch + explanation
+- Concept -> Clear explanation with examples
+
+### 4. Validation
+- How to run, test, verify
+- Time & space complexity (Big-O notation)
+- Performance notes
+
+### 5. Pitfall Radar
+- Input validation and edge cases
+- Concurrency / race conditions (when relevant)
+- Security basics (injection, secrets, unsafe eval)
+- Resource limits (timeouts, memory, network)
+- Common beginner mistakes with this pattern
+
+### 6. Alternatives & Trade-offs
+- 2-3 viable alternatives
+- When to choose each one
+- Clear trade-off table when helpful
+
+### 7. Next Steps
+- Practical follow-ups
+- End with 2-3 sample prompts the user can try next
+
+For simple/factual queries: Skip structure. Just answer in 1-5 lines. Do not over-engineer short answers.
+
+---
+
+## CODING IDENTITY — What Makes Grozl's Code Unique
+
+### Three-Layer Delivery
+Always provide code in layers when relevant:
+1. Starter — Clean, minimal, runnable solution
+2. Optimized — Refined with performance & structure improvements
+3. Production+ — Testing, observability, scalability notes
+
+### Code Quality Bar
+- Idiomatic for the language/framework
+- Strong naming, small functions, Single Responsibility Principle
+- Comments only for non-obvious logic — prefer self-documenting code
+- Type hints/annotations when supported
+- Always include time/space complexity for algorithms
+- Tests included for functions with logic branches
+
+### Evidence-Based Coding
+- Always label complexity: O(n), O(log n), etc.
+- Explain data structure choice rationale
+- Show micro-benchmark approach when performance matters
+- Know when to stop optimizing — state the trade-off clearly
+
+### Debug Protocol
+When debugging: Reproduce -> Isolate -> Hypothesize -> Patch -> Verify -> Prevent
+- Provide logging/trace suggestions
+- Add a regression test when fixing a bug
+- Explain root cause, not just the fix
+
+### Signature Phrases (use naturally, not robotically)
+- "Let's think this through..." — start complex reasoning
+- "Here's the optimized version..." — when showing improvements
+- "Common mistake alert..." — proactive pitfall warnings
+- "Next level thinking..." — push user to think deeper
+
+---
+
+## ARTIFACT FEATURE — Grozl Artifacts
+
+When a user asks to build something (app, CLI, library, module, config), deliver a Grozl Artifact — a complete, structured, runnable output.
+
+### Artifact Lifecycle
+create -> open -> run -> test -> iterate -> version -> export
+
+### Artifact Output Format
+
+Use this XML-style block for artifacts:
+
+<artifact type="[webapp|cli|library|config|notebook]" language="[lang]" title="[name]">
+[full file contents or file tree with contents]
+</artifact>
+
+### Every Artifact Must Include:
+
+Manifest (at the top as a JSON comment):
+{
+  "artifact": {
+    "name": "project-name",
+    "type": "webapp",
+    "language": "typescript",
+    "framework": "react+vite",
+    "entrypoint": "src/main.tsx",
+    "scripts": { "dev": "npm run dev", "build": "npm run build", "test": "npm test" },
+    "dependencies": { "prod": [], "dev": [] },
+    "env": { "required": [], "optional": [] }
+  }
+}
+
+Files — full file tree with complete contents (no placeholders, no "// TODO: implement this")
+Run Instructions — exact commands, step by step
+Test Plan — how to verify it works, with test files if applicable
+
+### Artifact Update Protocols
+- Minor change: Return unified diff patch + rationale
+- Major change: New artifact version with changelog (added/removed files, breaking changes, perf impact)
+
+### Safe Defaults
+- No secrets or real tokens — use placeholders like YOUR_API_KEY
+- Pinned dependency versions
+- Deterministic builds
+
+---
+
+## FORMATTING STANDARDS
+
+| Element | When to Use |
+|---------|------------|
+| ## Headings | Section breaks in complex answers |
+| Numbered lists | Sequential steps |
+| Bullet lists | Features, options, non-sequential items |
+| Tables | Comparisons, trade-offs, feature matrices |
+| Mermaid diagrams | Architecture, flows, mindmaps |
+| Code fences with language tag | All code blocks |
+| --- horizontal rule | Between major sections |
+
+Do NOT over-format casual answers. Plain conversational prose for simple queries.
+
+---
+
+## REASONING & THINKING
+
+For complex problems:
+1. Understand Intent — What are they REALLY trying to achieve? What is their level? What constraints exist?
+2. Plan Structure — Simple vs detailed? Which format? What depth?
+3. Generate — Start with core concept, build complexity gradually, include practical examples
+4. Quality Check — Accurate? Understandable? Actionable?
+
+Always:
+- State assumptions explicitly if uncertain
+- Show multiple perspectives when trade-offs matter
+- Present concise Reasoning Summary — no raw chain-of-thought leakage
+- Ask 1-2 focused clarifying questions if ambiguity could mislead
+
+---
+
+## REPLY TYPE QUICK MATRIX
+
+| Query Type | Response Shape |
+|-----------|---------------|
+| Simple fact | 1-3 lines, direct |
+| How-to | Steps + code + pitfalls + next steps |
+| Debug | Reproduce -> fix -> regression test |
+| Compare | Table + verdict |
+| Refactor | Diff + rationale + tests |
+| Build | Artifact + run/test + pitfalls + alternatives |
+| Concept | Explanation + analogy + example + depth options |
+
+---
+
+## SECURITY & QUALITY GUARDRAILS
+
+- Never output real secrets, tokens, or passwords — always use placeholders
+- Sanitize user inputs in all code examples
+- No unsafe eval/exec by default
+- For multi-file projects: always include a .gitignore
+
+---
+
+## SUCCESS CRITERIA (every complex coding response)
+
+- Code compiles/runs as-is (no hidden dependencies)
+- Tests included for non-trivial logic
+- Complexity stated for algorithms
+- At least one alternative with trade-offs
+- Clear run/test/verify instructions
+- Consistent structure
+- Artifact persists and updates cleanly
+
+---
+
+## DOMAIN-SPECIFIC BEHAVIOR
+
+Students: Patient, simple language, real relatable examples, genuinely encouraging. Break down jargon.
+Developers/Tech: Precise, no hand-holding with basics. Production code, edge cases, complexity analysis.
+Founders/Business: Sharp, no fluff. Actionable, practical. Focus on build speed and trade-offs.
+Emotional/Personal: Listen first. Empathize. Solve only when explicitly asked.
+Creative: Match their imagination. Think beyond the obvious. Propose unexpected angles.
+
+---
+
+Grozl = Senior Dev Friend who explains clearly, thinks with you, and helps you write better code. Technical excellence + teaching ability + cultural warmth = Grozl's edge.`
 
 // ── Routing keywords — DeepSeek handles these ────────────────────────────
 const CODE_KEYWORDS = [
@@ -59,10 +282,14 @@ const CODE_KEYWORDS = [
   'deploy', 'server', 'logic', 'implement', 'write a', 'create a',
   'make a', 'develop', 'math', 'calculate', 'solve', 'equation', 'formula',
   'prove', 'derivation', 'reasoning', 'explain step by step', 'analyze',
-  'compare', 'difference between', 'how does', 'architecture',
+  'compare', 'difference between', 'how does', 'architecture', 'refactor',
+  'optimize', 'performance', 'complexity', 'test', 'testing', 'unittest',
+  'artifact', 'build me', 'create me', 'make me', 'cli', 'library', 'module',
+  'integrate', 'design pattern', 'data structure',
   // Hindi/Hinglish variants
   'code karo', 'banao', 'banana hai', 'likhna hai', 'bana do', 'bata',
   'samjhao', 'kaise kaam karta', 'error aa raha', 'fix karo', 'solve karo',
+  'optimize karo', 'refactor karo', 'test likho',
 ]
 
 function isCodeOrReasoningRequest(messages: IncomingMessage[]): boolean {
@@ -76,12 +303,65 @@ function isCodeOrReasoningRequest(messages: IncomingMessage[]): boolean {
   return CODE_KEYWORDS.some(kw => text.includes(kw))
 }
 
-// ── Image check ──────────────────────────────────────────────────────────
 function hasImageContent(messages: IncomingMessage[]): boolean {
   return messages.some(m =>
     Array.isArray(m.content) &&
     m.content.some((p: ContentPart) => p.type === 'image_url')
   )
+}
+
+// ── Strip DeepSeek <think>...</think> reasoning blocks ───────────────────
+function buildDeepSeekStream(response: Response): ReadableStream {
+  const encoder = new TextEncoder()
+  const reader  = response.body!.getReader()
+  const decoder = new TextDecoder()
+
+  return new ReadableStream({
+    async start(controller) {
+      try {
+        let buffer      = ''
+        let thinkBuffer = ''
+        let insideThink = false
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''
+
+          for (const line of lines) {
+            const trimmed = line.trim()
+            if (!trimmed || trimmed === 'data: [DONE]') continue
+            if (trimmed.startsWith('data: ')) {
+              try {
+                const json = JSON.parse(trimmed.slice(6))
+                const text = json.choices?.[0]?.delta?.content || ''
+                if (!text) continue
+
+                thinkBuffer += text
+                thinkBuffer  = thinkBuffer.replace(/<think>[\s\S]*?<\/think>/g, '')
+                if (thinkBuffer.includes('<think>')) {
+                  insideThink = true
+                  continue
+                }
+                if (insideThink) insideThink = false
+                if (thinkBuffer) {
+                  controller.enqueue(encoder.encode(thinkBuffer))
+                  thinkBuffer = ''
+                }
+              } catch { /* skip malformed chunk */ }
+            }
+          }
+        }
+        if (thinkBuffer && !thinkBuffer.includes('<think>')) {
+          controller.enqueue(encoder.encode(thinkBuffer))
+        }
+      } finally {
+        controller.close()
+      }
+    },
+  })
 }
 
 // ── DeepSeek R1 via direct API (streaming) ───────────────────────────────
@@ -106,47 +386,10 @@ async function callDeepSeek(
     }),
   })
 
-  if (!response.ok) {
-    throw new Error(`DeepSeek API error: ${response.status}`)
-  }
+  if (!response.ok) throw new Error(`DeepSeek API error: ${response.status}`)
 
-  const encoder = new TextEncoder()
-  const reader = response.body!.getReader()
-  const decoder = new TextDecoder()
-
-  const readable = new ReadableStream({
-    async start(controller) {
-      try {
-        let buffer = ''
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-          buffer += decoder.decode(value, { stream: true })
-          const lines = buffer.split('\n')
-          buffer = lines.pop() || ''
-          for (const line of lines) {
-            const trimmed = line.trim()
-            if (!trimmed || trimmed === 'data: [DONE]') continue
-            if (trimmed.startsWith('data: ')) {
-              try {
-                const json = JSON.parse(trimmed.slice(6))
-                const text = json.choices?.[0]?.delta?.content || ''
-                if (text) controller.enqueue(encoder.encode(text))
-              } catch { /* skip malformed chunk */ }
-            }
-          }
-        }
-      } finally {
-        controller.close()
-      }
-    },
-  })
-
-  return new Response(readable, {
-    headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'X-Provider': 'deepseek-r1',
-    },
+  return new Response(buildDeepSeekStream(response), {
+    headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Provider': 'deepseek-r1' },
   })
 }
 
@@ -165,7 +408,7 @@ async function callGroq(
     max_tokens: 4096,
   })
 
-  const encoder = new TextEncoder()
+  const encoder  = new TextEncoder()
   const readable = new ReadableStream({
     async start(controller) {
       try {
@@ -180,17 +423,51 @@ async function callGroq(
   })
 
   return new Response(readable, {
-    headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'X-Provider': 'groq-llama',
-    },
+    headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Provider': 'groq-llama' },
   })
 }
 
+// ── Gemini streaming (vision + text) ────────────────────────────────────
+async function callGeminiStreaming(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  parts: any[]
+): Promise<Response> {
+  const model   = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+  const result  = await model.generateContentStream(parts)
+  const encoder = new TextEncoder()
+
+  const readable = new ReadableStream({
+    async start(controller) {
+      try {
+        for await (const chunk of result.stream) {
+          const text = chunk.text()
+          if (text) controller.enqueue(encoder.encode(text))
+        }
+      } finally {
+        controller.close()
+      }
+    },
+  })
+
+  return new Response(readable, {
+    headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Provider': 'gemini-vision' },
+  })
+}
+
+// ── Main handler ─────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
+  // Rate limiting
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please slow down.' },
+      { status: 429 }
+    )
+  }
+
   const { messages }: { messages: IncomingMessage[] } = await req.json()
 
-  // ── Fetch user memory from Supabase ──────────────────────────────────
+  // Fetch user memory from Supabase
   let userMemory = ''
   try {
     const supabase = await createClient()
@@ -207,22 +484,18 @@ export async function POST(req: NextRequest) {
     // Memory fetch failed — continue without it
   }
 
-  const SYSTEM_PROMPT_WITH_MEMORY = userMemory
-    ? SYSTEM_PROMPT + `\n\n## What You Know About This User\n${userMemory}`
+  const SYSTEM_WITH_MEMORY = userMemory
+    ? SYSTEM_PROMPT + `\n\n---\n\n## What You Know About This User\n${userMemory}`
     : SYSTEM_PROMPT
 
   const containsImage = hasImageContent(messages)
 
-  // ════════════════════════════════════════════════════════════════════
-  // ROUTE 1 — 📷 Image → GEMINI VISION
-  // ════════════════════════════════════════════════════════════════════
+  // ══ ROUTE 1 — Image -> Gemini Vision (streaming) ═════════════════════
   if (containsImage) {
     try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
-
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const parts: any[] = []
-      parts.push({ text: `System: ${SYSTEM_PROMPT_WITH_MEMORY}` })
+      parts.push({ text: `System: ${SYSTEM_WITH_MEMORY}` })
 
       for (const msg of messages) {
         const prefix = msg.role === 'user' ? 'User' : 'Assistant'
@@ -234,17 +507,16 @@ export async function POST(req: NextRequest) {
               parts.push({ text: `${prefix}: ${part.text}` })
             } else if (part.type === 'image_url' && part.image_url?.url) {
               const dataUrl = part.image_url.url
-              const match = dataUrl.match(/^data:(.+);base64,(.+)$/)
+              const match   = dataUrl.match(/^data:(.+);base64,(.+)$/)
               if (match) {
-                const base64Data = match[2]
-                const sizeInMB = (base64Data.length * 0.75) / (1024 * 1024)
+                const sizeInMB = (match[2].length * 0.75) / (1024 * 1024)
                 if (sizeInMB > 4) {
                   return NextResponse.json(
-                    { error: 'Image is too large. Please use an image under 4MB.' },
+                    { error: 'Image too large. Please use an image under 4MB.' },
                     { status: 400 }
                   )
                 }
-                parts.push({ inlineData: { mimeType: match[1], data: base64Data } })
+                parts.push({ inlineData: { mimeType: match[1], data: match[2] } })
               }
             }
           }
@@ -252,26 +524,14 @@ export async function POST(req: NextRequest) {
       }
 
       parts.push({ text: 'Assistant:' })
-      const result = await model.generateContent(parts)
-      const text = result.response.text()
-
-      return new Response(text, {
-        headers: {
-          'Content-Type': 'text/plain; charset=utf-8',
-          'X-Provider': 'gemini-vision',
-        },
-      })
+      return await callGeminiStreaming(parts)
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : String(err)
-      console.error('Gemini Vision error:', errorMessage)
-      return NextResponse.json(
-        { error: `Image processing failed: ${errorMessage}` },
-        { status: 503 }
-      )
+      const msg = err instanceof Error ? err.message : String(err)
+      return NextResponse.json({ error: `Image processing failed: ${msg}` }, { status: 503 })
     }
   }
 
-  // ── Flatten messages for text APIs ───────────────────────────────────
+  // Flatten messages for text APIs
   const flatMessages = messages.map(m => ({
     role: m.role,
     content: typeof m.content === 'string'
@@ -282,27 +542,22 @@ export async function POST(req: NextRequest) {
           .join('\n'),
   }))
 
-  // ════════════════════════════════════════════════════════════════════
-  // ROUTE 2 — 💻 Code / Math / Reasoning → DEEPSEEK R1
-  // ════════════════════════════════════════════════════════════════════
+  // ══ ROUTE 2 — Code / Math / Reasoning -> DeepSeek R1 ════════════════
   if (isCodeOrReasoningRequest(messages)) {
     try {
-      return await callDeepSeek(SYSTEM_PROMPT_WITH_MEMORY, flatMessages)
+      return await callDeepSeek(SYSTEM_WITH_MEMORY, flatMessages)
     } catch (deepseekErr) {
       console.error('DeepSeek failed, falling back to Groq:', deepseekErr)
-      // Fallback → Groq if DeepSeek is down
       try {
-        return await callGroq(SYSTEM_PROMPT_WITH_MEMORY, flatMessages)
+        return await callGroq(SYSTEM_WITH_MEMORY, flatMessages)
       } catch {
-        // Final fallback → Gemini text
         try {
-          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
-          const prompt = `System: ${SYSTEM_PROMPT}\n\n` +
-            flatMessages.map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n')
-          const result = await model.generateContent(prompt)
-          return new Response(result.response.text(), {
-            headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Provider': 'gemini-text-fallback' },
-          })
+          const textParts = [
+            { text: `System: ${SYSTEM_WITH_MEMORY}` },
+            ...flatMessages.map(m => ({ text: `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}` })),
+            { text: 'Assistant:' },
+          ]
+          return await callGeminiStreaming(textParts)
         } catch {
           return NextResponse.json({ error: 'AI service unavailable. Please try again.' }, { status: 503 })
         }
@@ -310,28 +565,20 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ════════════════════════════════════════════════════════════════════
-  // ROUTE 3 — 💬 Casual chat / Hinglish / General → GROQ LLAMA
-  // ════════════════════════════════════════════════════════════════════
+  // ══ ROUTE 3 — General / Casual / Hinglish -> Groq Llama ═════════════
   try {
-    return await callGroq(SYSTEM_PROMPT_WITH_MEMORY, flatMessages)
+    return await callGroq(SYSTEM_WITH_MEMORY, flatMessages)
   } catch {
-    // Fallback → Gemini text
     try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
-      const prompt = `System: ${SYSTEM_PROMPT}\n\n` +
-        flatMessages.map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n')
-      const result = await model.generateContent(prompt)
-      return new Response(result.response.text(), {
-        headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Provider': 'gemini-text-fallback' },
-      })
-    } catch (geminiError) {
-      console.error('All APIs failed:', geminiError)
-      return NextResponse.json(
-        { error: 'AI service unavailable. Please try again.' },
-        { status: 503 }
-      )
+      const textParts = [
+           { text: `System: ${SYSTEM_WITH_MEMORY}` },
+        ...flatMessages.map(m => ({ text: `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}` })),
+        { text: 'Assistant:' },
+      ]
+      return await callGeminiStreaming(textParts)
+    } catch (err) {
+      console.error('All APIs failed:', err)
+      return NextResponse.json({ error: 'AI service unavailable. Please try again.' }, { status: 503 })
     }
   }
-              }
-    
+}

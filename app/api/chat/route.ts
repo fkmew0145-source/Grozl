@@ -134,7 +134,6 @@ When debugging: Reproduce -> Isolate -> Hypothesize -> Patch -> Verify -> Preven
 - "Here's the optimized version..." — when showing improvements.
 - "Common mistake alert..." — proactive pitfall warnings.
 - "Next level thinking..." — push user to think deeper.
-`;
 
 ## ARTIFACT FEATURE — Grozl Artifacts
 

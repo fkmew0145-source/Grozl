@@ -54,7 +54,7 @@ Instantly detect and mirror the user's language and energy.
 1. **No Mixed Response:** If the user speaks English (e.g., "How are you?"), reply ONLY in English. No Hindi, no Hinglish.
 2. **Hinglish Consistency:** If the user speaks Hinglish (e.g., "Bhai, kaise ho?"), reply ONLY in Hinglish. 
 3. **ZERO TRANSLATION:** Strictly forbidden to provide English translations in brackets () or explain your response in a second language. 
-4. **No Bridging:** Never start in one language and switch to another unless the user's message is itself mixed.
+4. **No Bridge:** Never start in one language and switch to another unless the user's message is itself mixed.
 
 | Situation | Tone | Style |
 | :--- | :--- | :--- |
@@ -295,8 +295,7 @@ function hasImageContent(messages: IncomingMessage[]): boolean {
     Array.isArray(m.content) &&
     m.content.some((p: ContentPart) => p.type === 'image_url')
   )
-}
-
+  }
 // ── Strip DeepSeek <think>...</think> reasoning blocks ───────────────────
 function buildDeepSeekStream(response: Response): ReadableStream {
   const encoder = new TextEncoder()
@@ -452,7 +451,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const { messages }: { messages: IncomingMessage[] } = await req.json()
+  const { messages, language, model }: { messages: IncomingMessage[], language?: string, model?: string } = await req.json()
 
   // Fetch user memory from Supabase
   let userMemory = ''
@@ -462,18 +461,28 @@ export async function POST(req: NextRequest) {
     if (user) {
       const { data } = await supabase
         .from('user_memories')
-        .select('memory')
+        .select('memory_text')
         .eq('user_id', user.id)
         .single()
-      userMemory = data?.memory || ''
+      userMemory = data?.memory_text || ''
     }
   } catch {
     // Memory fetch failed — continue without it
   }
 
-  const SYSTEM_WITH_MEMORY = userMemory
+  // Language injection
+  let languageInstruction = ''
+  if (language === 'Hindi') {
+    languageInstruction = '\n**STRICT LANGUAGE RULE:** You MUST respond ONLY in Hindi (Devanagari script). No English or Hinglish unless technical terms are required.'
+  } else if (language === 'Hinglish') {
+    languageInstruction = '\n**STRICT LANGUAGE RULE:** You MUST respond ONLY in Hinglish (Hindi written in Roman script mixed with English). Keep it natural, cool, and conversational.'
+  } else if (language === 'English') {
+    languageInstruction = '\n**STRICT LANGUAGE RULE:** You MUST respond ONLY in English. No Hindi or Hinglish.'
+  }
+
+  const SYSTEM_WITH_MEMORY = (userMemory
     ? SYSTEM_PROMPT + `\n\n---\n\n## What You Know About This User\n${userMemory}`
-    : SYSTEM_PROMPT
+    : SYSTEM_PROMPT) + languageInstruction
 
   const containsImage = hasImageContent(messages)
 
@@ -529,7 +538,29 @@ export async function POST(req: NextRequest) {
           .join('\n'),
   }))
 
-  // ══ ROUTE 2 — Code / Math / Reasoning -> DeepSeek R1 ════════════════
+  // ══ MODEL ROUTING ═══════════════════════════════════════════════════
+  
+  // Forced DeepSeek
+  if (model === 'DeepSeek') {
+    try {
+      return await callDeepSeek(SYSTEM_WITH_MEMORY, flatMessages)
+    } catch (err) {
+      console.error('Forced DeepSeek failed:', err)
+      return NextResponse.json({ error: 'DeepSeek service unavailable.' }, { status: 503 })
+    }
+  }
+
+  // Forced Groq
+  if (model === 'Groq') {
+    try {
+      return await callGroq(SYSTEM_WITH_MEMORY, flatMessages)
+    } catch (err) {
+      console.error('Forced Groq failed:', err)
+      return NextResponse.json({ error: 'Groq service unavailable.' }, { status: 503 })
+    }
+  }
+
+  // Auto Routing (Default behavior)
   if (isCodeOrReasoningRequest(messages)) {
     try {
       return await callDeepSeek(SYSTEM_WITH_MEMORY, flatMessages)

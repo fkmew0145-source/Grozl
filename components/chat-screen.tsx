@@ -1,5 +1,5 @@
 'use client'
-
+import SettingsScreen from './settings/settings-screen'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
@@ -81,17 +81,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
   const [renameValue, setRenameValue] = useState('')
 
   // ── Settings modal state ─────────────────────────────────────────────
-  const [showSettings, setShowSettings]         = useState(false)
-  const [settingsTab, setSettingsTab]           = useState<'profile'|'memory'|'model'|'appearance'|'history'|'about'>('profile')
-  const [settingsAppearance, setSettingsAppearance] = useState<'light'|'dark'|'system'>('system')
-  const [settingsFontSize, setSettingsFontSize] = useState<'small'|'medium'|'large'>('medium')
-  const [settingsLanguage, setSettingsLanguage] = useState<'english'|'hindi'|'hinglish'>('hinglish')
-  const [settingsDefaultModel, setSettingsDefaultModel] = useState<'auto'|'deepseek'|'groq'|'gemini'>('auto')
-  const [settingsSaveHistory, setSettingsSaveHistory] = useState(true)
-  const [memoryText, setMemoryText]             = useState('')
-  const [memoryLoading, setMemoryLoading]       = useState(false)
-  const [memorySaved, setMemorySaved]           = useState(false)
-
+  const [showSettings, setShowSettings] = useState(false)
   // ── Refs ─────────────────────────────────────────────────────────────
   const textareaRef    = useRef<HTMLTextAreaElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)

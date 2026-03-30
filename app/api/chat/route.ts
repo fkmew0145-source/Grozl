@@ -49,12 +49,142 @@ Follow these core directives for every interaction:
 - Business/Marketing: Sharp, no fluff, actionable advice only.
 - Emotional/Personal: Listen first, solutions only when asked.
 - Creative: Match their imagination, think beyond the obvious.`
-// Check if any message contains an image
+
+// ── Routing keywords — DeepSeek handles these ────────────────────────────
+const CODE_KEYWORDS = [
+  'code', 'coding', 'debug', 'error', 'bug', 'fix', 'function', 'class',
+  'component', 'api', 'script', 'program', 'algorithm', 'database', 'sql',
+  'html', 'css', 'javascript', 'typescript', 'python', 'java', 'react',
+  'nextjs', 'node', 'backend', 'frontend', 'build', 'website', 'app',
+  'deploy', 'server', 'logic', 'implement', 'write a', 'create a',
+  'make a', 'develop', 'math', 'calculate', 'solve', 'equation', 'formula',
+  'prove', 'derivation', 'reasoning', 'explain step by step', 'analyze',
+  'compare', 'difference between', 'how does', 'architecture',
+  // Hindi/Hinglish variants
+  'code karo', 'banao', 'banana hai', 'likhna hai', 'bana do', 'bata',
+  'samjhao', 'kaise kaam karta', 'error aa raha', 'fix karo', 'solve karo',
+]
+
+function isCodeOrReasoningRequest(messages: IncomingMessage[]): boolean {
+  const lastUserMsg = [...messages].reverse().find(m => m.role === 'user')
+  if (!lastUserMsg) return false
+  const text = (
+    typeof lastUserMsg.content === 'string'
+      ? lastUserMsg.content
+      : lastUserMsg.content.filter(p => p.type === 'text').map(p => p.text || '').join(' ')
+  ).toLowerCase()
+  return CODE_KEYWORDS.some(kw => text.includes(kw))
+}
+
+// ── Image check ──────────────────────────────────────────────────────────
 function hasImageContent(messages: IncomingMessage[]): boolean {
   return messages.some(m =>
     Array.isArray(m.content) &&
     m.content.some((p: ContentPart) => p.type === 'image_url')
   )
+}
+
+// ── DeepSeek R1 via direct API (streaming) ───────────────────────────────
+async function callDeepSeek(
+  systemPrompt: string,
+  messages: { role: string; content: string }[]
+): Promise<Response> {
+  const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.DEEPSEEK_R1_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'deepseek-reasoner',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...messages,
+      ],
+      stream: true,
+      max_tokens: 8192,
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`DeepSeek API error: ${response.status}`)
+  }
+
+  const encoder = new TextEncoder()
+  const reader = response.body!.getReader()
+  const decoder = new TextDecoder()
+
+  const readable = new ReadableStream({
+    async start(controller) {
+      try {
+        let buffer = ''
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''
+          for (const line of lines) {
+            const trimmed = line.trim()
+            if (!trimmed || trimmed === 'data: [DONE]') continue
+            if (trimmed.startsWith('data: ')) {
+              try {
+                const json = JSON.parse(trimmed.slice(6))
+                const text = json.choices?.[0]?.delta?.content || ''
+                if (text) controller.enqueue(encoder.encode(text))
+              } catch { /* skip malformed chunk */ }
+            }
+          }
+        }
+      } finally {
+        controller.close()
+      }
+    },
+  })
+
+  return new Response(readable, {
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'X-Provider': 'deepseek-r1',
+    },
+  })
+}
+
+// ── Groq Llama streaming ─────────────────────────────────────────────────
+async function callGroq(
+  systemPrompt: string,
+  messages: { role: string; content: string }[]
+): Promise<Response> {
+  const stream = await groq.chat.completions.create({
+    model: 'llama-3.3-70b-versatile',
+    messages: [
+      { role: 'system', content: systemPrompt },
+      ...messages as Parameters<typeof groq.chat.completions.create>[0]['messages'],
+    ],
+    stream: true,
+    max_tokens: 4096,
+  })
+
+  const encoder = new TextEncoder()
+  const readable = new ReadableStream({
+    async start(controller) {
+      try {
+        for await (const chunk of stream) {
+          const text = chunk.choices[0]?.delta?.content || ''
+          if (text) controller.enqueue(encoder.encode(text))
+        }
+      } finally {
+        controller.close()
+      }
+    },
+  })
+
+  return new Response(readable, {
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'X-Provider': 'groq-llama',
+    },
+  })
 }
 
 export async function POST(req: NextRequest) {
@@ -78,28 +208,24 @@ export async function POST(req: NextRequest) {
   }
 
   const SYSTEM_PROMPT_WITH_MEMORY = userMemory
-    ? SYSTEM_PROMPT + `
-
-## What You Know About This User
-${userMemory}`
+    ? SYSTEM_PROMPT + `\n\n## What You Know About This User\n${userMemory}`
     : SYSTEM_PROMPT
 
   const containsImage = hasImageContent(messages)
 
-  // ── If images present → Gemini Vision (non-streaming) ────────────────
+  // ════════════════════════════════════════════════════════════════════
+  // ROUTE 1 — 📷 Image → GEMINI VISION
+  // ════════════════════════════════════════════════════════════════════
   if (containsImage) {
     try {
       const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const parts: any[] = []
-
-      // System prompt at the beginning
       parts.push({ text: `System: ${SYSTEM_PROMPT_WITH_MEMORY}` })
 
       for (const msg of messages) {
         const prefix = msg.role === 'user' ? 'User' : 'Assistant'
-
         if (typeof msg.content === 'string') {
           parts.push({ text: `${prefix}: ${msg.content}` })
         } else if (Array.isArray(msg.content)) {
@@ -118,12 +244,7 @@ ${userMemory}`
                     { status: 400 }
                   )
                 }
-                parts.push({
-                  inlineData: {
-                    mimeType: match[1],
-                    data: base64Data,
-                  },
-                })
+                parts.push({ inlineData: { mimeType: match[1], data: base64Data } })
               }
             }
           }
@@ -131,7 +252,6 @@ ${userMemory}`
       }
 
       parts.push({ text: 'Assistant:' })
-
       const result = await model.generateContent(parts)
       const text = result.response.text()
 
@@ -151,8 +271,8 @@ ${userMemory}`
     }
   }
 
-  // ── Text-only → Groq (streaming) ─────────────────────────────────────
-  const groqMessages = messages.map(m => ({
+  // ── Flatten messages for text APIs ───────────────────────────────────
+  const flatMessages = messages.map(m => ({
     role: m.role,
     content: typeof m.content === 'string'
       ? m.content
@@ -162,61 +282,56 @@ ${userMemory}`
           .join('\n'),
   }))
 
-  try {
-    const stream = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT_WITH_MEMORY },
-        ...groqMessages,
-      ],
-      stream: true,
-      max_tokens: 4096,
-    })
-
-    const encoder = new TextEncoder()
-    const readable = new ReadableStream({
-      async start(controller) {
+  // ════════════════════════════════════════════════════════════════════
+  // ROUTE 2 — 💻 Code / Math / Reasoning → DEEPSEEK R1
+  // ════════════════════════════════════════════════════════════════════
+  if (isCodeOrReasoningRequest(messages)) {
+    try {
+      return await callDeepSeek(SYSTEM_PROMPT_WITH_MEMORY, flatMessages)
+    } catch (deepseekErr) {
+      console.error('DeepSeek failed, falling back to Groq:', deepseekErr)
+      // Fallback → Groq if DeepSeek is down
+      try {
+        return await callGroq(SYSTEM_PROMPT_WITH_MEMORY, flatMessages)
+      } catch {
+        // Final fallback → Gemini text
         try {
-          for await (const chunk of stream) {
-            const text = chunk.choices[0]?.delta?.content || ''
-            if (text) controller.enqueue(encoder.encode(text))
-          }
-        } finally {
-          controller.close()
+          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+          const prompt = `System: ${SYSTEM_PROMPT}\n\n` +
+            flatMessages.map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n')
+          const result = await model.generateContent(prompt)
+          return new Response(result.response.text(), {
+            headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Provider': 'gemini-text-fallback' },
+          })
+        } catch {
+          return NextResponse.json({ error: 'AI service unavailable. Please try again.' }, { status: 503 })
         }
-      },
-    })
+      }
+    }
+  }
 
-    return new Response(readable, {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'X-Provider': 'groq',
-      },
-    })
+  // ════════════════════════════════════════════════════════════════════
+  // ROUTE 3 — 💬 Casual chat / Hinglish / General → GROQ LLAMA
+  // ════════════════════════════════════════════════════════════════════
+  try {
+    return await callGroq(SYSTEM_PROMPT_WITH_MEMORY, flatMessages)
   } catch {
-    // ── Groq failed → Gemini text fallback ───────────────────────────
+    // Fallback → Gemini text
     try {
       const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
-
-      const prompt = `System: ${SYSTEM_PROMPT}\n\n` + groqMessages
-        .map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
-        .join('\n')
-
+      const prompt = `System: ${SYSTEM_PROMPT}\n\n` +
+        flatMessages.map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n')
       const result = await model.generateContent(prompt)
-      const text = result.response.text()
-
-      return new Response(text, {
-        headers: {
-          'Content-Type': 'text/plain; charset=utf-8',
-          'X-Provider': 'gemini',
-        },
+      return new Response(result.response.text(), {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Provider': 'gemini-text-fallback' },
       })
     } catch (geminiError) {
-      console.error('Both APIs failed:', geminiError)
+      console.error('All APIs failed:', geminiError)
       return NextResponse.json(
         { error: 'AI service unavailable. Please try again.' },
         { status: 503 }
       )
     }
   }
-}
+              }
+    

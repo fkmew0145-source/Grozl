@@ -6,7 +6,9 @@ import type { User } from '@supabase/supabase-js'
 import {
   Menu, Plus, Search, FolderOpen, MessageSquarePlus,
   LogOut, Mic, MicOff, Send, Camera, Image, FileText, Loader2, MessageSquare,
+  Code2, ExternalLink,
 } from 'lucide-react'
+import ArtifactPanel from './artifact-panel'
 
 interface ContentPart {
   type: 'text' | 'image_url'
@@ -32,6 +34,13 @@ interface ChatScreenProps {
   user: User | null
 }
 
+interface ArtifactData {
+  type: 'html' | 'react' | 'code'
+  language?: string
+  title: string
+  content: string
+}
+
 export default function ChatScreen({ user }: ChatScreenProps) {
   // ── Core state ───────────────────────────────────────────────────────
   const [sidebarOpen, setSidebarOpen]     = useState(false)
@@ -45,6 +54,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
   const [isStreaming, setIsStreaming]      = useState(false)
   const [attachedFiles, setAttachedFiles] = useState<File[]>([])
   const [isFocused, setIsFocused]         = useState(false)
+  const [activeArtifact, setActiveArtifact] = useState<ArtifactData | null>(null)
 
   // ── Chat history state ───────────────────────────────────────────────
   const [chatSessions, setChatSessions]       = useState<ChatSession[]>([])
@@ -125,6 +135,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
     setSidebarOpen(false)
     setInputValue('')
     setAttachedFiles([])
+    setActiveArtifact(null)
   }
 
   const newChat = useCallback(() => {
@@ -136,6 +147,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
     setSidebarOpen(false)
     setShowAttachMenu(false)
     setIsFocused(false)
+    setActiveArtifact(null)
     setCurrentSessionId(crypto.randomUUID())
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
   }, [messages, currentSessionId, saveSession])
@@ -357,6 +369,22 @@ export default function ChatScreen({ user }: ChatScreenProps) {
     }
   }
 
+  // ── Artifact helpers ─────────────────────────────────────────────────
+  const parseArtifact = (text: string): ArtifactData | null => {
+    const regex = /<artifact\s+type="([^"]+)"(?:\s+language="([^"]+)")?(?:\s+title="([^"]+)")?[^>]*>([\s\S]*?)<\/artifact>/
+    const match = text.match(regex)
+    if (!match) return null
+    return {
+      type: match[1] as 'html' | 'react' | 'code',
+      language: match[2],
+      title: match[3] || 'Artifact',
+      content: match[4].trim(),
+    }
+  }
+
+  const stripArtifactTags = (text: string) =>
+    text.replace(/<artifact[\s\S]*?<\/artifact>/g, '').trim()
+
   // ── Render message content ───────────────────────────────────────────
   const renderContent = (
     content: string | ContentPart[],
@@ -392,14 +420,50 @@ export default function ChatScreen({ user }: ChatScreenProps) {
     }
 
     if (typeof content === 'string') {
+      // Check for artifact in assistant messages only
+      const artifact = isAssistant ? parseArtifact(content) : null
+      const cleanText = artifact ? stripArtifactTags(content) : content
+
       return (
-        <span style={{ whiteSpace: 'pre-wrap' }}>
-          {content}
-          {/* Typewriter cursor while streaming */}
-          {isAssistant && isLast && isStreaming && content !== '' && (
-            <span className="ml-0.5 inline-block animate-pulse font-light text-gray-400">▌</span>
+        <div className="flex flex-col gap-3">
+          {/* Main text */}
+          {cleanText !== '' && (
+            <span style={{ whiteSpace: 'pre-wrap' }}>
+              {cleanText}
+              {/* Typewriter cursor while streaming */}
+              {isAssistant && isLast && isStreaming && cleanText !== '' && (
+                <span className="ml-0.5 inline-block animate-pulse font-light text-gray-400">▌</span>
+              )}
+            </span>
           )}
-        </span>
+
+          {/* Artifact building indicator — visible while streaming */}
+          {isAssistant && isLast && isStreaming && !artifact && content.includes('<artifact') && (
+            <div className="flex items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-2.5 text-[13px] text-indigo-500">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              Building artifact...
+            </div>
+          )}
+
+          {/* Artifact open button — shown after streaming is done */}
+          {artifact && !isStreaming && (
+            <button
+              onClick={() => setActiveArtifact(artifact)}
+              className="flex items-center gap-2.5 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 to-blue-50 px-4 py-3 text-left text-[13px] font-medium text-indigo-700 transition hover:border-indigo-300 hover:shadow-sm"
+            >
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-100">
+                <Code2 className="h-3.5 w-3.5 text-indigo-600" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-semibold">{artifact.title}</div>
+                <div className="text-[11px] font-normal capitalize text-indigo-400">
+                  {artifact.type === 'code' ? artifact.language : artifact.type} · Click to open
+                </div>
+              </div>
+              <ExternalLink className="h-3.5 w-3.5 shrink-0 text-indigo-400" />
+            </button>
+          )}
+        </div>
       )
     }
 
@@ -543,214 +607,230 @@ export default function ChatScreen({ user }: ChatScreenProps) {
 
   // ── Render ───────────────────────────────────────────────────────────
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-gradient-to-b from-slate-50 to-indigo-50">
+    <div className="flex h-dvh overflow-hidden bg-gradient-to-b from-slate-50 to-indigo-50">
 
-      {/* Hidden file inputs */}
-      <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
-      <input ref={photoInputRef}  type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
-      <input ref={fileInputRef}   type="file" multiple className="hidden" onChange={handleFileChange} />
+      {/* ── Chat side ─────────────────────────────────────────────────── */}
+      <div className={`flex flex-col overflow-hidden transition-all duration-300 ${activeArtifact ? 'w-1/2' : 'w-full'}`}>
 
-      {/* ── Sidebar ────────────────────────────────────────────────────── */}
-      <div className={`fixed left-0 top-0 z-50 flex h-full w-72 -translate-x-full flex-col gap-2 border-r border-gray-200 bg-white p-6 shadow-xl transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : ''}`}>
-        {/* Search */}
-        <div className="relative mb-5">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input type="text" placeholder="Search chats..." className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-indigo-300" />
-        </div>
+        {/* Hidden file inputs */}
+        <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
+        <input ref={photoInputRef}  type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+        <input ref={fileInputRef}   type="file" multiple className="hidden" onChange={handleFileChange} />
 
-        {/* New Chat */}
-        <button
-          onClick={() => { setActiveMenuItem(activeMenuItem === 'newchat' ? null : 'newchat'); newChat() }}
-          className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all duration-200 ease-out ${activeMenuItem === 'newchat' ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700'}`}
-        >
-          <MessageSquarePlus className={`h-5 w-5 ${activeMenuItem === 'newchat' ? 'text-[#4D6BFE]' : 'text-gray-400'}`} />
-          New Chat
-        </button>
+        {/* ── Sidebar ────────────────────────────────────────────────────── */}
+        <div className={`fixed left-0 top-0 z-50 flex h-full w-72 -translate-x-full flex-col gap-2 border-r border-gray-200 bg-white p-6 shadow-xl transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : ''}`}>
+          {/* Search */}
+          <div className="relative mb-5">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input type="text" placeholder="Search chats..." className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-indigo-300" />
+          </div>
 
-        {/* Projects */}
-        <button
-          onClick={() => setActiveMenuItem(activeMenuItem === 'projects' ? null : 'projects')}
-          className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all duration-200 ease-out ${activeMenuItem === 'projects' ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700'}`}
-        >
-          <FolderOpen className={`h-5 w-5 ${activeMenuItem === 'projects' ? 'text-[#4D6BFE]' : 'text-gray-400'}`} />
-          Projects
-        </button>
+          {/* New Chat */}
+          <button
+            onClick={() => { setActiveMenuItem(activeMenuItem === 'newchat' ? null : 'newchat'); newChat() }}
+            className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all duration-200 ease-out ${activeMenuItem === 'newchat' ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700'}`}
+          >
+            <MessageSquarePlus className={`h-5 w-5 ${activeMenuItem === 'newchat' ? 'text-[#4D6BFE]' : 'text-gray-400'}`} />
+            New Chat
+          </button>
 
-        {/* Recent Chats */}
-        <span className="ml-1 mt-5 text-xs font-semibold uppercase tracking-wide text-gray-400">Recent Chats</span>
-        <div className="flex flex-1 flex-col gap-1 overflow-y-auto">
-          {sortedSessions.length === 0 ? (
-            <p className="px-2 py-3 text-[13px] italic text-gray-400">No recent chats yet</p>
-          ) : (
-            sortedSessions.map(session => (
-              <div key={session.id} className="relative">
-                {renamingId === session.id ? (
-                  /* Inline rename input */
-                  <div className="flex items-center gap-1.5 rounded-xl bg-indigo-50 px-3 py-2">
-                    <input
-                      autoFocus
-                      value={renameValue}
-                      onChange={e => setRenameValue(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') confirmRename()
-                        if (e.key === 'Escape') setRenamingId(null)
-                      }}
-                      onBlur={confirmRename}
-                      className="flex-1 bg-transparent text-[14px] text-indigo-700 outline-none"
-                    />
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => loadSession(session)}
-                    onMouseDown={e => handleLongPressStart(e, session.id)}
-                    onMouseUp={handleLongPressEnd}
-                    onMouseLeave={handleLongPressEnd}
-                    onTouchStart={e => handleLongPressStart(e, session.id)}
-                    onTouchEnd={handleLongPressEnd}
-                    onContextMenu={e => {
-                      e.preventDefault()
-                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-                      setContextMenu({ sessionId: session.id, x: rect.left, y: rect.bottom + 4 })
-                    }}
-                    className={`flex w-full items-start gap-2.5 rounded-xl px-3 py-2.5 text-left text-[14px] text-gray-600 transition hover:bg-indigo-50 hover:text-indigo-600 ${session.id === currentSessionId ? 'bg-indigo-50 text-indigo-600' : ''}`}
-                  >
-                    <div className="mt-0.5 shrink-0">
-                      {session.pinned ? (
-                        /* Pin icon */
-                        <svg className="h-4 w-4 text-[#4D6BFE]" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
-                        </svg>
-                      ) : session.favorite ? (
-                        /* Star icon */
-                        <svg className="h-4 w-4 text-amber-400" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-                        </svg>
-                      ) : (
-                        <MessageSquare className="h-4 w-4 text-gray-400" />
-                      )}
+          {/* Projects */}
+          <button
+            onClick={() => setActiveMenuItem(activeMenuItem === 'projects' ? null : 'projects')}
+            className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all duration-200 ease-out ${activeMenuItem === 'projects' ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700'}`}
+          >
+            <FolderOpen className={`h-5 w-5 ${activeMenuItem === 'projects' ? 'text-[#4D6BFE]' : 'text-gray-400'}`} />
+            Projects
+          </button>
+
+          {/* Recent Chats */}
+          <span className="ml-1 mt-5 text-xs font-semibold uppercase tracking-wide text-gray-400">Recent Chats</span>
+          <div className="flex flex-1 flex-col gap-1 overflow-y-auto">
+            {sortedSessions.length === 0 ? (
+              <p className="px-2 py-3 text-[13px] italic text-gray-400">No recent chats yet</p>
+            ) : (
+              sortedSessions.map(session => (
+                <div key={session.id} className="relative">
+                  {renamingId === session.id ? (
+                    /* Inline rename input */
+                    <div className="flex items-center gap-1.5 rounded-xl bg-indigo-50 px-3 py-2">
+                      <input
+                        autoFocus
+                        value={renameValue}
+                        onChange={e => setRenameValue(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') confirmRename()
+                          if (e.key === 'Escape') setRenamingId(null)
+                        }}
+                        onBlur={confirmRename}
+                        className="flex-1 bg-transparent text-[14px] text-indigo-700 outline-none"
+                      />
                     </div>
-                    <span className="line-clamp-2 leading-snug">{session.title}</span>
-                  </button>
-                )}
+                  ) : (
+                    <button
+                      onClick={() => loadSession(session)}
+                      onMouseDown={e => handleLongPressStart(e, session.id)}
+                      onMouseUp={handleLongPressEnd}
+                      onMouseLeave={handleLongPressEnd}
+                      onTouchStart={e => handleLongPressStart(e, session.id)}
+                      onTouchEnd={handleLongPressEnd}
+                      onContextMenu={e => {
+                        e.preventDefault()
+                        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                        setContextMenu({ sessionId: session.id, x: rect.left, y: rect.bottom + 4 })
+                      }}
+                      className={`flex w-full items-start gap-2.5 rounded-xl px-3 py-2.5 text-left text-[14px] text-gray-600 transition hover:bg-indigo-50 hover:text-indigo-600 ${session.id === currentSessionId ? 'bg-indigo-50 text-indigo-600' : ''}`}
+                    >
+                      <div className="mt-0.5 shrink-0">
+                        {session.pinned ? (
+                          /* Pin icon */
+                          <svg className="h-4 w-4 text-[#4D6BFE]" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
+                          </svg>
+                        ) : session.favorite ? (
+                          /* Star icon */
+                          <svg className="h-4 w-4 text-amber-400" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                          </svg>
+                        ) : (
+                          <MessageSquare className="h-4 w-4 text-gray-400" />
+                        )}
+                      </div>
+                      <span className="line-clamp-2 leading-snug">{session.title}</span>
+                    </button>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Context Menu (long-press popup) */}
+          {contextMenu && (
+            <>
+              <div className="fixed inset-0 z-[60]" onClick={() => setContextMenu(null)} />
+              <div
+                className="fixed z-[70] w-44 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl"
+                style={{
+                  top:  Math.min(contextMenu.y, window.innerHeight - 230),
+                  left: Math.min(contextMenu.x, window.innerWidth - 185),
+                }}
+              >
+                {/* Pin / Unpin */}
+                <button onClick={() => handlePin(contextMenu.sessionId)} className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-[14px] font-medium text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-600">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
+                  {chatSessions.find(s => s.id === contextMenu.sessionId)?.pinned ? 'Unpin' : 'Pin'}
+                </button>
+                {/* Favorite / Unfavorite */}
+                <button onClick={() => handleFavorite(contextMenu.sessionId)} className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-[14px] font-medium text-gray-700 transition hover:bg-amber-50 hover:text-amber-600">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                  {chatSessions.find(s => s.id === contextMenu.sessionId)?.favorite ? 'Unfavorite' : 'Favorite'}
+                </button>
+                {/* Rename */}
+                <button onClick={() => { const s = chatSessions.find(x => x.id === contextMenu.sessionId); if (s) startRename(s) }} className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-[14px] font-medium text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-600">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                  Rename
+                </button>
+                {/* Delete */}
+                <button onClick={() => handleDelete(contextMenu.sessionId)} className="flex w-full items-center gap-3 px-4 py-3 text-[14px] font-medium text-rose-600 transition hover:bg-red-50">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                    <path d="M10 11v6"/><path d="M14 11v6"/>
+                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                  </svg>
+                  Delete
+                </button>
               </div>
-            ))
+            </>
+          )}
+
+          {/* Sign Out */}
+          {user && (
+            <button onClick={handleSignOut} className="mt-2 flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-left text-sm font-medium text-rose-600 transition hover:bg-red-100">
+              <LogOut className="h-4 w-4" />
+              Sign Out ({user.email?.split('@')[0]})
+            </button>
           )}
         </div>
 
-        {/* Context Menu (long-press popup) */}
-        {contextMenu && (
-          <>
-            <div className="fixed inset-0 z-[60]" onClick={() => setContextMenu(null)} />
-            <div
-              className="fixed z-[70] w-44 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl"
-              style={{
-                top:  Math.min(contextMenu.y, window.innerHeight - 230),
-                left: Math.min(contextMenu.x, window.innerWidth - 185),
-              }}
-            >
-              {/* Pin / Unpin */}
-              <button onClick={() => handlePin(contextMenu.sessionId)} className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-[14px] font-medium text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-600">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
-                {chatSessions.find(s => s.id === contextMenu.sessionId)?.pinned ? 'Unpin' : 'Pin'}
-              </button>
-              {/* Favorite / Unfavorite */}
-              <button onClick={() => handleFavorite(contextMenu.sessionId)} className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-[14px] font-medium text-gray-700 transition hover:bg-amber-50 hover:text-amber-600">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                {chatSessions.find(s => s.id === contextMenu.sessionId)?.favorite ? 'Unfavorite' : 'Favorite'}
-              </button>
-              {/* Rename */}
-              <button onClick={() => { const s = chatSessions.find(x => x.id === contextMenu.sessionId); if (s) startRename(s) }} className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-[14px] font-medium text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-600">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-                Rename
-              </button>
-              {/* Delete */}
-              <button onClick={() => handleDelete(contextMenu.sessionId)} className="flex w-full items-center gap-3 px-4 py-3 text-[14px] font-medium text-rose-600 transition hover:bg-red-50">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="3 6 5 6 21 6"/>
-                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                  <path d="M10 11v6"/><path d="M14 11v6"/>
-                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                </svg>
-                Delete
-              </button>
-            </div>
-          </>
-        )}
+        {sidebarOpen && <div className="fixed inset-0 z-40 bg-black/10" onClick={() => setSidebarOpen(false)} />}
 
-        {/* Sign Out */}
-        {user && (
-          <button onClick={handleSignOut} className="mt-2 flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-left text-sm font-medium text-rose-600 transition hover:bg-red-100">
-            <LogOut className="h-4 w-4" />
-            Sign Out ({user.email?.split('@')[0]})
+        {/* ── Header ─────────────────────────────────────────────────────── */}
+        <header className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between p-4">
+          <button onClick={() => setSidebarOpen(true)} className="text-gray-500 transition hover:text-gray-700">
+            <Menu className="h-6 w-6" />
           </button>
-        )}
-      </div>
+          <button onClick={newChat} className="text-gray-500 transition hover:text-gray-700">
+            <Plus className="h-6 w-6" />
+          </button>
+        </header>
 
-      {sidebarOpen && <div className="fixed inset-0 z-40 bg-black/10" onClick={() => setSidebarOpen(false)} />}
+        {/* ── Main Content ────────────────────────────────────────────────── */}
+        <main className="flex flex-1 flex-col overflow-hidden">
 
-      {/* ── Header ─────────────────────────────────────────────────────── */}
-      <header className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between p-4">
-        <button onClick={() => setSidebarOpen(true)} className="text-gray-500 transition hover:text-gray-700">
-          <Menu className="h-6 w-6" />
-        </button>
-        <button onClick={newChat} className="text-gray-500 transition hover:text-gray-700">
-          <Plus className="h-6 w-6" />
-        </button>
-      </header>
-
-      {/* ── Main Content ────────────────────────────────────────────────── */}
-      <main className="flex flex-1 flex-col overflow-hidden">
-
-        {!hasMessages ? (
-          /* Empty / welcome state */
-          <div className="flex flex-1 flex-col items-center justify-center px-4 pb-8">
-            <div className="flex w-full max-w-[650px] flex-col items-center">
-              <div className="mb-5 h-[90px] w-[90px]">
-                <img src="/logo.png" alt="Grozl" className="h-full w-full object-contain" />
-              </div>
-              <h1 className="mb-7 text-center text-[28px] font-semibold tracking-tight text-gray-900">
-                Your Mind, Amplified By Grozl
-              </h1>
-              {InputBox}
-            </div>
-          </div>
-        ) : (
-          /* Chat messages */
-          <div className="flex-1 overflow-y-auto px-4 pb-4 pt-16">
-            <div className="mx-auto flex w-full max-w-[700px] flex-col gap-5">
-              {messages.map((msg, i) => (
-                <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  {msg.role === 'assistant' && (
-                    <div className="mr-2.5 mt-1 h-7 w-7 shrink-0 overflow-hidden rounded-full">
-                      <img src="/logo.png" alt="Grozl" className="h-full w-full object-contain" />
-                    </div>
-                  )}
-                  <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-[15px] leading-relaxed ${
-                    msg.role === 'user'
-                      ? 'bg-[#4D6BFE] text-white'
-                      : 'bg-white text-gray-800 shadow-sm border border-gray-100'
-                  }`}>
-                    {renderContent(msg.content, msg.role === 'assistant', i === messages.length - 1)}
-                  </div>
+          {!hasMessages ? (
+            /* Empty / welcome state */
+            <div className="flex flex-1 flex-col items-center justify-center px-4 pb-8">
+              <div className="flex w-full max-w-[650px] flex-col items-center">
+                <div className="mb-5 h-[90px] w-[90px]">
+                  <img src="/logo.png" alt="Grozl" className="h-full w-full object-contain" />
                 </div>
-              ))}
-              <div ref={messagesEndRef} />
+                <h1 className="mb-7 text-center text-[28px] font-semibold tracking-tight text-gray-900">
+                  Your Mind, Amplified By Grozl
+                </h1>
+                {InputBox}
+              </div>
             </div>
-          </div>
-        )}
+          ) : (
+            /* Chat messages */
+            <div className="flex-1 overflow-y-auto px-4 pb-4 pt-16">
+              <div className="mx-auto flex w-full max-w-[700px] flex-col gap-5">
+                {messages.map((msg, i) => (
+                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    {msg.role === 'assistant' && (
+                      <div className="mr-2.5 mt-1 h-7 w-7 shrink-0 overflow-hidden rounded-full">
+                        <img src="/logo.png" alt="Grozl" className="h-full w-full object-contain" />
+                      </div>
+                    )}
+                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-[15px] leading-relaxed ${
+                      msg.role === 'user'
+                        ? 'bg-[#4D6BFE] text-white'
+                        : 'border border-gray-100 bg-white text-gray-800 shadow-sm'
+                    }`}>
+                      {renderContent(msg.content, msg.role === 'assistant', i === messages.length - 1)}
+                    </div>
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
+          )}
 
-        {/* Input box at bottom when chatting */}
-        {hasMessages && (
-          <div className="w-full px-4 pb-4">
-            <div className="mx-auto w-full max-w-[650px]">
-              {InputBox}
+          {/* Input box at bottom when chatting */}
+          {hasMessages && (
+            <div className="w-full px-4 pb-4">
+              <div className="mx-auto w-full max-w-[650px]">
+                {InputBox}
+              </div>
             </div>
-          </div>
-        )}
-      </main>
+          )}
+        </main>
+
+      </div>{/* end chat side */}
+
+      {/* ── Artifact Panel ──────────────────────────────────────────────── */}
+      {activeArtifact && (
+        <div className="w-1/2 shrink-0">
+          <ArtifactPanel
+            artifact={activeArtifact}
+            onClose={() => setActiveArtifact(null)}
+          />
+        </div>
+      )}
+
     </div>
   )
-}
+                }

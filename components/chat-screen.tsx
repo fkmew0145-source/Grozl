@@ -826,7 +826,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
               <span className="truncate text-[15px] font-medium text-gray-800">{displayName}</span>
             </div>
             <button
-              onClick={() => { setSidebarOpen(false); setSettingsTab('profile'); if (user) loadMemory(); setShowSettings(true) }}
+              onClick={() => { setSidebarOpen(false); setShowSettings(true) }}
               className="ml-3 shrink-0 rounded-xl p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
             >
               <Settings className="h-5 w-5" />

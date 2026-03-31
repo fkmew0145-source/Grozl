@@ -462,8 +462,6 @@ export default function ChatScreen({ user }: ChatScreenProps) {
               {cleanText}
               {isAssistant && isLast && isStreaming && cleanText !== '' && (
                 <span className="ml-0.5 inline-block animate-pulse font-light text-gray-400">▌</span>
-              )}
-            </span>
           )}
           {isAssistant && isLast && isStreaming && !artifact && content.includes('<artifact') && (
               <span className="ml-0.5 inline-block animate-pulse font-light text-gray-400">▌</span>

@@ -606,8 +606,8 @@ export default function ChatScreen({ user }: ChatScreenProps) {
         </div>
       </div>
     </div>
+  </div>
   )
-
   // ── Render ───────────────────────────────────────────────────────────
   return (
     <div className="flex h-dvh overflow-hidden bg-gradient-to-b from-slate-50 to-indigo-50">
@@ -912,5 +912,6 @@ export default function ChatScreen({ user }: ChatScreenProps) {
         />
       )}
     </div>
+    </div>
   )
-                }
+  }

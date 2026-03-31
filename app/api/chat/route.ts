@@ -14,13 +14,9 @@ const RATE_WINDOW  = 60_000
 function checkRateLimit(ip: string): boolean {
   const now   = Date.now()
   const entry = rateLimitMap.get(ip)
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW })
-    return true
-  }
+  if (!entry || now > entry.resetAt) { rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW }); return true }
   if (entry.count >= RATE_LIMIT) return false
-  entry.count++
-  return true
+  entry.count++; return true
 }
 
 interface ContentPart {
@@ -34,9 +30,7 @@ interface IncomingMessage {
   content: string | ContentPart[]
 }
 
-// ════════════════════════════════════════════════════════════════════════
-// GROZL SYSTEM PROMPT — Enhanced Coding & Reasoning Edition
-// ════════════════════════════════════════════════════════════════════════
+// ── System prompt (unchanged) ────────────────────────────────────────────
 const SYSTEM_PROMPT = `
 ## CORE IDENTITY
 You are **Grozl**. You are **Coding-First, Reasoning-Backed**. Every response reflects:
@@ -260,7 +254,7 @@ Creative: Match their imagination. Think beyond the obvious. Propose unexpected 
 
 Grozl = Senior Dev Friend who explains clearly, thinks with you, and helps you write better code. Technical excellence + teaching ability + cultural warmth = Grozl's edge.`
 
-// ── Routing keywords — DeepSeek handles these ────────────────────────────
+// ── Routing keywords for auto-detect (used when model = 'auto') ──────────
 const CODE_KEYWORDS = [
   'code', 'coding', 'debug', 'error', 'bug', 'fix', 'function', 'class',
   'component', 'api', 'script', 'program', 'algorithm', 'database', 'sql',
@@ -291,10 +285,7 @@ function isCodeOrReasoningRequest(messages: IncomingMessage[]): boolean {
 }
 
 function hasImageContent(messages: IncomingMessage[]): boolean {
-  return messages.some(m =>
-    Array.isArray(m.content) &&
-    m.content.some((p: ContentPart) => p.type === 'image_url')
-  )
+  return messages.some(m => Array.isArray(m.content) && m.content.some((p: ContentPart) => p.type === 'image_url'))
 }
 
 // ── Strip DeepSeek <think>...</think> reasoning blocks ───────────────────
@@ -302,21 +293,14 @@ function buildDeepSeekStream(response: Response): ReadableStream {
   const encoder = new TextEncoder()
   const reader  = response.body!.getReader()
   const decoder = new TextDecoder()
-
   return new ReadableStream({
     async start(controller) {
       try {
-        let buffer      = ''
-        let thinkBuffer = ''
-        let insideThink = false
-
+        let buffer = ''; let thinkBuffer = ''; let insideThink = false
         while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
+          const { done, value } = await reader.read(); if (done) break
           buffer += decoder.decode(value, { stream: true })
-          const lines = buffer.split('\n')
-          buffer = lines.pop() || ''
-
+          const lines = buffer.split('\n'); buffer = lines.pop() || ''
           for (const line of lines) {
             const trimmed = line.trim()
             if (!trimmed || trimmed === 'data: [DONE]') continue
@@ -325,151 +309,95 @@ function buildDeepSeekStream(response: Response): ReadableStream {
                 const json = JSON.parse(trimmed.slice(6))
                 const text = json.choices?.[0]?.delta?.content || ''
                 if (!text) continue
-
                 thinkBuffer += text
                 thinkBuffer  = thinkBuffer.replace(/<think>[\s\S]*?<\/think>/g, '')
-                if (thinkBuffer.includes('<think>')) {
-                  insideThink = true
-                  continue
-                }
+                if (thinkBuffer.includes('<think>')) { insideThink = true; continue }
                 if (insideThink) insideThink = false
-                if (thinkBuffer) {
-                  controller.enqueue(encoder.encode(thinkBuffer))
-                  thinkBuffer = ''
-                }
+                if (thinkBuffer) { controller.enqueue(encoder.encode(thinkBuffer)); thinkBuffer = '' }
               } catch { /* skip malformed chunk */ }
             }
           }
         }
-        if (thinkBuffer && !thinkBuffer.includes('<think>')) {
-          controller.enqueue(encoder.encode(thinkBuffer))
-        }
-      } finally {
-        controller.close()
-      }
+        if (thinkBuffer && !thinkBuffer.includes('<think>')) controller.enqueue(encoder.encode(thinkBuffer))
+      } finally { controller.close() }
     },
   })
 }
 
 // ── DeepSeek R1 via direct API (streaming) ───────────────────────────────
-async function callDeepSeek(
-  systemPrompt: string,
-  messages: { role: string; content: string }[]
-): Promise<Response> {
+async function callDeepSeek(systemPrompt: string, messages: { role: string; content: string }[]): Promise<Response> {
   const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.DEEPSEEK_R1_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'deepseek-reasoner',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        ...messages,
-      ],
-      stream: true,
-      max_tokens: 8192,
-    }),
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_R1_API_KEY}` },
+    body: JSON.stringify({ model: 'deepseek-reasoner', messages: [{ role: 'system', content: systemPrompt }, ...messages], stream: true, max_tokens: 8192 }),
   })
-
   if (!response.ok) throw new Error(`DeepSeek API error: ${response.status}`)
-
-  return new Response(buildDeepSeekStream(response), {
-    headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Provider': 'deepseek-r1' },
-  })
+  return new Response(buildDeepSeekStream(response), { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Provider': 'deepseek-r1' } })
 }
 
 // ── Groq Llama streaming ─────────────────────────────────────────────────
-async function callGroq(
-  systemPrompt: string,
-  messages: { role: string; content: string }[]
-): Promise<Response> {
+async function callGroq(systemPrompt: string, messages: { role: string; content: string }[]): Promise<Response> {
   const stream = await groq.chat.completions.create({
     model: 'llama-3.3-70b-versatile',
-    messages: [
-      { role: 'system', content: systemPrompt },
-      ...messages as Parameters<typeof groq.chat.completions.create>[0]['messages'],
-    ],
-    stream: true,
-    max_tokens: 4096,
+    messages: [{ role: 'system', content: systemPrompt }, ...messages as Parameters<typeof groq.chat.completions.create>[0]['messages']],
+    stream: true, max_tokens: 4096,
   })
-
-  const encoder  = new TextEncoder()
-  const readable = new ReadableStream({
-    async start(controller) {
-      try {
-        for await (const chunk of stream) {
-          const text = chunk.choices[0]?.delta?.content || ''
-          if (text) controller.enqueue(encoder.encode(text))
-        }
-      } finally {
-        controller.close()
-      }
-    },
-  })
-
-  return new Response(readable, {
-    headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Provider': 'groq-llama' },
-  })
+  const encoder = new TextEncoder()
+  return new Response(
+    new ReadableStream({
+      async start(controller) {
+        try { for await (const chunk of stream) { const text = chunk.choices[0]?.delta?.content || ''; if (text) controller.enqueue(encoder.encode(text)) } }
+        finally { controller.close() }
+      },
+    }),
+    { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Provider': 'groq-llama' } }
+  )
 }
 
-// ── Gemini streaming (vision + text) ────────────────────────────────────
-async function callGeminiStreaming(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  parts: any[]
-): Promise<Response> {
-  const model   = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
-  const result  = await model.generateContentStream(parts)
+// ── Gemini streaming ─────────────────────────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function callGeminiStreaming(parts: any[]): Promise<Response> {
+  const model  = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+  const result = await model.generateContentStream(parts)
   const encoder = new TextEncoder()
+  return new Response(
+    new ReadableStream({
+      async start(controller) {
+        try { for await (const chunk of result.stream) { const text = chunk.text(); if (text) controller.enqueue(encoder.encode(text)) } }
+        finally { controller.close() }
+      },
+    }),
+    { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Provider': 'gemini' } }
+  )
+}
 
-  const readable = new ReadableStream({
-    async start(controller) {
-      try {
-        for await (const chunk of result.stream) {
-          const text = chunk.text()
-          if (text) controller.enqueue(encoder.encode(text))
-        }
-      } finally {
-        controller.close()
-      }
-    },
-  })
-
-  return new Response(readable, {
-    headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Provider': 'gemini-vision' },
-  })
+// ── Gemini text parts helper ─────────────────────────────────────────────
+function toGeminiTextParts(systemPrompt: string, messages: { role: string; content: string }[]) {
+  return [
+    { text: `System: ${systemPrompt}` },
+    ...messages.map(m => ({ text: `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}` })),
+    { text: 'Assistant:' },
+  ]
 }
 
 // ── Main handler ─────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
-  // Rate limiting
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-  if (!checkRateLimit(ip)) {
-    return NextResponse.json(
-      { error: 'Too many requests. Please slow down.' },
-      { status: 429 }
-    )
-  }
+  if (!checkRateLimit(ip)) return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 })
 
-  const { messages }: { messages: IncomingMessage[] } = await req.json()
+  // Read model preference sent from frontend (settings)
+  const { messages, model: modelPref = 'auto' }: { messages: IncomingMessage[]; model?: string } = await req.json()
 
-  // Fetch user memory from Supabase
+  // Fetch user memory
   let userMemory = ''
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
-      const { data } = await supabase
-        .from('user_memories')
-        .select('memory')
-        .eq('user_id', user.id)
-        .single()
+      const { data } = await supabase.from('user_memories').select('memory').eq('user_id', user.id).single()
       userMemory = data?.memory || ''
     }
-  } catch {
-    // Memory fetch failed — continue without it
-  }
+  } catch { /* ignore */ }
 
   const SYSTEM_WITH_MEMORY = userMemory
     ? SYSTEM_PROMPT + `\n\n---\n\n## What You Know About This User\n${userMemory}`
@@ -477,95 +405,74 @@ export async function POST(req: NextRequest) {
 
   const containsImage = hasImageContent(messages)
 
-  // ══ ROUTE 1 — Image -> Gemini Vision (streaming) ═════════════════════
+  // ══ ROUTE 1 — Image → Gemini Vision (always, regardless of model pref) ═
   if (containsImage) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const parts: any[] = []
-      parts.push({ text: `System: ${SYSTEM_WITH_MEMORY}` })
-
+      const parts: any[] = [{ text: `System: ${SYSTEM_WITH_MEMORY}` }]
       for (const msg of messages) {
         const prefix = msg.role === 'user' ? 'User' : 'Assistant'
-        if (typeof msg.content === 'string') {
-          parts.push({ text: `${prefix}: ${msg.content}` })
-        } else if (Array.isArray(msg.content)) {
+        if (typeof msg.content === 'string') { parts.push({ text: `${prefix}: ${msg.content}` }) }
+        else if (Array.isArray(msg.content)) {
           for (const part of msg.content) {
-            if (part.type === 'text' && part.text) {
-              parts.push({ text: `${prefix}: ${part.text}` })
-            } else if (part.type === 'image_url' && part.image_url?.url) {
-              const dataUrl = part.image_url.url
-              const match   = dataUrl.match(/^data:(.+);base64,(.+)$/)
+            if (part.type === 'text' && part.text) { parts.push({ text: `${prefix}: ${part.text}` }) }
+            else if (part.type === 'image_url' && part.image_url?.url) {
+              const match = part.image_url.url.match(/^data:(.+);base64,(.+)$/)
               if (match) {
-                const sizeInMB = (match[2].length * 0.75) / (1024 * 1024)
-                if (sizeInMB > 4) {
-                  return NextResponse.json(
-                    { error: 'Image too large. Please use an image under 4MB.' },
-                    { status: 400 }
-                  )
-                }
+                if ((match[2].length * 0.75) / (1024 * 1024) > 4) return NextResponse.json({ error: 'Image too large. Please use an image under 4MB.' }, { status: 400 })
                 parts.push({ inlineData: { mimeType: match[1], data: match[2] } })
               }
             }
           }
         }
       }
-
       parts.push({ text: 'Assistant:' })
       return await callGeminiStreaming(parts)
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err)
-      return NextResponse.json({ error: `Image processing failed: ${msg}` }, { status: 503 })
+      return NextResponse.json({ error: `Image processing failed: ${err instanceof Error ? err.message : String(err)}` }, { status: 503 })
     }
   }
 
   // Flatten messages for text APIs
   const flatMessages = messages.map(m => ({
     role: m.role,
-    content: typeof m.content === 'string'
-      ? m.content
-      : m.content
-          .filter((p: ContentPart) => p.type === 'text')
-          .map((p: ContentPart) => p.text || '')
-          .join('\n'),
+    content: typeof m.content === 'string' ? m.content
+      : m.content.filter((p: ContentPart) => p.type === 'text').map((p: ContentPart) => p.text || '').join('\n'),
   }))
 
-  // ══ ROUTE 2 — Code / Math / Reasoning -> DeepSeek R1 ════════════════
+  // ══ FORCED MODEL (user picked manually in Settings) ══════════════════
+  if (modelPref === 'deepseek') {
+    try { return await callDeepSeek(SYSTEM_WITH_MEMORY, flatMessages) }
+    catch { /* fall through to Groq */ }
+  }
+
+  if (modelPref === 'groq') {
+    try { return await callGroq(SYSTEM_WITH_MEMORY, flatMessages) }
+    catch { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_WITH_MEMORY, flatMessages)).catch(() => NextResponse.json({ error: 'AI service unavailable.' }, { status: 503 })) }
+  }
+
+  if (modelPref === 'gemini') {
+    try { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_WITH_MEMORY, flatMessages)) }
+    catch { return NextResponse.json({ error: 'AI service unavailable.' }, { status: 503 }) }
+  }
+
+  // ══ AUTO ROUTING (default) ════════════════════════════════════════════
+  // Code / Math / Reasoning → DeepSeek R1
   if (isCodeOrReasoningRequest(messages)) {
-    try {
-      return await callDeepSeek(SYSTEM_WITH_MEMORY, flatMessages)
-    } catch (deepseekErr) {
-      console.error('DeepSeek failed, falling back to Groq:', deepseekErr)
-      try {
-        return await callGroq(SYSTEM_WITH_MEMORY, flatMessages)
-      } catch {
-        try {
-          const textParts = [
-            { text: `System: ${SYSTEM_WITH_MEMORY}` },
-            ...flatMessages.map(m => ({ text: `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}` })),
-            { text: 'Assistant:' },
-          ]
-          return await callGeminiStreaming(textParts)
-        } catch {
-          return NextResponse.json({ error: 'AI service unavailable. Please try again.' }, { status: 503 })
-        }
+    try { return await callDeepSeek(SYSTEM_WITH_MEMORY, flatMessages) }
+    catch {
+      try { return await callGroq(SYSTEM_WITH_MEMORY, flatMessages) }
+      catch {
+        try { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_WITH_MEMORY, flatMessages)) }
+        catch { return NextResponse.json({ error: 'AI service unavailable. Please try again.' }, { status: 503 }) }
       }
     }
   }
 
-  // ══ ROUTE 3 — General / Casual / Hinglish -> Groq Llama ═════════════
-  try {
-    return await callGroq(SYSTEM_WITH_MEMORY, flatMessages)
-  } catch {
-    try {
-      const textParts = [
-           { text: `System: ${SYSTEM_WITH_MEMORY}` },
-        ...flatMessages.map(m => ({ text: `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}` })),
-        { text: 'Assistant:' },
-      ]
-      return await callGeminiStreaming(textParts)
-    } catch (err) {
-      console.error('All APIs failed:', err)
-      return NextResponse.json({ error: 'AI service unavailable. Please try again.' }, { status: 503 })
-    }
+  // General / Casual / Hinglish → Groq Llama
+  try { return await callGroq(SYSTEM_WITH_MEMORY, flatMessages) }
+  catch {
+    try { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_WITH_MEMORY, flatMessages)) }
+    catch { return NextResponse.json({ error: 'AI service unavailable. Please try again.' }, { status: 503 }) }
   }
 }

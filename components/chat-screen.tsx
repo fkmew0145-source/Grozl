@@ -354,7 +354,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
     if (user) {
       try { await fetch('/api/chat/sessions', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: sessionId }) }) } catch { /* ignore */ }
     }
-                         }
+}
   const startRename = (session: ChatSession) => { setRenamingId(session.id); setRenameValue(session.title); setContextMenu(null) }
 
   const confirmRename = async () => {

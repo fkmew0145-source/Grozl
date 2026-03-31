@@ -1,5 +1,5 @@
 'use client'
-import SettingsScreen from './settings/settings-screen'
+
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
@@ -81,7 +81,17 @@ export default function ChatScreen({ user }: ChatScreenProps) {
   const [renameValue, setRenameValue] = useState('')
 
   // ── Settings modal state ─────────────────────────────────────────────
-  const [showSettings, setShowSettings] = useState(false)
+  const [showSettings, setShowSettings]         = useState(false)
+  const [settingsTab, setSettingsTab]           = useState<'profile'|'memory'|'model'|'appearance'|'history'|'about'>('profile')
+  const [settingsAppearance, setSettingsAppearance] = useState<'light'|'dark'|'system'>('system')
+  const [settingsFontSize, setSettingsFontSize] = useState<'small'|'medium'|'large'>('medium')
+  const [settingsLanguage, setSettingsLanguage] = useState<'english'|'hindi'|'hinglish'>('hinglish')
+  const [settingsDefaultModel, setSettingsDefaultModel] = useState<'auto'|'deepseek'|'groq'|'gemini'>('auto')
+  const [settingsSaveHistory, setSettingsSaveHistory] = useState(true)
+  const [memoryText, setMemoryText]             = useState('')
+  const [memoryLoading, setMemoryLoading]       = useState(false)
+  const [memorySaved, setMemorySaved]           = useState(false)
+
   // ── Refs ─────────────────────────────────────────────────────────────
   const textareaRef    = useRef<HTMLTextAreaElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
@@ -345,8 +355,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
     if (user && session) {
       try { await fetch('/api/chat/sessions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...session, favorite: newFav }) }) } catch { /* ignore */ }
     }
-  }
-
+    }
   const handleDelete = async (sessionId: string) => {
     updateSessions(prev => prev.filter(s => s.id !== sessionId))
     if (currentSessionId === sessionId) newChat()
@@ -354,7 +363,8 @@ export default function ChatScreen({ user }: ChatScreenProps) {
     if (user) {
       try { await fetch('/api/chat/sessions', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: sessionId }) }) } catch { /* ignore */ }
     }
-}
+  }
+
   const startRename = (session: ChatSession) => { setRenamingId(session.id); setRenameValue(session.title); setContextMenu(null) }
 
   const confirmRename = async () => {
@@ -881,7 +891,6 @@ export default function ChatScreen({ user }: ChatScreenProps) {
               </div>
             </div>
           )}
-
           {hasMessages && (
             <div className="w-full px-4 pb-4">
               <div className="mx-auto w-full max-w-[650px]">{InputBox}</div>
@@ -889,6 +898,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
           )}
         </main>
       </div>
+
       {/* ── Artifact Modal ───────────────────────────────────────────────── */}
       {activeArtifact && showArtifactModal && (
         <>
@@ -1120,7 +1130,6 @@ export default function ChatScreen({ user }: ChatScreenProps) {
                   </div>
                 </div>
               )}
-
               {/* ── HISTORY ── */}
               {settingsTab === 'history' && (
                 <div className="flex flex-col gap-4">
@@ -1195,4 +1204,4 @@ export default function ChatScreen({ user }: ChatScreenProps) {
       )}
     </div>
   )
-          }
+                        }

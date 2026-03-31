@@ -42,19 +42,19 @@ export default function DataControlsPage({
         <p className="mb-2 px-1 text-[13px] text-gray-500">History</p>
         <div className="mb-6 overflow-hidden rounded-2xl bg-white">
           <div className="flex items-center justify-between px-4 py-4">
-            <div className="flex flex-col gap-0.5">
+            <div className="flex flex-col gap-0.5 flex-1 pr-4">
               <span className="text-[15px] text-gray-800">Save Chat History</span>
               <span className="text-[12px] text-gray-400">Store your conversations locally</span>
             </div>
             <button
               onClick={() => toggle('saveHistory')}
-              className={`relative h-[31px] w-[51px] rounded-full transition-colors duration-200 ${
-                settings.saveHistory ? 'bg-[#4D6BFE]' : 'bg-gray-300'
+              className={`relative flex-shrink-0 h-[30px] w-[52px] rounded-full transition-colors duration-300 ${
+                settings.saveHistory ? 'bg-[#34C759]' : 'bg-[#E5E5EA]'
               }`}
             >
               <span
-                className={`absolute top-[2px] h-[27px] w-[27px] rounded-full bg-white shadow-md transition-transform duration-200 ${
-                  settings.saveHistory ? 'translate-x-[22px]' : 'translate-x-[2px]'
+                className={`absolute top-[2px] h-[26px] w-[26px] rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.25)] transition-transform duration-300 ${
+                  settings.saveHistory ? 'translate-x-[24px]' : 'translate-x-[2px]'
                 }`}
               />
             </button>
@@ -62,21 +62,20 @@ export default function DataControlsPage({
 
           <div className="mx-4 h-px bg-gray-100" />
 
-          {/* Improve model toggle */}
           <div className="flex items-center justify-between px-4 py-4">
-            <div className="flex flex-col gap-0.5">
+            <div className="flex flex-col gap-0.5 flex-1 pr-4">
               <span className="text-[15px] text-gray-800">Improve Grozl for Everyone</span>
               <span className="text-[12px] text-gray-400">Help train better AI models</span>
             </div>
             <button
               onClick={() => toggle('improveModel')}
-              className={`relative h-[31px] w-[51px] rounded-full transition-colors duration-200 ${
-                settings.improveModel ? 'bg-[#4D6BFE]' : 'bg-gray-300'
+              className={`relative flex-shrink-0 h-[30px] w-[52px] rounded-full transition-colors duration-300 ${
+                settings.improveModel ? 'bg-[#34C759]' : 'bg-[#E5E5EA]'
               }`}
             >
               <span
-                className={`absolute top-[2px] h-[27px] w-[27px] rounded-full bg-white shadow-md transition-transform duration-200 ${
-                  settings.improveModel ? 'translate-x-[22px]' : 'translate-x-[2px]'
+                className={`absolute top-[2px] h-[26px] w-[26px] rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.25)] transition-transform duration-300 ${
+                  settings.improveModel ? 'translate-x-[24px]' : 'translate-x-[2px]'
                 }`}
               />
             </button>
@@ -106,4 +105,4 @@ export default function DataControlsPage({
     </div>
   )
               }
-                  
+

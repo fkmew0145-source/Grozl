@@ -801,7 +801,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
                 {messages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     {msg.role === 'assistant' && (
-                      <div className="mr-2.5 mt-1 h-7 w-7 shrink-0 overflow-hidden rounded-full">
+                    <div className="mr-2.5 mt-1 h-7 w-7 shrink-0 overflow-hidden rounded-full">
                         <img src="/logo.png" alt="Grozl" className="h-full w-full object-contain" />
                       </div>
                     )}
@@ -826,66 +826,40 @@ export default function ChatScreen({ user }: ChatScreenProps) {
           )}
         </main>
       </div>
-      return (
-  <>
-    {/* ── Artifact Modal ───────────────────────────────────────────────── */}
-    {activeArtifact && showArtifactModal && (
-      <>
-        <div className="hidden md:block md:w-1/2 shrink-0">
-          <ArtifactPanel
-            artifact={activeArtifact}
-            onClose={() => {
-              setActiveArtifact(null)
-              setShowArtifactModal(false)
-            }}
-          />
-        </div>
 
-        <div className="fixed inset-0 z-50 flex flex-col md:hidden">
-          <div className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
-            <div className="flex items-center gap-2">
-              <Code2 className="h-4 w-4 text-indigo-500" />
-              <span className="text-sm font-semibold text-gray-800">
-                {activeArtifact.title}
-              </span>
+      {/* ── Artifact Modal ───────────────────────────────────────────────── */}
+      {activeArtifact && showArtifactModal && (
+        <>
+          <div className="hidden md:block md:w-1/2 shrink-0">
+            <ArtifactPanel artifact={activeArtifact} onClose={() => { setActiveArtifact(null); setShowArtifactModal(false) }} />
+          </div>
+          <div className="fixed inset-0 z-50 flex flex-col md:hidden">
+            <div className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
+              <div className="flex items-center gap-2">
+                <Code2 className="h-4 w-4 text-indigo-500" />
+                <span className="text-sm font-semibold text-gray-800">{activeArtifact.title}</span>
+              </div>
+              <button onClick={() => { setActiveArtifact(null); setShowArtifactModal(false) }} className="text-gray-400 hover:text-gray-600">
+                <X className="h-5 w-5" />
+              </button>
             </div>
-
-            <button
-              onClick={() => {
-                setActiveArtifact(null)
-                setShowArtifactModal(false)
-              }}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <div className="flex-1 overflow-hidden">
+              <ArtifactPanel artifact={activeArtifact} onClose={() => { setActiveArtifact(null); setShowArtifactModal(false) }} />
+            </div>
           </div>
+        </>
+      )}
 
-          <div className="flex-1 overflow-hidden">
-            <ArtifactPanel
-              artifact={activeArtifact}
-              onClose={() => {
-                setActiveArtifact(null)
-                setShowArtifactModal(false)
-              }}
-            />
-          </div>
-        </div>
-      </>
-    )}
-
-    {/* ── Settings Screen ───────────────────────────────────────────── */}
-    {showSettings && (
-      <SettingsScreen
-        user={user}
-        chatCount={chatSessions.length}
-        onClose={() => setShowSettings(false)}
-        onClearChats={() => {
-          setChatSessions([])
-          setMessages([])
-        }}
-        onLogout={() => setShowSettings(false)}
-      />
-    )}
-  </>
-)
+      {/* ── Settings Screen ───────────────────────────────────────────── */}
+      {showSettings && (
+        <SettingsScreen
+          user={user}
+          chatCount={chatSessions.length}
+          onClose={() => setShowSettings(false)}
+          onClearChats={() => { setChatSessions([]); setMessages([]) }}
+          onLogout={() => setShowSettings(false)}
+        />
+      )}
+    </div>
+  )
+}

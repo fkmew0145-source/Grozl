@@ -801,7 +801,6 @@ export default function ChatScreen({ user }: ChatScreenProps) {
                 {messages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     {msg.role === 'assistant' && (
-                    {msg.role === 'assistant' && (
                       <div className="mr-2.5 mt-1 h-7 w-7 shrink-0 overflow-hidden rounded-full">
                         <img src="/logo.png" alt="Grozl" className="h-full w-full object-contain" />
                       </div>

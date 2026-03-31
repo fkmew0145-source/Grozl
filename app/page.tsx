@@ -72,12 +72,13 @@ export default function Home() {
   }
 
   // Logged-in user → chat
-  if (user) return <ChatScreen user={user} />
+  if (user) return <ChatScreen user={user} onLogout={() => { setUser(null); setNeedsOnboarding(false) }} />
 
   // Guest → chat
-  if (isGuest) return <ChatScreen user={null} />
+  if (isGuest) return <ChatScreen user={null} onLogout={() => { setIsGuest(false); setNeedsOnboarding(false) }} />
 
   // Not logged in → login
   return <LoginScreen onGuestContinue={handleGuestContinue} />
       }
-  
+
+      

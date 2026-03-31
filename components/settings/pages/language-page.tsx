@@ -14,6 +14,18 @@ const APP_LANGUAGES = [
   { id: 'hinglish', label: 'Hinglish (Hindi + English)' },
   { id: 'english',  label: 'English' },
   { id: 'hindi',    label: 'हिंदी (Hindi)' },
+  { id: 'spanish',  label: 'Español (Spanish)' },
+  { id: 'french',   label: 'Français (French)' },
+  { id: 'arabic',   label: 'العربية (Arabic)' },
+  { id: 'bengali',  label: 'বাংলা (Bengali)' },
+  { id: 'portuguese', label: 'Português (Portuguese)' },
+  { id: 'russian',  label: 'Русский (Russian)' },
+  { id: 'urdu',     label: 'اردو (Urdu)' },
+  { id: 'indonesian', label: 'Bahasa Indonesia' },
+  { id: 'german',   label: 'Deutsch (German)' },
+  { id: 'japanese', label: '日本語 (Japanese)' },
+  { id: 'chinese',  label: '中文 (Chinese)' },
+  { id: 'turkish',  label: 'Türkçe (Turkish)' },
 ] as const
 
 const VOICE_LANGUAGES = [
@@ -178,4 +190,5 @@ export default function LanguagePage({ settings, onSettingsChange, onBack }: Lan
     </div>
   )
       }
-          
+
+    

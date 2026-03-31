@@ -889,3 +889,4 @@ export default function ChatScreen({ user }: ChatScreenProps) {
     )}
   </>
 )
+    }

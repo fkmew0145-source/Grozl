@@ -33,6 +33,7 @@ interface ChatSession {
 
 interface ChatScreenProps {
   user: User | null
+  onLogout?: () => void
 }
 
 interface ArtifactData {
@@ -47,7 +48,7 @@ interface UserProfile {
   nickname: string
 }
 
-export default function ChatScreen({ user }: ChatScreenProps) {
+export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
   // ── Core state ───────────────────────────────────────────────────────
   const [sidebarOpen, setSidebarOpen]       = useState(false)
   const [inputValue, setInputValue]         = useState('')
@@ -801,7 +802,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
                 {messages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     {msg.role === 'assistant' && (
-                    <div className="mr-2.5 mt-1 h-7 w-7 shrink-0 overflow-hidden rounded-full">
+     <div className="mr-2.5 mt-1 h-7 w-7 shrink-0 overflow-hidden rounded-full">
                         <img src="/logo.png" alt="Grozl" className="h-full w-full object-contain" />
                       </div>
                     )}
@@ -857,9 +858,9 @@ export default function ChatScreen({ user }: ChatScreenProps) {
           chatCount={chatSessions.length}
           onClose={() => setShowSettings(false)}
           onClearChats={() => { setChatSessions([]); setMessages([]) }}
-          onLogout={() => setShowSettings(false)}
+          onLogout={() => { setShowSettings(false); onLogout?.() }}
         />
       )}
     </div>
   )
-}
+      }

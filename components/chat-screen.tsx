@@ -466,7 +466,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
             </span>
           )}
           {isAssistant && isLast && isStreaming && !artifact && content.includes('<artifact') && (
-            <div className="flex items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-2.5 text-[13px] text-indigo-500">
+              <div className="flex items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-2.5 text-[13px] text-indigo-500">
               <Loader2 className="h-3.5 w-3.5 animate-spin" /> Building artifact...
             </div>
           )}
@@ -813,7 +813,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
       </div>
     </div>
   ) : (
-    <div className="flex-1 overflow-y-auto px-4 pb-4 pt-16">
+  <div className="flex-1 overflow-y-auto px-4 pb-4 pt-16">
       <div className="mx-auto flex w-full max-w-[700px] flex-col gap-5">
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -908,4 +908,4 @@ export default function ChatScreen({ user }: ChatScreenProps) {
       </div>
     </div>
   )
-                        }
+}

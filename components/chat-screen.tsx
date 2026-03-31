@@ -466,6 +466,11 @@ export default function ChatScreen({ user }: ChatScreenProps) {
             </span>
           )}
           {isAssistant && isLast && isStreaming && !artifact && content.includes('<artifact') && (
+              <span className="ml-0.5 inline-block animate-pulse font-light text-gray-400">▌</span>
+              )}
+            </span>
+          )}
+          {isAssistant && isLast && isStreaming && !artifact && content.includes('<artifact') && (
               <div className="flex items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-2.5 text-[13px] text-indigo-500">
               <Loader2 className="h-3.5 w-3.5 animate-spin" /> Building artifact...
             </div>
@@ -907,8 +912,5 @@ export default function ChatScreen({ user }: ChatScreenProps) {
         />
       )}
     </div>
-    </div>
-    </div>
-  </div>
   )
-}
+                }

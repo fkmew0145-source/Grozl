@@ -118,72 +118,77 @@ export default function SettingsScreen({
       <div className="flex h-full flex-col bg-[#F2F2F7]">
 
         {/* Header */}
-        <div className="flex items-center gap-3 bg-[#F2F2F7] px-4 py-4 pt-6">
-          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition hover:bg-gray-200">
+        <div className="flex items-center bg-[#F2F2F7] px-4 py-3 pt-12">
+          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition active:bg-gray-200">
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-[17px] font-semibold text-gray-900">Settings</h1>
+          <h1 className="flex-1 text-center text-[17px] font-semibold text-gray-900">Settings</h1>
+          <div className="h-8 w-8" />{/* spacer to center the title */}
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-2">
+        <div className="flex-1 overflow-y-auto px-4 py-3">
 
           {/* Profile */}
-          <p className="mb-2 px-1 text-[13px] text-gray-500">Profile</p>
-          <div className="mb-6 overflow-hidden rounded-2xl bg-white">
+          <p className="mb-1.5 px-1 text-[13px] text-gray-500">Profile</p>
+          <div className="mb-5 overflow-hidden rounded-2xl bg-white shadow-sm">
             <SettingsRow icon={<UserIcon />} label="Account settings" onPress={() => setSubPage('account')} />
             <Divider />
             <SettingsRow icon={<DataIcon />} label="Data controls" onPress={() => setSubPage('data-controls')} />
-            {user && (
-              <>
-                <Divider />
-                <SettingsRow icon={<MemoryIcon />} label="Memory" onPress={() => setSubPage('memory')} />
-              </>
-            )}
-            <Divider />
-            <SettingsRow icon={<HistoryIcon />} label="Chat history" value={`${chatCount}`} onPress={() => setSubPage('history')} />
           </div>
 
           {/* App */}
-          <p className="mb-2 px-1 text-[13px] text-gray-500">App</p>
-          <div className="mb-6 overflow-hidden rounded-2xl bg-white">
+          <p className="mb-1.5 px-1 text-[13px] text-gray-500">App</p>
+          <div className="mb-5 overflow-hidden rounded-2xl bg-white shadow-sm">
             <SettingsRow icon={<LangIcon />} label="Language" value={langLabel} onPress={() => setSubPage('language')} />
             <Divider />
             <SettingsRow icon={<SunIcon />} label="Appearance" value={appearanceLabel} onPress={() => setSubPage('appearance')} />
             <Divider />
-            <SettingsRow icon={<span className="text-[15px] font-bold text-gray-500" style={{ letterSpacing: '-1px' }}>AA</span>} label="Font size" onPress={() => setSubPage('font-size')} />
-          </div>
-
-          {/* AI Model */}
-          <p className="mb-2 px-1 text-[13px] text-gray-500">AI Model</p>
-          <div className="mb-6 overflow-hidden rounded-2xl bg-white">
             <SettingsRow
-              icon={<span className="text-[18px]">🤖</span>}
-              label="Default model"
-              value={settings.defaultModel === 'auto' ? 'Auto' : settings.defaultModel === 'deepseek' ? 'DeepSeek R1' : settings.defaultModel === 'groq' ? 'Groq Llama' : 'Gemini'}
-              onPress={() => setSubPage('model')}
+              icon={<span className="text-[14px] font-bold text-gray-500" style={{ letterSpacing: '-0.5px' }}>AA</span>}
+              label="Font size"
+              onPress={() => setSubPage('font-size')}
             />
           </div>
 
+          {/* Audio */}
+          <p className="mb-1.5 px-1 text-[13px] text-gray-500">Audio</p>
+          <div className="mb-1 overflow-hidden rounded-2xl bg-white shadow-sm">
+            <SettingsRow
+              icon={<MicIcon />}
+              label="Main language"
+              value="Use App language"
+              onPress={() => setSubPage('language')}
+            />
+          </div>
+          <p className="mb-5 px-1 text-[12px] leading-relaxed text-gray-400">
+            Select the primary language you use for voice input to achieve better recognition results
+          </p>
+
           {/* About */}
-          <p className="mb-2 px-1 text-[13px] text-gray-500">About</p>
-          <div className="mb-6 overflow-hidden rounded-2xl bg-white">
-            <SettingsRow icon={<InfoIcon />} label="About Grozl" value="v1.0.0" onPress={() => setSubPage('about')} />
+          <p className="mb-1.5 px-1 text-[13px] text-gray-500">About</p>
+          <div className="mb-5 overflow-hidden rounded-2xl bg-white shadow-sm">
+            <SettingsRow icon={<InfoIcon />} label="Check for updates" value="1.8.0(190)" onPress={() => setSubPage('about')} />
+            <Divider />
+            <SettingsRow icon={<DocIcon />} label="Service agreement" onPress={() => setSubPage('about')} />
           </div>
 
-          {/* Help */}
-          <div className="mb-6 overflow-hidden rounded-2xl bg-white">
+          {/* Help & Feedback */}
+          <div className="mb-5 overflow-hidden rounded-2xl bg-white shadow-sm">
             <SettingsRow icon={<HelpIcon />} label="Help & Feedback" onPress={() => setSubPage('feedback')} />
           </div>
 
           {/* Log out */}
-          <div className="mb-8 overflow-hidden rounded-2xl bg-white">
-            <button onClick={() => setShowLogoutDialog(true)} className="flex w-full items-center gap-3 px-4 py-4 text-left transition active:bg-gray-50">
+          <div className="mb-8 overflow-hidden rounded-2xl bg-white shadow-sm">
+            <button
+              onClick={() => setShowLogoutDialog(true)}
+              className="flex w-full items-center gap-3 px-4 py-[14px] text-left transition active:bg-gray-50"
+            >
               <LogOut className="h-5 w-5 text-gray-500" />
               <span className="text-[15px] text-gray-800">Log out</span>
             </button>
           </div>
 
-          <p className="mb-6 text-center text-[11px] text-gray-400">AI-generated content is for reference only. Use legally.</p>
+          <p className="mb-6 text-center text-[11px] text-gray-400">AI-generated, for reference only. Use legally.</p>
         </div>
       </div>
 
@@ -232,9 +237,10 @@ function SettingsWrapper({ children }: { children: React.ReactNode }) {
 const s = { className: 'h-5 w-5 text-gray-500', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '1.75', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
 function UserIcon()    { return <svg {...s}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> }
 function DataIcon()    { return <svg {...s}><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg> }
-function MemoryIcon()  { return <svg {...s}><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18"/></svg> }
-function HistoryIcon() { return <svg {...s}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> }
 function LangIcon()    { return <svg {...s}><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg> }
 function SunIcon()     { return <svg {...s}><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg> }
+function MicIcon()     { return <svg {...s}><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> }
 function InfoIcon()    { return <svg {...s}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> }
+function DocIcon()     { return <svg {...s}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> }
 function HelpIcon()    { return <svg {...s}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> }
+              

@@ -1,5 +1,5 @@
 export interface GrozlSettings {
-  language: 'english' | 'hindi' | 'hinglish'
+  language: 'english' | 'hindi' | 'hinglish' | 'spanish' | 'french' | 'arabic' | 'bengali' | 'portuguese' | 'russian' | 'urdu' | 'indonesian' | 'german' | 'japanese' | 'chinese' | 'turkish'
   appearance: 'light' | 'dark' | 'system'
   fontSize: number          // 12–20, default 15
   voiceLanguage: string     // e.g. 'hi-IN', 'en-US'

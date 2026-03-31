@@ -9,6 +9,7 @@ import {
   Code2, ExternalLink, X, Settings,
 } from 'lucide-react'
 import ArtifactPanel from './artifact-panel'
+import SettingsScreen from './settings/settings-screen'
 
 interface ContentPart {
   type: 'text' | 'image_url'
@@ -73,6 +74,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
 
   // ── Artifacts sidebar panel ──────────────────────────────────────────
   const [showArtifactsList, setShowArtifactsList] = useState(false)
+  const [showSettings, setShowSettings]           = useState(false)
   const [allArtifacts, setAllArtifacts]           = useState<ArtifactData[]>([])
 
   // ── Context menu state ───────────────────────────────────────────────
@@ -759,7 +761,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
               <span className="truncate text-[15px] font-medium text-gray-800">{displayName}</span>
             </div>
             <button
-              onClick={() => alert('Settings coming soon!')}
+              onClick={() => setShowSettings(true)}
               className="ml-3 shrink-0 rounded-xl p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
             >
               <Settings className="h-5 w-5" />
@@ -798,6 +800,7 @@ export default function ChatScreen({ user }: ChatScreenProps) {
               <div className="mx-auto flex w-full max-w-[700px] flex-col gap-5">
                 {messages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    {msg.role === 'assistant' && (
                     {msg.role === 'assistant' && (
                       <div className="mr-2.5 mt-1 h-7 w-7 shrink-0 overflow-hidden rounded-full">
                         <img src="/logo.png" alt="Grozl" className="h-full w-full object-contain" />
@@ -848,5 +851,17 @@ export default function ChatScreen({ user }: ChatScreenProps) {
         </>
       )}
     </div>
+
+    {/* ── Settings Screen ───────────────────────────────────────────── */}
+    {showSettings && (
+      <SettingsScreen
+        user={user}
+        chatCount={chatSessions.length}
+        onClose={() => setShowSettings(false)}
+        onClearChats={() => { setChatSessions([]); setMessages([]) }}
+        onLogout={() => setShowSettings(false)}
+      />
+    )}
   )
-                }
+      }
+     

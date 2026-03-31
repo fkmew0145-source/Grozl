@@ -8,9 +8,9 @@ import OnboardingScreen from '@/components/onboarding-screen'
 import type { User } from '@supabase/supabase-js'
 
 export default function Home() {
-  const [user, setUser]           = useState<User | null>(null)
-  const [isGuest, setIsGuest]     = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser]                   = useState<User | null>(null)
+  const [isGuest, setIsGuest]             = useState(false)
+  const [isLoading, setIsLoading]         = useState(true)
   const [needsOnboarding, setNeedsOnboarding] = useState(false)
 
   const supabase = createClient()
@@ -19,38 +19,45 @@ export default function Home() {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
+
+      // Check onboarding for logged-in user here (in effect, not in render)
+      if (user) {
+        const existing = localStorage.getItem('grozl_user_profile')
+        if (!existing) setNeedsOnboarding(true)
+      }
+
       setIsLoading(false)
     }
 
     checkUser()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
+      const newUser = session?.user ?? null
+      setUser(newUser)
+      if (newUser) {
         setIsGuest(false)
+        // Check onboarding on auth change too
+        const existing = localStorage.getItem('grozl_user_profile')
+        if (!existing) setNeedsOnboarding(true)
       }
     })
 
     return () => subscription.unsubscribe()
-  }, [supabase.auth])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleGuestContinue = () => {
-    // Check if guest has already completed onboarding
     const existing = localStorage.getItem('grozl_user_profile')
-    if (existing) {
-      setIsGuest(true)
-    } else {
-      setIsGuest(true)
-      setNeedsOnboarding(true)
-    }
+    setIsGuest(true)
+    if (!existing) setNeedsOnboarding(true)
   }
 
   const handleOnboardingComplete = (fullName: string, nickname: string) => {
-    // Save to localStorage for both guest and logged-in
     localStorage.setItem('grozl_user_profile', JSON.stringify({ fullName, nickname }))
     setNeedsOnboarding(false)
   }
 
+  // Loading spinner
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F5F3EF]">
@@ -59,33 +66,18 @@ export default function Home() {
     )
   }
 
-  // Show onboarding if entering app for first time
+  // Onboarding (guest or logged-in, first time)
   if ((user || isGuest) && needsOnboarding) {
     return <OnboardingScreen onComplete={handleOnboardingComplete} />
   }
 
-  // Check on login: if user logged in but never onboarded
-  if (user && !needsOnboarding) {
-    const existing = localStorage.getItem('grozl_user_profile')
-    if (!existing) {
-      // First time Google login — show onboarding once
-      return (
-        <OnboardingScreen
-          onComplete={(fullName, nickname) => {
-            localStorage.setItem('grozl_user_profile', JSON.stringify({ fullName, nickname }))
-            // Re-render will pick up the saved profile
-            window.location.reload()
-          }}
-        />
-      )
-    }
-    return <ChatScreen user={user} />
-  }
+  // Logged-in user → chat
+  if (user) return <ChatScreen user={user} />
 
-  if (isGuest) {
-    return <ChatScreen user={null} />
-  }
+  // Guest → chat
+  if (isGuest) return <ChatScreen user={null} />
 
+  // Not logged in → login
   return <LoginScreen onGuestContinue={handleGuestContinue} />
-}
+      }
   

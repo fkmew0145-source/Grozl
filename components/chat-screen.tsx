@@ -1,4 +1,5 @@
 'use client'
+
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
@@ -7,8 +8,9 @@ import {
   Mic, MicOff, Send, Camera, Image, FileText, Loader2, MessageSquare,
   Code2, ExternalLink, X, Settings,
 } from 'lucide-react'
-import ArtifactsList from './artifacts-list'
 import ArtifactPanel from './artifact-panel'
+import ProjectsPanel from './projects-panel'
+import ArtifactsList from './artifacts-list'
 import SettingsScreen from './settings/settings-screen'
 import { profileKey, sessionsKey, loadSettings, loadPersonalization } from './settings/settings-store'
 
@@ -74,8 +76,9 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
   const [sessionsLoaded, setSessionsLoaded]     = useState(false)
   const [searchQuery, setSearchQuery]           = useState('')
 
-  // ── Artifacts sidebar panel ──────────────────────────────────────────
+  // ── Right panels ─────────────────────────────────────────────────────
   const [showArtifactsList, setShowArtifactsList] = useState(false)
+  const [showProjectsPanel, setShowProjectsPanel] = useState(false)
   const [showSettings, setShowSettings]           = useState(false)
   const [allArtifacts, setAllArtifacts]           = useState<ArtifactData[]>([])
 
@@ -92,15 +95,13 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const recognitionRef   = useRef<SpeechRecognition | null>(null)
   const longPressTimer   = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // Memory update throttle — fires on 1st message, then every 5th after that
   const memoryCallCount  = useRef(0)
 
   const supabase = createClient()
 
-  // ── App settings (appearance, language, font, model) ───────────────────
+  // ── App settings ─────────────────────────────────────────────────────
   const [appSettings, setAppSettings] = useState(() => loadSettings())
 
-  // Per-user localStorage keys — ensures data isolation between accounts
   const SESSIONS_KEY = sessionsKey(user?.id)
   const PROFILE_KEY  = profileKey(user?.id)
 
@@ -112,7 +113,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
     }
   }, [PROFILE_KEY])
 
-  // ── Apply font size on mount ────────────────────────────────────────────
+  // ── Apply font size on mount ──────────────────────────────────────────
   useEffect(() => {
     const s = loadSettings()
     setAppSettings(s)
@@ -168,10 +169,8 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
               timestamp: new Date(s.updated_at).getTime(),
             }))
             setChatSessions(mapped)
-            // Sync to user-scoped localStorage key
             localStorage.setItem(SESSIONS_KEY, JSON.stringify(mapped))
           } else {
-            // Fallback to user-scoped local key
             const stored = localStorage.getItem(SESSIONS_KEY)
             if (stored) { try { setChatSessions(JSON.parse(stored)) } catch { /* ignore */ } }
           }
@@ -180,7 +179,6 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
           if (stored) { try { setChatSessions(JSON.parse(stored)) } catch { /* ignore */ } }
         }
       } else {
-        // Guest — use guest-scoped key
         const stored = localStorage.getItem(SESSIONS_KEY)
         if (stored) { try { setChatSessions(JSON.parse(stored)) } catch { /* ignore */ } }
       }
@@ -246,6 +244,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
     })
   }
 
+  // ── CHANGE 1: loadSession closes both panels ─────────────────────────
   const loadSession = (session: ChatSession) => {
     setMessages(session.messages)
     setCurrentSessionId(session.id)
@@ -255,8 +254,10 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
     setActiveArtifact(null)
     setShowArtifactModal(false)
     setShowArtifactsList(false)
+    setShowProjectsPanel(false)
   }
 
+  // ── CHANGE 2: newChat closes both panels ─────────────────────────────
   const newChat = useCallback(() => {
     if (messages.length >= 2) saveSession(messages, currentSessionId)
     setMessages([])
@@ -269,11 +270,11 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
     setActiveArtifact(null)
     setShowArtifactModal(false)
     setShowArtifactsList(false)
+    setShowProjectsPanel(false)
     setCurrentSessionId(crypto.randomUUID())
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
   }, [messages, currentSessionId, saveSession])
 
-  // Clear all chats — both state, localStorage and Supabase
   const handleClearChats = useCallback(async () => {
     setChatSessions([])
     setMessages([])
@@ -455,7 +456,6 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       setIsLoading(false); setIsStreaming(false)
       if (user) {
         memoryCallCount.current += 1
-        // Fire on 1st message, then every 5th — avoids wasting Groq API on every send
         if (memoryCallCount.current === 1 || memoryCallCount.current % 5 === 0) {
           fetch('/api/memory/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: newMessages }) }).catch(() => { /* ignore */ })
         }
@@ -512,7 +512,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
           )}
           {artifact && !isStreaming && (
             <button
-              onClick={() => { setActiveArtifact(artifact); setShowArtifactModal(true) }}
+              onClick={() => { setActiveArtifact(artifact); setShowArtifactModal(true); setShowProjectsPanel(false) }}
               className="flex items-center gap-2.5 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 to-blue-50 px-4 py-3 text-left text-[13px] font-medium text-indigo-700 transition hover:border-indigo-300 hover:shadow-sm"
             >
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-100">
@@ -552,6 +552,9 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
   const hasText     = inputValue.trim().length > 0
   const hasMessages = messages.length > 0
   const isActive    = isFocused || hasText || attachedFiles.length > 0
+
+  // ── Right panel open? (for layout split) ─────────────────────────────
+  const rightPanelOpen = (activeArtifact && showArtifactModal) || showProjectsPanel
 
   // ── Input box ────────────────────────────────────────────────────────
   const InputBox = (
@@ -642,10 +645,14 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       </div>
     </div>
   )
+
   // ── Render ───────────────────────────────────────────────────────────
   return (
+    // CHANGE 6: outer wrapper is always flex-row, chat shrinks when panel opens
     <div className="flex h-dvh overflow-hidden bg-gradient-to-b from-slate-50 to-indigo-50">
-      <div className="flex w-full flex-col overflow-hidden">
+
+      {/* ── Chat column ──────────────────────────────────────────────── */}
+      <div className={`flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${rightPanelOpen ? 'flex-1 min-w-0' : 'w-full'}`}>
 
         {/* Hidden file inputs */}
         <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
@@ -677,8 +684,17 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
               New Chat
             </button>
 
-            {/* Projects */}
-            <button onClick={() => { setActiveMenuItem(activeMenuItem === 'projects' ? null : 'projects'); setShowProjectsPanel(prev => !prev) }}
+            {/* CHANGE 3: Projects button — opens right panel, closes artifacts */}
+            <button
+              onClick={() => {
+                const isOpen = activeMenuItem === 'projects'
+                setActiveMenuItem(isOpen ? null : 'projects')
+                setShowProjectsPanel(!isOpen)
+                setShowArtifactsList(false)
+                setActiveArtifact(null)
+                setShowArtifactModal(false)
+                setSidebarOpen(false)
+              }}
               className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all ${
                 activeMenuItem === 'projects'
                   ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm'
@@ -689,9 +705,14 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
               Projects
             </button>
 
-            {/* Artifacts */}
+            {/* CHANGE 4: Artifacts button — closes projects panel */}
             <button
-              onClick={() => { setActiveMenuItem(activeMenuItem === 'artifacts' ? null : 'artifacts'); setShowArtifactsList(prev => !prev) }}
+              onClick={() => {
+                const isOpen = activeMenuItem === 'artifacts'
+                setActiveMenuItem(isOpen ? null : 'artifacts')
+                setShowArtifactsList(prev => !prev)
+                setShowProjectsPanel(false)
+              }}
               className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all ${
                 activeMenuItem === 'artifacts'
                   ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm'
@@ -716,24 +737,17 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
               )}
             </button>
 
-            {/* Artifacts dropdown */}
+            {/* CHANGE 5: Artifacts dropdown — uses ArtifactsList component */}
             {showArtifactsList && (
-              <div className="ml-2 flex flex-col gap-1 border-l-2 border-indigo-100 pl-3">
-                {allArtifacts.length === 0 ? (
-                  <p className="py-2 text-[12px] italic text-gray-400">No artifacts yet</p>
-                ) : (
-                  allArtifacts.map((art, i) => (
-                    <button key={i}
-                      onClick={() => { setActiveArtifact(art); setShowArtifactModal(true); setSidebarOpen(false) }}
-                      className="flex items-center gap-2 rounded-lg px-2 py-2 text-left text-[13px] text-gray-600 transition hover:bg-indigo-50 hover:text-indigo-600"
-                    >
-                      <Code2 className="h-3.5 w-3.5 shrink-0 text-indigo-400" />
-                      <span className="truncate">{art.title}</span>
-                      <span className="ml-auto shrink-0 text-[10px] capitalize text-gray-400">{art.type}</span>
-                    </button>
-                  ))
-                )}
-              </div>
+              <ArtifactsList
+                artifacts={allArtifacts}
+                onOpen={(art) => {
+                  setActiveArtifact(art)
+                  setShowArtifactModal(true)
+                  setShowProjectsPanel(false)
+                  setSidebarOpen(false)
+                }}
+              />
             )}
 
             {/* Recent Chats */}
@@ -808,7 +822,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
             </>
           )}
 
-          {/* ── Bottom user bar ─────────────────────────────────────────── */}
+          {/* ── Bottom user bar ───────────────────────────────────────── */}
           <div className="flex items-center justify-between border-t border-gray-100 px-5 py-4">
             <div className="flex min-w-0 items-center gap-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-900 text-[13px] font-bold text-white">
@@ -883,25 +897,42 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
         </main>
       </div>
 
-      {/* ── Artifact Modal ───────────────────────────────────────────────── */}
+      {/* CHANGE 7A: Artifact Right Panel — Desktop split + Mobile fullscreen */}
       {activeArtifact && showArtifactModal && (
         <>
-          <div className="hidden md:block md:w-1/2 shrink-0">
-            <ArtifactPanel artifact={activeArtifact} onClose={() => { setActiveArtifact(null); setShowArtifactModal(false) }} />
+          {/* Desktop: persistent right panel, true split view */}
+          <div className="hidden md:flex md:w-[46%] shrink-0 flex-col border-l border-white/10">
+            <ArtifactPanel
+              artifact={activeArtifact}
+              onClose={() => { setActiveArtifact(null); setShowArtifactModal(false) }}
+            />
           </div>
-          <div className="fixed inset-0 z-50 flex flex-col md:hidden">
-            <div className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
-              <div className="flex items-center gap-2">
-                <Code2 className="h-4 w-4 text-indigo-500" />
-                <span className="text-sm font-semibold text-gray-800">{activeArtifact.title}</span>
-              </div>
-              <button onClick={() => { setActiveArtifact(null); setShowArtifactModal(false) }} className="text-gray-400 hover:text-gray-600">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <ArtifactPanel artifact={activeArtifact} onClose={() => { setActiveArtifact(null); setShowArtifactModal(false) }} />
-            </div>
+          {/* Mobile: full screen dark overlay */}
+          <div className="fixed inset-0 z-50 flex flex-col md:hidden bg-[#0f1117]">
+            <ArtifactPanel
+              artifact={activeArtifact}
+              onClose={() => { setActiveArtifact(null); setShowArtifactModal(false) }}
+            />
+          </div>
+        </>
+      )}
+
+      {/* CHANGE 7B: Projects Right Panel — Desktop split + Mobile fullscreen */}
+      {showProjectsPanel && (
+        <>
+          {/* Desktop: persistent right panel */}
+          <div className="hidden md:flex md:w-[380px] shrink-0 flex-col border-l border-gray-200 bg-white shadow-xl">
+            <ProjectsPanel
+              currentSessionId={currentSessionId}
+              onClose={() => { setShowProjectsPanel(false); setActiveMenuItem(null) }}
+            />
+          </div>
+          {/* Mobile: full screen */}
+          <div className="fixed inset-0 z-50 flex flex-col md:hidden bg-white">
+            <ProjectsPanel
+              currentSessionId={currentSessionId}
+              onClose={() => { setShowProjectsPanel(false); setActiveMenuItem(null); setSidebarOpen(false) }}
+            />
           </div>
         </>
       )}
@@ -918,4 +949,5 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       )}
     </div>
   )
-}
+      }
+

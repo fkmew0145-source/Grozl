@@ -71,7 +71,7 @@ export default function LoginScreen({ onGuestContinue }: LoginScreenProps) {
         <button
           onClick={handleGoogleLogin}
           disabled={isLoading}
-          className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-gray-200 bg-white px-4 py-4 text-[15px] font-medium shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+          className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-gray-200 bg-white px-4 py-4 text-[15px] font-medium text-gray-800 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
         >
           {isLoading ? (
             <div className="h-[18px] w-[18px] animate-spin rounded-full border-2 border-gray-300 border-t-indigo-600" />
@@ -118,4 +118,5 @@ export default function LoginScreen({ onGuestContinue }: LoginScreenProps) {
     </div>
   )
                   }
-          
+
+      

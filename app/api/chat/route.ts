@@ -30,8 +30,52 @@ interface IncomingMessage {
   content: string | ContentPart[]
 }
 
-// ── System prompt (unchanged) ────────────────────────────────────────────
-const SYSTEM_PROMPT = `
+interface PersonalizationPayload {
+  baseTone?: string
+  characteristics?: string[]
+  customInstructions?: string
+  nickname?: string
+  occupation?: string
+  aboutYou?: string
+}
+
+// ── Build personalised addition to system prompt ─────────────────────────
+function buildPersonalizationBlock(p: PersonalizationPayload | undefined): string {
+  if (!p) return ''
+  const lines: string[] = []
+
+  if (p.baseTone && p.baseTone !== 'default') {
+    const toneMap: Record<string, string> = {
+      formal:    'Always maintain a formal and professional tone. Use structured, precise language.',
+      casual:    'Keep a casual, relaxed, and friendly tone throughout the conversation.',
+      technical: 'Use deep technical depth. Assume expertise. Code-first, no hand-holding.',
+      concise:   'Be strictly concise. No filler words, no preamble. Answer only what is asked.',
+      friendly:  'Be warm, supportive, and encouraging in every response.',
+      humorous:  'Maintain a light-hearted, witty tone with occasional humour where appropriate.',
+    }
+    if (toneMap[p.baseTone]) lines.push(`**Tone Override:** ${toneMap[p.baseTone]}`)
+  }
+
+  if (p.characteristics?.length) {
+    lines.push(`**Response Characteristics:** ${p.characteristics.join(', ')}.`)
+  }
+
+  if (p.customInstructions?.trim()) {
+    lines.push(`**User's Custom Instructions:**\n${p.customInstructions.trim()}`)
+  }
+
+  const about: string[] = []
+  if (p.nickname?.trim())    about.push(`The user's name/nickname is "${p.nickname.trim()}".`)
+  if (p.occupation?.trim())  about.push(`Their occupation is: ${p.occupation.trim()}.`)
+  if (p.aboutYou?.trim())    about.push(`About them: ${p.aboutYou.trim()}`)
+  if (about.length)          lines.push(`**User Info:**\n${about.join(' ')}`)
+
+  if (!lines.length) return ''
+  return `\n\n---\n## USER PERSONALIZATION SETTINGS (Follow strictly)\n${lines.join('\n\n')}`
+}
+
+// ── System prompt ────────────────────────────────────────────────────────
+const BASE_SYSTEM_PROMPT = `
 ## CORE IDENTITY
 You are **Grozl**. You are **Coding-First, Reasoning-Backed**. Every response reflects:
 - A senior developer's precision and production mindset.
@@ -123,55 +167,15 @@ When debugging: Reproduce -> Isolate -> Hypothesize -> Patch -> Verify -> Preven
 - Add a regression test when fixing a bug.
 - Explain root cause, not just the fix.
 
-### Signature Phrases (Use naturally, in the user's current language)
-- "Let's think this through..." — start complex reasoning.
-- "Here's the optimized version..." — when showing improvements.
-- "Common mistake alert..." — proactive pitfall warnings.
-- "Next level thinking..." — push user to think deeper.
-
 ## ARTIFACT FEATURE — Grozl Artifacts
 
 When a user asks to build something (app, CLI, library, module, config), deliver a Grozl Artifact — a complete, structured, runnable output.
-
-### Artifact Lifecycle
-create -> open -> run -> test -> iterate -> version -> export
-
-### Artifact Output Format
 
 Use this XML-style block for artifacts:
 
 <artifact type="[webapp|cli|library|config|notebook]" language="[lang]" title="[name]">
 [full file contents or file tree with contents]
 </artifact>
-
-### Every Artifact Must Include:
-
-Manifest (at the top as a JSON comment):
-{
-  "artifact": {
-    "name": "project-name",
-    "type": "webapp",
-    "language": "typescript",
-    "framework": "react+vite",
-    "entrypoint": "src/main.tsx",
-    "scripts": { "dev": "npm run dev", "build": "npm run build", "test": "npm test" },
-    "dependencies": { "prod": [], "dev": [] },
-    "env": { "required": [], "optional": [] }
-  }
-}
-
-Files — full file tree with complete contents (no placeholders, no "// TODO: implement this")
-Run Instructions — exact commands, step by step
-Test Plan — how to verify it works, with test files if applicable
-
-### Artifact Update Protocols
-- Minor change: Return unified diff patch + rationale
-- Major change: New artifact version with changelog (added/removed files, breaking changes, perf impact)
-
-### Safe Defaults
-- No secrets or real tokens — use placeholders like YOUR_API_KEY
-- Pinned dependency versions
-- Deterministic builds
 
 ---
 
@@ -183,41 +187,9 @@ Test Plan — how to verify it works, with test files if applicable
 | Numbered lists | Sequential steps |
 | Bullet lists | Features, options, non-sequential items |
 | Tables | Comparisons, trade-offs, feature matrices |
-| Mermaid diagrams | Architecture, flows, mindmaps |
 | Code fences with language tag | All code blocks |
-| --- horizontal rule | Between major sections |
 
 Do NOT over-format casual answers. Plain conversational prose for simple queries.
-
----
-
-## REASONING & THINKING
-
-For complex problems:
-1. Understand Intent — What are they REALLY trying to achieve? What is their level? What constraints exist?
-2. Plan Structure — Simple vs detailed? Which format? What depth?
-3. Generate — Start with core concept, build complexity gradually, include practical examples
-4. Quality Check — Accurate? Understandable? Actionable?
-
-Always:
-- State assumptions explicitly if uncertain
-- Show multiple perspectives when trade-offs matter
-- Present concise Reasoning Summary — no raw chain-of-thought leakage
-- Ask 1-2 focused clarifying questions if ambiguity could mislead
-
----
-
-## REPLY TYPE QUICK MATRIX
-
-| Query Type | Response Shape |
-|-----------|---------------|
-| Simple fact | 1-3 lines, direct |
-| How-to | Steps + code + pitfalls + next steps |
-| Debug | Reproduce -> fix -> regression test |
-| Compare | Table + verdict |
-| Refactor | Diff + rationale + tests |
-| Build | Artifact + run/test + pitfalls + alternatives |
-| Concept | Explanation + analogy + example + depth options |
 
 ---
 
@@ -226,29 +198,6 @@ Always:
 - Never output real secrets, tokens, or passwords — always use placeholders
 - Sanitize user inputs in all code examples
 - No unsafe eval/exec by default
-- For multi-file projects: always include a .gitignore
-
----
-
-## SUCCESS CRITERIA (every complex coding response)
-
-- Code compiles/runs as-is (no hidden dependencies)
-- Tests included for non-trivial logic
-- Complexity stated for algorithms
-- At least one alternative with trade-offs
-- Clear run/test/verify instructions
-- Consistent structure
-- Artifact persists and updates cleanly
-
----
-
-## DOMAIN-SPECIFIC BEHAVIOR
-
-Students: Patient, simple language, real relatable examples, genuinely encouraging. Break down jargon.
-Developers/Tech: Precise, no hand-holding with basics. Production code, edge cases, complexity analysis.
-Founders/Business: Sharp, no fluff. Actionable, practical. Focus on build speed and trade-offs.
-Emotional/Personal: Listen first. Empathize. Solve only when explicitly asked.
-Creative: Match their imagination. Think beyond the obvious. Propose unexpected angles.
 
 ---
 
@@ -385,10 +334,17 @@ export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
   if (!checkRateLimit(ip)) return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 })
 
-  // Read model preference sent from frontend (settings)
-  const { messages, model: modelPref = 'auto' }: { messages: IncomingMessage[]; model?: string } = await req.json()
+  const {
+    messages,
+    model: modelPref = 'auto',
+    personalization,
+  }: {
+    messages: IncomingMessage[]
+    model?: string
+    personalization?: PersonalizationPayload
+  } = await req.json()
 
-  // Fetch user memory
+  // Fetch user memory from Supabase
   let userMemory = ''
   try {
     const supabase = await createClient()
@@ -399,9 +355,11 @@ export async function POST(req: NextRequest) {
     }
   } catch { /* ignore */ }
 
-  const SYSTEM_WITH_MEMORY = userMemory
-    ? SYSTEM_PROMPT + `\n\n---\n\n## What You Know About This User\n${userMemory}`
-    : SYSTEM_PROMPT
+  // Build complete system prompt
+  const SYSTEM_PROMPT =
+    BASE_SYSTEM_PROMPT +
+    buildPersonalizationBlock(personalization) +
+    (userMemory ? `\n\n---\n\n## What You Know About This User\n${userMemory}` : '')
 
   const containsImage = hasImageContent(messages)
 
@@ -409,7 +367,7 @@ export async function POST(req: NextRequest) {
   if (containsImage) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const parts: any[] = [{ text: `System: ${SYSTEM_WITH_MEMORY}` }]
+      const parts: any[] = [{ text: `System: ${SYSTEM_PROMPT}` }]
       for (const msg of messages) {
         const prefix = msg.role === 'user' ? 'User' : 'Assistant'
         if (typeof msg.content === 'string') { parts.push({ text: `${prefix}: ${msg.content}` }) }
@@ -442,37 +400,37 @@ export async function POST(req: NextRequest) {
 
   // ══ FORCED MODEL (user picked manually in Settings) ══════════════════
   if (modelPref === 'deepseek') {
-    try { return await callDeepSeek(SYSTEM_WITH_MEMORY, flatMessages) }
+    try { return await callDeepSeek(SYSTEM_PROMPT, flatMessages) }
     catch { /* fall through to Groq */ }
   }
 
   if (modelPref === 'groq') {
-    try { return await callGroq(SYSTEM_WITH_MEMORY, flatMessages) }
-    catch { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_WITH_MEMORY, flatMessages)).catch(() => NextResponse.json({ error: 'AI service unavailable.' }, { status: 503 })) }
+    try { return await callGroq(SYSTEM_PROMPT, flatMessages) }
+    catch { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_PROMPT, flatMessages)).catch(() => NextResponse.json({ error: 'AI service unavailable.' }, { status: 503 })) }
   }
 
   if (modelPref === 'gemini') {
-    try { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_WITH_MEMORY, flatMessages)) }
+    try { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_PROMPT, flatMessages)) }
     catch { return NextResponse.json({ error: 'AI service unavailable.' }, { status: 503 }) }
   }
 
   // ══ AUTO ROUTING (default) ════════════════════════════════════════════
-  // Code / Math / Reasoning → DeepSeek R1
   if (isCodeOrReasoningRequest(messages)) {
-    try { return await callDeepSeek(SYSTEM_WITH_MEMORY, flatMessages) }
+    try { return await callDeepSeek(SYSTEM_PROMPT, flatMessages) }
     catch {
-      try { return await callGroq(SYSTEM_WITH_MEMORY, flatMessages) }
+      try { return await callGroq(SYSTEM_PROMPT, flatMessages) }
       catch {
-        try { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_WITH_MEMORY, flatMessages)) }
+        try { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_PROMPT, flatMessages)) }
         catch { return NextResponse.json({ error: 'AI service unavailable. Please try again.' }, { status: 503 }) }
       }
     }
   }
 
   // General / Casual / Hinglish → Groq Llama
-  try { return await callGroq(SYSTEM_WITH_MEMORY, flatMessages) }
+  try { return await callGroq(SYSTEM_PROMPT, flatMessages) }
   catch {
-    try { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_WITH_MEMORY, flatMessages)) }
+    try { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_PROMPT, flatMessages)) }
     catch { return NextResponse.json({ error: 'AI service unavailable. Please try again.' }, { status: 503 }) }
   }
-}
+                                                   }
+    

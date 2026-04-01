@@ -337,10 +337,12 @@ export async function POST(req: NextRequest) {
   const {
     messages,
     model: modelPref = 'auto',
+    language,
     personalization,
   }: {
     messages: IncomingMessage[]
     model?: string
+    language?: string
     personalization?: PersonalizationPayload
   } = await req.json()
 
@@ -356,8 +358,13 @@ export async function POST(req: NextRequest) {
   } catch { /* ignore */ }
 
   // Build complete system prompt
+  const languageBlock = language && language !== 'hinglish'
+    ? `\n\n---\n## LANGUAGE OVERRIDE\nThe user has set their preferred language to: **${language}**. Respond in this language unless the user writes in a different language mid-conversation.`
+    : ''
+
   const SYSTEM_PROMPT =
     BASE_SYSTEM_PROMPT +
+    languageBlock +
     buildPersonalizationBlock(personalization) +
     (userMemory ? `\n\n---\n\n## What You Know About This User\n${userMemory}` : '')
 
@@ -433,4 +440,5 @@ export async function POST(req: NextRequest) {
     catch { return NextResponse.json({ error: 'AI service unavailable. Please try again.' }, { status: 503 }) }
   }
                                                    }
-    
+
+  

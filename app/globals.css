@@ -123,3 +123,17 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ── Dark Mode: Full inversion approach ────────────────────────────────── */
+/* Since the app uses hardcoded colors, we invert the entire page for dark  */
+html.dark {
+  filter: invert(1) hue-rotate(180deg);
+  color-scheme: dark;
+}
+/* Re-invert media elements so images/logos look correct */
+html.dark img,
+html.dark video,
+html.dark iframe,
+html.dark canvas {
+  filter: invert(1) hue-rotate(180deg);
+  }

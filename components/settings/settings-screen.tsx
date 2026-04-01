@@ -5,16 +5,17 @@ import { ChevronLeft, ChevronRight, LogOut } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { loadSettings, GrozlSettings } from './settings-store'
-import AccountPage      from './pages/account-page'
-import DataControlsPage from './pages/data-controls-page'
-import MemoryPage       from './pages/memory-page'
-import LanguagePage     from './pages/language-page'
-import AppearancePage   from './pages/appearance-page'
-import FontSizePage     from './pages/font-size-page'
-import ModelPage        from './pages/model-page'
-import AboutPage        from './pages/about-page'
-import FeedbackPage     from './pages/feedback-page'
-import HistoryPage      from './pages/history-page'
+import AccountPage        from './pages/account-page'
+import DataControlsPage  from './pages/data-controls-page'
+import MemoryPage        from './pages/memory-page'
+import LanguagePage      from './pages/language-page'
+import AppearancePage    from './pages/appearance-page'
+import FontSizePage      from './pages/font-size-page'
+import ModelPage         from './pages/model-page'
+import AboutPage         from './pages/about-page'
+import FeedbackPage      from './pages/feedback-page'
+import HistoryPage       from './pages/history-page'
+import PersonalizationPage from './pages/personalization-page'
 
 type SubPage =
   | 'account'
@@ -27,6 +28,7 @@ type SubPage =
   | 'about'
   | 'feedback'
   | 'history'
+  | 'personalization'
   | null
 
 interface SettingsScreenProps {
@@ -52,11 +54,16 @@ export default function SettingsScreen({
 
   const handleLogout = useCallback(async () => {
     if (user) { const supabase = createClient(); await supabase.auth.signOut() }
-    localStorage.removeItem('grozl_user_profile')
     onLogout()
   }, [user, onLogout])
 
-  const langLabel = { english: 'English', hindi: 'Hindi', hinglish: 'Hinglish' }[settings.language]
+  const langLabel       = { english: 'English', hindi: 'Hindi', hinglish: 'Hinglish',
+    tamil: 'Tamil', telugu: 'Telugu', marathi: 'Marathi', gujarati: 'Gujarati',
+    kannada: 'Kannada', malayalam: 'Malayalam', punjabi: 'Punjabi', bengali: 'Bengali',
+    urdu: 'Urdu', spanish: 'Spanish', french: 'French', arabic: 'Arabic',
+    portuguese: 'Portuguese', russian: 'Russian', indonesian: 'Indonesian',
+    german: 'German', japanese: 'Japanese', chinese: 'Chinese', turkish: 'Turkish',
+  }[settings.language] ?? settings.language
   const appearanceLabel = { system: 'System', light: 'Light', dark: 'Dark' }[settings.appearance]
 
   // ── Sub-page routing ──────────────────────────────────────────────────
@@ -77,6 +84,9 @@ export default function SettingsScreen({
 
   if (subPage === 'memory')
     return <SettingsWrapper><MemoryPage user={user} onBack={() => setSubPage(null)} /></SettingsWrapper>
+
+  if (subPage === 'personalization')
+    return <SettingsWrapper><PersonalizationPage user={user} onBack={() => setSubPage(null)} /></SettingsWrapper>
 
   if (subPage === 'language')
     return <SettingsWrapper><LanguagePage settings={settings} onSettingsChange={setSettings} onBack={() => setSubPage(null)} /></SettingsWrapper>
@@ -123,7 +133,7 @@ export default function SettingsScreen({
             <ChevronLeft className="h-5 w-5" />
           </button>
           <h1 className="flex-1 text-center text-[17px] font-semibold text-gray-900">Settings</h1>
-          <div className="h-8 w-8" />{/* spacer to center the title */}
+          <div className="h-8 w-8" />
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-3">
@@ -134,6 +144,14 @@ export default function SettingsScreen({
             <SettingsRow icon={<UserIcon />} label="Account settings" onPress={() => setSubPage('account')} />
             <Divider />
             <SettingsRow icon={<DataIcon />} label="Data controls" onPress={() => setSubPage('data-controls')} />
+          </div>
+
+          {/* Personalise */}
+          <p className="mb-1.5 px-1 text-[13px] text-gray-500">Personalise</p>
+          <div className="mb-5 overflow-hidden rounded-2xl bg-white shadow-sm">
+            <SettingsRow icon={<PersonIcon />} label="Personalization" onPress={() => setSubPage('personalization')} />
+            <Divider />
+            <SettingsRow icon={<MemoryIcon />} label="Memory" onPress={() => setSubPage('memory')} />
           </div>
 
           {/* App */}
@@ -147,7 +165,7 @@ export default function SettingsScreen({
           {/* About */}
           <p className="mb-1.5 px-1 text-[13px] text-gray-500">About</p>
           <div className="mb-5 overflow-hidden rounded-2xl bg-white shadow-sm">
-            <SettingsRow icon={<InfoIcon />} label="Check for updates" value="1.8.0(190)" onPress={() => setSubPage('about')} />
+            <SettingsRow icon={<InfoIcon />} label="Check for updates" value="1.0.0" onPress={() => setSubPage('about')} />
           </div>
 
           {/* Help & Feedback */}
@@ -217,8 +235,8 @@ function UserIcon()    { return <svg {...s}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4
 function DataIcon()    { return <svg {...s}><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg> }
 function LangIcon()    { return <svg {...s}><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg> }
 function SunIcon()     { return <svg {...s}><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg> }
-function MicIcon()     { return <svg {...s}><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> }
 function InfoIcon()    { return <svg {...s}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> }
-function DocIcon()     { return <svg {...s}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> }
 function HelpIcon()    { return <svg {...s}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> }
-  
+function PersonIcon()  { return <svg {...s}><path d="M12 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/><path d="M20 21a8 8 0 1 0-16 0"/><path d="M15 10l1.5 1.5L19 9"/></svg> }
+function MemoryIcon()  { return <svg {...s}><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="8" cy="10" r="1.5"/><circle cx="16" cy="10" r="1.5"/><path d="M8 10h8"/></svg> }
+    

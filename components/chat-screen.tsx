@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
@@ -8,6 +7,7 @@ import {
   Mic, MicOff, Send, Camera, Image, FileText, Loader2, MessageSquare,
   Code2, ExternalLink, X, Settings,
 } from 'lucide-react'
+import ArtifactsList from './artifacts-list'
 import ArtifactPanel from './artifact-panel'
 import SettingsScreen from './settings/settings-screen'
 import { profileKey, sessionsKey, loadSettings, loadPersonalization } from './settings/settings-store'

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import ArtifactPanel from './artifact-panel'
 import SettingsScreen from './settings/settings-screen'
+import { profileKey, sessionsKey } from './settings/settings-store'
 
 interface ContentPart {
   type: 'text' | 'image_url'
@@ -94,13 +95,17 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
 
   const supabase = createClient()
 
+  // Per-user localStorage keys — ensures data isolation between accounts
+  const SESSIONS_KEY = sessionsKey(user?.id)
+  const PROFILE_KEY  = profileKey(user?.id)
+
   // ── Load user profile ────────────────────────────────────────────────
   useEffect(() => {
-    const stored = localStorage.getItem('grozl_user_profile')
+    const stored = localStorage.getItem(PROFILE_KEY)
     if (stored) {
       try { setUserProfile(JSON.parse(stored)) } catch { /* ignore */ }
     }
-  }, [])
+  }, [PROFILE_KEY])
 
   // ── Collect all artifacts across sessions ────────────────────────────
   useEffect(() => {
@@ -151,18 +156,26 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
               timestamp: new Date(s.updated_at).getTime(),
             }))
             setChatSessions(mapped)
+            // Sync to user-scoped localStorage key
+            localStorage.setItem(SESSIONS_KEY, JSON.stringify(mapped))
+          } else {
+            // Fallback to user-scoped local key
+            const stored = localStorage.getItem(SESSIONS_KEY)
+            if (stored) { try { setChatSessions(JSON.parse(stored)) } catch { /* ignore */ } }
           }
         } catch {
-          const stored = localStorage.getItem('grozl_chat_sessions')
+          const stored = localStorage.getItem(SESSIONS_KEY)
           if (stored) { try { setChatSessions(JSON.parse(stored)) } catch { /* ignore */ } }
         }
       } else {
-        const stored = localStorage.getItem('grozl_chat_sessions')
+        // Guest — use guest-scoped key
+        const stored = localStorage.getItem(SESSIONS_KEY)
         if (stored) { try { setChatSessions(JSON.parse(stored)) } catch { /* ignore */ } }
       }
       setSessionsLoaded(true)
     }
     loadSessions()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
   useEffect(() => {
@@ -194,7 +207,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       const merged   = { ...session, pinned: existing?.pinned, favorite: existing?.favorite }
       const filtered = prev.filter(s => s.id !== sessionId)
       const updated  = [merged, ...filtered].slice(0, 50)
-      localStorage.setItem('grozl_chat_sessions', JSON.stringify(updated))
+      localStorage.setItem(SESSIONS_KEY, JSON.stringify(updated))
       return updated
     })
 
@@ -211,12 +224,12 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
         })
       } catch { /* ignore */ }
     }
-  }, [user, chatSessions])
+  }, [user, chatSessions, SESSIONS_KEY])
 
   const updateSessions = (updater: (sessions: ChatSession[]) => ChatSession[]) => {
     setChatSessions(prev => {
       const updated = updater(prev)
-      localStorage.setItem('grozl_chat_sessions', JSON.stringify(updated))
+      localStorage.setItem(SESSIONS_KEY, JSON.stringify(updated))
       return updated
     })
   }
@@ -248,6 +261,22 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
   }, [messages, currentSessionId, saveSession])
 
+  // Clear all chats — both state, localStorage and Supabase
+  const handleClearChats = useCallback(async () => {
+    setChatSessions([])
+    setMessages([])
+    localStorage.removeItem(SESSIONS_KEY)
+    if (user) {
+      try {
+        const supabaseClient = createClient()
+        const { data: { user: authUser } } = await supabaseClient.auth.getUser()
+        if (authUser) {
+          await supabaseClient.from('chat_sessions').delete().eq('user_id', authUser.id)
+        }
+      } catch { /* ignore */ }
+    }
+  }, [user, SESSIONS_KEY])
+
   const sortedSessions = [...chatSessions]
     .filter(s => !searchQuery || s.title.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a, b) => {
@@ -273,7 +302,8 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
     if (user && session) {
       try { await fetch('/api/chat/sessions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...session, pinned: newPinned }) }) } catch { /* ignore */ }
     }
-                                                                   }
+  }
+
   const handleFavorite = async (sessionId: string) => {
     const session = chatSessions.find(s => s.id === sessionId)
     const newFav  = !session?.favorite
@@ -802,7 +832,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
                 {messages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     {msg.role === 'assistant' && (
-     <div className="mr-2.5 mt-1 h-7 w-7 shrink-0 overflow-hidden rounded-full">
+                      <div className="mr-2.5 mt-1 h-7 w-7 shrink-0 overflow-hidden rounded-full">
                         <img src="/logo.png" alt="Grozl" className="h-full w-full object-contain" />
                       </div>
                     )}
@@ -857,10 +887,10 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
           user={user}
           chatCount={chatSessions.length}
           onClose={() => setShowSettings(false)}
-          onClearChats={() => { setChatSessions([]); setMessages([]) }}
+          onClearChats={handleClearChats}
           onLogout={() => { setShowSettings(false); onLogout?.() }}
         />
       )}
     </div>
   )
-      }
+}

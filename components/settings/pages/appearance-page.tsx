@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { ChevronLeft } from 'lucide-react'
+import { useTheme } from 'next-themes'
 import { GrozlSettings, patchSettings } from '../settings-store'
 
 interface AppearancePageProps {
@@ -11,6 +12,7 @@ interface AppearancePageProps {
 }
 
 export default function AppearancePage({ settings, onSettingsChange, onBack }: AppearancePageProps) {
+  const { setTheme } = useTheme()
   const [showAppearanceDialog, setShowAppearanceDialog] = useState(false)
   const [tempAppearance, setTempAppearance] = useState(settings.appearance)
   const [showFontPage, setShowFontPage]     = useState(false)
@@ -18,6 +20,8 @@ export default function AppearancePage({ settings, onSettingsChange, onBack }: A
   const confirmAppearance = () => {
     const updated = patchSettings({ appearance: tempAppearance })
     onSettingsChange(updated)
+    // Apply theme immediately via next-themes
+    setTheme(tempAppearance)
     setShowAppearanceDialog(false)
   }
 
@@ -81,6 +85,10 @@ export default function AppearancePage({ settings, onSettingsChange, onBack }: A
             <ChevronLeft className="h-4 w-4 rotate-180 text-gray-400" />
           </button>
         </div>
+
+        <p className="mt-4 px-1 text-[12px] leading-relaxed text-gray-400">
+          Changing the appearance will apply immediately across the entire app.
+        </p>
       </div>
 
       {/* Appearance Dialog */}
@@ -100,12 +108,15 @@ export default function AppearancePage({ settings, onSettingsChange, onBack }: A
                   {tempAppearance === opt && <div className="h-2.5 w-2.5 rounded-full bg-gray-900" />}
                 </div>
                 <span className={`text-[15px] ${tempAppearance === opt ? 'font-medium text-gray-900' : 'text-gray-700'}`}>
-                  {{ system: 'System', light: 'Light', dark: 'Dark' }[opt]}
+                  {{ system: 'System (follow device)', light: 'Light', dark: 'Dark' }[opt]}
                 </span>
               </button>
             ))}
-            <div className="border-t border-gray-100">
-              <button onClick={confirmAppearance} className="w-full py-4 text-[15px] font-semibold text-[#4D6BFE] transition hover:bg-gray-50">
+            <div className="border-t border-gray-100 flex">
+              <button onClick={() => setShowAppearanceDialog(false)} className="flex-1 border-r border-gray-100 py-4 text-[15px] text-gray-500 transition hover:bg-gray-50">
+                Cancel
+              </button>
+              <button onClick={confirmAppearance} className="flex-1 py-4 text-[15px] font-semibold text-[#4D6BFE] transition hover:bg-gray-50">
                 Confirm
               </button>
             </div>
@@ -183,4 +194,4 @@ function FontSizePage({
     </div>
   )
             }
-            
+        

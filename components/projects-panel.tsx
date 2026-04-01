@@ -258,7 +258,7 @@ export default function ProjectsPanel({
     }
 
     return (
-      <div className="flex h-full flex-col bg-[#F5F3EF]">
+      <div className="relative flex h-full flex-col bg-[#F5F3EF]">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-4 pt-6">
           <button
@@ -430,6 +430,17 @@ export default function ProjectsPanel({
             </div>
           )}
         </div>
+
+        {/* FAB — New chat in project */}
+        <div className="absolute bottom-6 right-5 z-10">
+          <button
+            onClick={() => onStartNewChatInProject(project)}
+            className="flex items-center gap-2 rounded-full bg-gray-900 px-4 py-3 text-[14px] font-semibold text-white shadow-lg transition active:bg-gray-700"
+          >
+            <MessageSquarePlus className="h-4 w-4" />
+            New chat
+          </button>
+        </div>
       </div>
     )
   }
@@ -458,17 +469,17 @@ export default function ProjectsPanel({
       <div className="px-4 pb-4">
         <h1 className="mb-4 text-[28px] font-bold text-gray-900">Projects</h1>
 
-        {/* Search — was not working because bg-white input had no bg in some builds */}
-        <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3">
-          <Search className="h-4 w-4 shrink-0 text-gray-400" />
+        {/* Search — sidebar style */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search projects"
-            className="flex-1 bg-transparent text-[15px] text-gray-700 outline-none placeholder:text-gray-400"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-9 text-[14px] text-gray-800 outline-none focus:border-indigo-300 placeholder:text-gray-400"
           />
           {searchQuery.length > 0 && (
-            <button onClick={() => setSearchQuery('')} className="text-gray-300 transition active:text-gray-500">
+            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 transition active:text-gray-500">
               <X className="h-4 w-4" />
             </button>
           )}
@@ -521,4 +532,4 @@ export default function ProjectsPanel({
       {showCreate && <CreateSheet />}
     </div>
   )
-}
+            }

@@ -1,8 +1,8 @@
 export interface GrozlSettings {
   language: 'english' | 'hindi' | 'hinglish' | 'tamil' | 'telugu' | 'marathi' | 'gujarati' | 'kannada' | 'malayalam' | 'punjabi' | 'bengali' | 'urdu' | 'spanish' | 'french' | 'arabic' | 'portuguese' | 'russian' | 'indonesian' | 'german' | 'japanese' | 'chinese' | 'turkish'
   appearance: 'light' | 'dark' | 'system'
-  fontSize: number          // 12–20, default 15
-  voiceLanguage: string     // e.g. 'hi-IN', 'en-US'
+  fontSize: number
+  voiceLanguage: string
   defaultModel: 'auto' | 'deepseek' | 'groq' | 'gemini'
   saveHistory: boolean
   improveModel: boolean
@@ -42,6 +42,7 @@ export const DEFAULT_PERSONALIZATION: GrozlPersonalization = {
 
 const SETTINGS_KEY = 'grozl_settings'
 
+// ── User-specific key helpers ─────────────────────────────────────────────
 export function personalizationKey(userId?: string | null): string {
   return userId ? `grozl_personalization_${userId}` : 'grozl_personalization_guest'
 }
@@ -54,6 +55,11 @@ export function sessionsKey(userId?: string | null): string {
   return userId ? `grozl_sessions_${userId}` : 'grozl_sessions_guest'
 }
 
+export function projectsKey(userId?: string | null): string {
+  return userId ? `grozl_projects_${userId}` : 'grozl_projects_guest'
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────
 export function loadSettings(): GrozlSettings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY)
@@ -65,9 +71,7 @@ export function loadSettings(): GrozlSettings {
 }
 
 export function saveSettings(s: GrozlSettings): void {
-  try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(s))
-  } catch { /* ignore */ }
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)) } catch { /* ignore */ }
 }
 
 export function patchSettings(patch: Partial<GrozlSettings>): GrozlSettings {
@@ -77,6 +81,7 @@ export function patchSettings(patch: Partial<GrozlSettings>): GrozlSettings {
   return updated
 }
 
+// ── Personalization ───────────────────────────────────────────────────────
 export function loadPersonalization(userId?: string | null): GrozlPersonalization {
   try {
     const raw = localStorage.getItem(personalizationKey(userId))
@@ -88,9 +93,7 @@ export function loadPersonalization(userId?: string | null): GrozlPersonalizatio
 }
 
 export function savePersonalization(p: GrozlPersonalization, userId?: string | null): void {
-  try {
-    localStorage.setItem(personalizationKey(userId), JSON.stringify(p))
-  } catch { /* ignore */ }
+  try { localStorage.setItem(personalizationKey(userId), JSON.stringify(p)) } catch { /* ignore */ }
 }
 
 export function patchPersonalization(patch: Partial<GrozlPersonalization>, userId?: string | null): GrozlPersonalization {
@@ -99,3 +102,26 @@ export function patchPersonalization(patch: Partial<GrozlPersonalization>, userI
   savePersonalization(updated, userId)
   return updated
 }
+
+// ── Theme helper (used on app load to restore saved theme) ────────────────
+export function applyTheme(appearance: GrozlSettings['appearance']) {
+  const root = document.documentElement
+  if (appearance === 'dark') {
+    root.classList.add('dark')
+    root.style.colorScheme = 'dark'
+  } else if (appearance === 'light') {
+    root.classList.remove('dark')
+    root.style.colorScheme = 'light'
+  } else {
+    root.classList.remove('dark')
+    root.style.colorScheme = 'normal'
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      root.classList.add('dark')
+    }
+  }
+}
+
+export function applyFontSize(size: number) {
+  document.documentElement.style.setProperty('--chat-font-size', `${size}px`)
+  }
+    

@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import { ChevronLeft, Mail, Chrome } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { ChevronLeft, Mail, Camera, Loader2 } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
+import { profileKey } from '../settings-store'
 
 interface AccountPageProps {
   user: User | null
@@ -11,9 +12,33 @@ interface AccountPageProps {
   onLogout: () => void
 }
 
+interface ProfileData {
+  fullName: string
+  nickname: string
+  bio: string
+  avatarUrl: string
+}
+
 export default function AccountPage({ user, onBack, onLogout }: AccountPageProps) {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showEditProfile, setShowEditProfile]   = useState(false)
+  const [profile, setProfile]                   = useState<ProfileData>({ fullName: '', nickname: '', bio: '', avatarUrl: '' })
+  const [editProfile, setEditProfile]           = useState<ProfileData>({ fullName: '', nickname: '', bio: '', avatarUrl: '' })
+  const [savingProfile, setSavingProfile]       = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const PROFILE_KEY = profileKey(user?.id)
+
+  useEffect(() => {
+    const stored = localStorage.getItem(PROFILE_KEY)
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored)
+        setProfile({ fullName: parsed.fullName || '', nickname: parsed.nickname || '', bio: parsed.bio || '', avatarUrl: parsed.avatarUrl || '' })
+      } catch { /* ignore */ }
+    }
+  }, [PROFILE_KEY])
 
   const maskedEmail = user?.email
     ? user.email.replace(/(.{2})(.*)(@.*)/, (_: string, a: string, b: string, c: string) => a + '*'.repeat(Math.min(b.length, 6)) + c)
@@ -22,14 +47,39 @@ export default function AccountPage({ user, onBack, onLogout }: AccountPageProps
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
-    localStorage.removeItem('grozl_user_profile')
     onLogout()
   }
 
-  const handleGuestLogout = () => {
-    localStorage.removeItem('grozl_user_profile')
-    onLogout()
+  const handleGuestLogout = () => { onLogout() }
+
+  const openEditProfile = () => {
+    setEditProfile({ ...profile })
+    setShowEditProfile(true)
   }
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      setEditProfile(prev => ({ ...prev, avatarUrl: reader.result as string }))
+    }
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }
+
+  const handleSaveProfile = async () => {
+    setSavingProfile(true)
+    const updated = { ...editProfile }
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(updated))
+    setProfile(updated)
+    setSavingProfile(false)
+    setShowEditProfile(false)
+  }
+
+  const initials = profile.fullName
+    ? profile.fullName.split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('')
+    : (profile.nickname || user?.email?.split('@')[0] || 'U').slice(0, 2).toUpperCase()
 
   return (
     <div className="flex h-full flex-col bg-[#F2F2F7]">
@@ -42,8 +92,35 @@ export default function AccountPage({ user, onBack, onLogout }: AccountPageProps
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-2">
-        {/* Profile section */}
-        <p className="mb-2 px-1 text-[13px] text-gray-500">Profile</p>
+
+        {/* Profile card */}
+        <div className="mb-6 flex flex-col items-center rounded-2xl bg-white px-4 py-6">
+          <div className="relative mb-3">
+            {profile.avatarUrl ? (
+              <img src={profile.avatarUrl} alt="Profile" className="h-20 w-20 rounded-full object-cover" />
+            ) : (
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gray-900 text-[22px] font-bold text-white">
+                {initials}
+              </div>
+            )}
+          </div>
+          <p className="text-[17px] font-semibold text-gray-900">{profile.fullName || profile.nickname || user?.email?.split('@')[0] || 'Guest'}</p>
+          {profile.nickname && profile.fullName && (
+            <p className="text-[13px] text-gray-400">{profile.nickname}</p>
+          )}
+          {profile.bio && (
+            <p className="mt-2 text-center text-[13px] text-gray-500 px-4">{profile.bio}</p>
+          )}
+          <button
+            onClick={openEditProfile}
+            className="mt-4 rounded-xl border border-gray-200 px-5 py-2 text-[14px] font-medium text-gray-700 transition hover:bg-gray-50"
+          >
+            Edit Profile
+          </button>
+        </div>
+
+        {/* Account info */}
+        <p className="mb-2 px-1 text-[13px] text-gray-500">Account</p>
         <div className="mb-6 overflow-hidden rounded-2xl bg-white">
           {user?.email && (
             <div className="flex items-center justify-between px-4 py-3.5">
@@ -59,7 +136,6 @@ export default function AccountPage({ user, onBack, onLogout }: AccountPageProps
               {user?.email && <div className="mx-4 h-px bg-gray-100" />}
               <div className="flex items-center justify-between px-4 py-3.5">
                 <div className="flex items-center gap-3">
-                  {/* Google G icon */}
                   <svg className="h-5 w-5" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -68,7 +144,7 @@ export default function AccountPage({ user, onBack, onLogout }: AccountPageProps
                   </svg>
                   <span className="text-[15px] text-gray-800">Google</span>
                 </div>
-                <span className="text-[13px] text-gray-400">Bound</span>
+                <span className="text-[13px] text-gray-400">Linked</span>
               </div>
             </>
           )}
@@ -110,6 +186,79 @@ export default function AccountPage({ user, onBack, onLogout }: AccountPageProps
           </div>
         )}
       </div>
+
+      {/* Edit Profile Sheet */}
+      {showEditProfile && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
+          <div className="w-full max-w-lg rounded-t-3xl bg-white px-4 pb-8 pt-4">
+            <div className="mb-5 flex items-center justify-between">
+              <button onClick={() => setShowEditProfile(false)} className="text-[15px] text-gray-500">Cancel</button>
+              <p className="text-[17px] font-semibold text-gray-900">Edit Profile</p>
+              <button
+                onClick={handleSaveProfile}
+                disabled={savingProfile}
+                className="text-[15px] font-semibold text-[#4D6BFE] disabled:opacity-50"
+              >
+                {savingProfile ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+              </button>
+            </div>
+
+            {/* Avatar picker */}
+            <div className="mb-6 flex flex-col items-center">
+              <div className="relative">
+                {editProfile.avatarUrl ? (
+                  <img src={editProfile.avatarUrl} alt="Profile" className="h-20 w-20 rounded-full object-cover" />
+                ) : (
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gray-900 text-[22px] font-bold text-white">
+                    {(editProfile.fullName || editProfile.nickname || 'U').slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-[#4D6BFE] text-white shadow-md"
+                >
+                  <Camera className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+              <button onClick={() => fileInputRef.current?.click()} className="mt-2 text-[13px] text-[#4D6BFE]">
+                Change photo
+              </button>
+            </div>
+
+            {/* Fields */}
+            {[
+              { label: 'Full Name', key: 'fullName', placeholder: 'Your full name' },
+              { label: 'Nickname', key: 'nickname', placeholder: 'What should Grozl call you?' },
+            ].map(field => (
+              <div key={field.key} className="mb-4">
+                <p className="mb-1.5 text-[13px] text-gray-500">{field.label}</p>
+                <div className="rounded-2xl bg-gray-100 px-4 py-3">
+                  <input
+                    type="text"
+                    value={editProfile[field.key as 'fullName' | 'nickname']}
+                    onChange={e => setEditProfile(prev => ({ ...prev, [field.key]: e.target.value }))}
+                    placeholder={field.placeholder}
+                    className="w-full bg-transparent text-[15px] text-gray-800 outline-none placeholder:text-gray-400"
+                  />
+                </div>
+              </div>
+            ))}
+            <div className="mb-4">
+              <p className="mb-1.5 text-[13px] text-gray-500">Bio</p>
+              <div className="rounded-2xl bg-gray-100 px-4 py-3">
+                <textarea
+                  value={editProfile.bio}
+                  onChange={e => setEditProfile(prev => ({ ...prev, bio: e.target.value }))}
+                  placeholder="A little about yourself..."
+                  rows={3}
+                  className="w-full resize-none bg-transparent text-[15px] text-gray-800 outline-none placeholder:text-gray-400"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Logout confirm dialog */}
       {showLogoutDialog && (
@@ -164,5 +313,5 @@ export default function AccountPage({ user, onBack, onLogout }: AccountPageProps
       )}
     </div>
   )
-              }
-          
+  }
+            

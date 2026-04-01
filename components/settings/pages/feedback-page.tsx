@@ -1,23 +1,47 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronLeft, Send, Star } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Send, Star } from 'lucide-react'
 
 interface FeedbackPageProps {
   onBack: () => void
 }
 
 export default function FeedbackPage({ onBack }: FeedbackPageProps) {
-  const [rating, setRating]     = useState(0)
-  const [hovered, setHovered]   = useState(0)
-  const [feedback, setFeedback] = useState('')
+  const [rating, setRating]       = useState(0)
+  const [hovered, setHovered]     = useState(0)
+  const [feedback, setFeedback]   = useState('')
   const [submitted, setSubmitted] = useState(false)
 
   const handleSubmit = () => {
     if (!feedback.trim() && rating === 0) return
-    // In future: send to backend
+    // Send via mailto
+    const subject = encodeURIComponent(`Grozl Feedback — ${rating > 0 ? `${rating} Stars` : 'General'}`)
+    const body    = encodeURIComponent(`Rating: ${rating > 0 ? '⭐'.repeat(rating) : 'Not rated'}\n\nFeedback:\n${feedback}`)
+    window.open(`mailto:grozlteam@gmail.com?subject=${subject}&body=${body}`)
     setSubmitted(true)
   }
+
+  const quickLinks = [
+    {
+      emoji: '🐛',
+      label: 'Report a Bug',
+      sub:   'Found something broken?',
+      href:  'mailto:grozlteam@gmail.com?subject=Bug%20Report%20%E2%80%94%20Grozl&body=Describe%20the%20bug%3A%0A%0ASteps%20to%20reproduce%3A%0A1.%20%0A2.%20%0A%0AExpected%20behavior%3A%0A%0AActual%20behavior%3A',
+    },
+    {
+      emoji: '💡',
+      label: 'Request a Feature',
+      sub:   'Have an idea? Tell us!',
+      href:  'mailto:grozlteam@gmail.com?subject=Feature%20Request%20%E2%80%94%20Grozl&body=Feature%20idea%3A%0A%0AWhy%20it%20would%20be%20useful%3A',
+    },
+    {
+      emoji: '📖',
+      label: 'Read Documentation',
+      sub:   'How Grozl works',
+      href:  'mailto:grozlteam@gmail.com?subject=Documentation%20Question%20%E2%80%94%20Grozl&body=My%20question%3A',
+    },
+  ]
 
   return (
     <div className="flex h-full flex-col bg-[#F2F2F7]">
@@ -29,7 +53,7 @@ export default function FeedbackPage({ onBack }: FeedbackPageProps) {
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
-        <h2 className="text-[17px] font-semibold text-gray-900">Help & Feedback</h2>
+        <h2 className="text-[17px] font-semibold text-gray-900">Help &amp; Feedback</h2>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-2">
@@ -88,22 +112,40 @@ export default function FeedbackPage({ onBack }: FeedbackPageProps) {
               />
             </div>
 
-            {/* Help links */}
+            {/* Quick links */}
             <p className="mb-2 px-1 text-[13px] text-gray-500">Quick Help</p>
             <div className="mb-6 overflow-hidden rounded-2xl bg-white">
-              {[
-                { emoji: '🐛', label: 'Report a Bug' },
-                { emoji: '💡', label: 'Request a Feature' },
-                { emoji: '📖', label: 'Read Documentation' },
-              ].map((item, i, arr) => (
+              {quickLinks.map((item, i, arr) => (
                 <div key={item.label}>
-                  <button className="flex w-full items-center gap-3 px-4 py-4 text-left transition active:bg-gray-50">
-                    <span className="text-[18px]">{item.emoji}</span>
-                    <span className="text-[15px] text-gray-800">{item.label}</span>
-                  </button>
+                  <a
+                    href={item.href}
+                    className="flex w-full items-center gap-3 px-4 py-4 text-left transition active:bg-gray-50"
+                  >
+                    <span className="text-[20px]">{item.emoji}</span>
+                    <div className="flex-1">
+                      <p className="text-[15px] text-gray-800">{item.label}</p>
+                      <p className="text-[12px] text-gray-400">{item.sub}</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-gray-400" />
+                  </a>
                   {i < arr.length - 1 && <div className="mx-4 h-px bg-gray-100" />}
                 </div>
               ))}
+            </div>
+
+            {/* Support email */}
+            <div className="mb-6 overflow-hidden rounded-2xl bg-white">
+              <a
+                href="mailto:grozlteam@gmail.com"
+                className="flex w-full items-center gap-3 px-4 py-4 transition active:bg-gray-50"
+              >
+                <span className="text-[20px]">📧</span>
+                <div className="flex-1">
+                  <p className="text-[15px] text-gray-800">Email Support</p>
+                  <p className="text-[12px] text-gray-400">grozlteam@gmail.com</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-gray-400" />
+              </a>
             </div>
 
             {/* Submit */}
@@ -120,4 +162,5 @@ export default function FeedbackPage({ onBack }: FeedbackPageProps) {
       </div>
     </div>
   )
-}
+      }
+                

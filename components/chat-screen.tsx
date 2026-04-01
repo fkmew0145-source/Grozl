@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import ArtifactPanel from './artifact-panel'
 import SettingsScreen from './settings/settings-screen'
-import { profileKey, sessionsKey } from './settings/settings-store'
+import { profileKey, sessionsKey, loadSettings, loadPersonalization } from './settings/settings-store'
 
 interface ContentPart {
   type: 'text' | 'image_url'
@@ -95,6 +95,9 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
 
   const supabase = createClient()
 
+  // ── App settings (appearance, language, font, model) ───────────────────
+  const [appSettings, setAppSettings] = useState(() => loadSettings())
+
   // Per-user localStorage keys — ensures data isolation between accounts
   const SESSIONS_KEY = sessionsKey(user?.id)
   const PROFILE_KEY  = profileKey(user?.id)
@@ -106,6 +109,13 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       try { setUserProfile(JSON.parse(stored)) } catch { /* ignore */ }
     }
   }, [PROFILE_KEY])
+
+  // ── Apply font size on mount ────────────────────────────────────────────
+  useEffect(() => {
+    const s = loadSettings()
+    setAppSettings(s)
+    document.documentElement.style.setProperty('--chat-font-size', `${s.fontSize}px`)
+  }, [])
 
   // ── Collect all artifacts across sessions ────────────────────────────
   useEffect(() => {
@@ -374,7 +384,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
     const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     if (!SpeechRecognitionAPI) { alert('Speech recognition not supported. Use Chrome or Edge.'); return }
     const recognition = new SpeechRecognitionAPI()
-    recognition.lang = 'hi-IN'; recognition.continuous = false; recognition.interimResults = true
+    recognition.lang = loadSettings().voiceLanguage || 'hi-IN'; recognition.continuous = false; recognition.interimResults = true
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       const transcript = Array.from(event.results).map((r: SpeechRecognitionResult) => r[0].transcript).join('')
       setInputValue(transcript)
@@ -415,7 +425,12 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
     setMessages([...newMessages, { role: 'assistant', content: '' }])
 
     try {
-      const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: newMessages }) })
+      const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+          messages: newMessages,
+          model: loadSettings().defaultModel,
+          language: loadSettings().language,
+          personalization: loadPersonalization(user?.id),
+        }) })
       if (!res.ok) {
         const err = await res.json()
         setMessages([...newMessages, { role: 'assistant', content: err.error || 'Something went wrong.' }])
@@ -473,7 +488,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       return (
         <div className="flex flex-col gap-3">
           {cleanText !== '' && (
-            <span style={{ whiteSpace: 'pre-wrap' }}>
+            <span style={{ whiteSpace: 'pre-wrap', fontSize: 'var(--chat-font-size, 15px)' }}>
               {cleanText}
               {isAssistant && isLast && isStreaming && cleanText !== '' && (
                 <span className="ml-0.5 inline-block animate-pulse font-light text-gray-400">▌</span>

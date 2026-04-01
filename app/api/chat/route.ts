@@ -203,6 +203,56 @@ Do NOT over-format casual answers. Plain conversational prose for simple queries
 
 Grozl = Senior Dev Friend who explains clearly, thinks with you, and helps you write better code. Technical excellence + teaching ability + cultural warmth = Grozl's edge.`
 
+// ── Think + Search mode system block ─────────────────────────────────────
+function buildModeBlock(think: boolean, search: boolean, searchResults: string): string {
+  if (!think && !search) return ''
+
+  const thinkStatus  = think  ? 'ON' : 'OFF'
+  const searchStatus = search ? 'ON' : 'OFF'
+
+  let block = `\n\n---
+## ACTIVE MODES
+You are Grozl AI. Your behaviour depends on two modes: **Think Mode** and **Search Mode**.
+
+### SEARCH MODE = ${searchStatus}
+${search
+  ? `You have access to real-time internet search results provided below as [SEARCH_RESULTS].
+Use these results to give accurate, up-to-date information.
+If results are empty or irrelevant, say so clearly.
+When quoting facts, mention the source or date if available.`
+  : `Search Mode is OFF. Rely only on your internal knowledge.
+If the user asks for real-time info (news, stocks, weather), politely remind them to enable Search.`}
+
+### THINK MODE = ${thinkStatus}
+${think
+  ? `You must solve the query using explicit step-by-step reasoning.
+Break the problem into logical steps.
+Show calculations, logic, or reasoning at each stage.
+End with a clear conclusion.
+Keep the response structured (e.g., Step 1, Step 2, …).`
+  : `Think Mode is OFF. Answer conversationally without forcing step-by-step reasoning.`}
+
+### COMBINATION BEHAVIOUR
+| Think | Search | Behaviour |
+|-------|--------|-----------|
+| OFF   | OFF    | Normal conversational answer using internal knowledge. |
+| OFF   | ON     | Concise, factual answer based on search results. No step-by-step. |
+| ON    | OFF    | Internal knowledge + full step-by-step reasoning. |
+| ON    | ON     | (1) Key insights from search → (2) Step-wise reasoning → (3) Final reasoned conclusion. |
+
+**Current Status → Think: ${thinkStatus} | Search: ${searchStatus}**`
+
+  if (search) {
+    const resultsText = searchResults?.trim()
+      ? searchResults
+      : 'No search results found. Answer using internal knowledge and mention that search returned no results.'
+
+    block += `\n\n### [SEARCH_RESULTS]\n${resultsText}`
+  }
+
+  return block
+}
+
 // ── Routing keywords for auto-detect (used when model = 'auto') ──────────
 const CODE_KEYWORDS = [
   'code', 'coding', 'debug', 'error', 'bug', 'fix', 'function', 'class',
@@ -235,6 +285,117 @@ function isCodeOrReasoningRequest(messages: IncomingMessage[]): boolean {
 
 function hasImageContent(messages: IncomingMessage[]): boolean {
   return messages.some(m => Array.isArray(m.content) && m.content.some((p: ContentPart) => p.type === 'image_url'))
+}
+
+// ── Extract plain text from last user message ─────────────────────────────
+function getLastUserText(messages: IncomingMessage[]): string {
+  const last = [...messages].reverse().find(m => m.role === 'user')
+  if (!last) return ''
+  return (
+    typeof last.content === 'string'
+      ? last.content
+      : last.content.filter(p => p.type === 'text').map(p => p.text || '').join(' ')
+  ).trim()
+}
+
+// ── TIER 0 — Ultra-simple local replies (zero API cost) ──────────────────
+const GREETING_REPLIES = [
+  'Hey! Kya chal raha hai? Kuch kaam hai? 😊',
+  'Haan bolo! Main yahan hoon. 🙂',
+  'Hello! Batao, kya help chahiye?',
+  'Hey yaar! Kya scene hai? 😄',
+  'Hi! Bol do kya chahiye. 😊',
+]
+const THANKS_REPLIES = [
+  'Koi baat nahi yaar! 🙌',
+  'Always! Aur kuch chahiye?',
+  'Mention not! Kabhi bhi bolo. 😊',
+  'Arrey koi baat nahi! 🙏',
+]
+const BYE_REPLIES = [
+  'Bye! Take care 👋',
+  'Alvida! Jab zarurat ho wapas aana. 😊',
+  'See you! Kal milte hain. 🙂',
+  'Bye bye! 👋 Kuch aur chahiye toh bolo.',
+]
+const ACK_REPLIES  = ['👍', 'Theek hai!', 'Alright! Aur kuch?', 'Okay 👌']
+const NICE_REPLIES = ['😊', 'Shukriya yaar!', '🙌 Acha laga!', 'Glad to help!']
+
+function pick<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)]
+}
+
+function getUltraSimpleReply(text: string): string | null {
+  const t = text.toLowerCase().trim()
+  if (t.length > 0 && t.length <= 12 && !/[a-z0-9\u0900-\u097F]/.test(t)) return pick(NICE_REPLIES)
+  if (/^(hi+|hello+|hey+|hiya|helo|howdy|namaste|namaskar|sat sri akal|salaam|assalaamu|jai hind|sup|wassup)[\s!.?😊🙂]*$/.test(t)) return pick(GREETING_REPLIES)
+  if (/^(thanks?|thank(s| you)+|shukriya|dhanyawad|ty|thnx|thx|mehrbani|shukar hai|shukar)[\s!.?😊🙏]*$/.test(t)) return pick(THANKS_REPLIES)
+  if (/^(bye+|goodbye|good bye|alvida|cya|see ya|see you|baad mein|baad me|take care|tc|later|ttyl)[\s!.?👋😊]*$/.test(t)) return pick(BYE_REPLIES)
+  if (/^(ok|okay|k|hmm+|hm+|ohh?|ah+|ahan|acha|thik|theek|haan|han|nahi|nope|yep|yup|yes|no|got it|noted|sure|alright|bilkul)[\s!.?]*$/.test(t)) return pick(ACK_REPLIES)
+  if (/^(nice|great|awesome|wow|wah+|amazing|kya baat|shabash|bahut badhiya|good|cool|superb|perfect|excellent|badhiya|mast|ekdum|sahi|zabardast)[\s!.?😊🔥👏]*$/.test(t)) return pick(NICE_REPLIES)
+  return null
+}
+
+// ── TIER 1 — Casual short messages → Groq 512 tokens ────────────────────
+function isCasualShort(messages: IncomingMessage[]): boolean {
+  const text = getLastUserText(messages)
+  if (!text) return false
+  const wordCount = text.trim().split(/\s+/).length
+  const hasCodeIntent = CODE_KEYWORDS.some(kw => text.toLowerCase().includes(kw))
+  return wordCount <= 15 && !hasCodeIntent
+}
+
+// ── Web search via Tavily ─────────────────────────────────────────────────
+// Add TAVILY_API_KEY to your Vercel environment variables.
+// Free tier: 1000 searches/month → https://tavily.com
+interface TavilyResult {
+  title: string
+  url: string
+  content: string
+  published_date?: string
+  score?: number
+}
+
+async function webSearch(query: string): Promise<string> {
+  const apiKey = process.env.TAVILY_API_KEY
+  if (!apiKey) return '[Search unavailable: TAVILY_API_KEY not set]'
+
+  try {
+    const res = await fetch('https://api.tavily.com/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: apiKey,
+        query,
+        search_depth: 'basic',
+        max_results: 5,
+        include_answer: true,
+        include_raw_content: false,
+      }),
+    })
+
+    if (!res.ok) return `[Search failed: HTTP ${res.status}]`
+
+    const data = await res.json()
+    const parts: string[] = []
+
+    // Tavily's own AI-generated answer (concise summary)
+    if (data.answer) {
+      parts.push(`**Quick Answer:** ${data.answer}\n`)
+    }
+
+    // Individual results
+    if (data.results?.length) {
+      data.results.forEach((r: TavilyResult, i: number) => {
+        const date = r.published_date ? ` (${r.published_date.slice(0, 10)})` : ''
+        parts.push(`[${i + 1}] **${r.title}**${date}\nURL: ${r.url}\n${r.content}`)
+      })
+    }
+
+    return parts.length ? parts.join('\n\n') : '[No relevant results found]'
+  } catch (err) {
+    return `[Search error: ${err instanceof Error ? err.message : 'Unknown'}]`
+  }
 }
 
 // ── Strip DeepSeek <think>...</think> reasoning blocks ───────────────────
@@ -285,11 +446,20 @@ async function callDeepSeek(systemPrompt: string, messages: { role: string; cont
 }
 
 // ── Groq Llama streaming ─────────────────────────────────────────────────
-async function callGroq(systemPrompt: string, messages: { role: string; content: string }[]): Promise<Response> {
+// maxTokens: 4096 default | 512 for casual short chat
+// temperature: 0.7 default | 0.2 for Think mode (more deterministic)
+async function callGroq(
+  systemPrompt: string,
+  messages: { role: string; content: string }[],
+  maxTokens = 4096,
+  temperature = 0.7,
+): Promise<Response> {
   const stream = await groq.chat.completions.create({
     model: 'llama-3.3-70b-versatile',
     messages: [{ role: 'system', content: systemPrompt }, ...messages as Parameters<typeof groq.chat.completions.create>[0]['messages']],
-    stream: true, max_tokens: 4096,
+    stream: true,
+    max_tokens: maxTokens,
+    temperature,
   })
   const encoder = new TextEncoder()
   return new Response(
@@ -308,7 +478,7 @@ async function callGroq(systemPrompt: string, messages: { role: string; content:
 async function callGeminiStreaming(parts: any[]): Promise<Response> {
   const model  = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
   const result = await model.generateContentStream(parts)
-  const encoder = new TextEncoder()
+    const encoder = new TextEncoder()
   return new Response(
     new ReadableStream({
       async start(controller) {
@@ -329,6 +499,17 @@ function toGeminiTextParts(systemPrompt: string, messages: { role: string; conte
   ]
 }
 
+// ── Instant local stream helper ───────────────────────────────────────────
+function localStream(text: string): Response {
+  const encoder = new TextEncoder()
+  return new Response(
+    new ReadableStream({
+      start(controller) { controller.enqueue(encoder.encode(text)); controller.close() },
+    }),
+    { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Provider': 'local' } }
+  )
+}
+
 // ── Main handler ─────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
@@ -339,11 +520,15 @@ export async function POST(req: NextRequest) {
     model: modelPref = 'auto',
     language,
     personalization,
+    think  = false,   // Think Mode — step-by-step reasoning
+    search = false,   // Search Mode — real-time web results
   }: {
     messages: IncomingMessage[]
     model?: string
     language?: string
     personalization?: PersonalizationPayload
+    think?: boolean
+    search?: boolean
   } = await req.json()
 
   // Fetch user memory from Supabase
@@ -357,6 +542,14 @@ export async function POST(req: NextRequest) {
     }
   } catch { /* ignore */ }
 
+  // ── Run web search if Search Mode is ON ────────────────────────────────
+  // Runs in parallel with nothing (we await here before building prompt)
+  let searchResults = ''
+  if (search) {
+    const query = getLastUserText(messages)
+    if (query) searchResults = await webSearch(query)
+  }
+
   // Build complete system prompt
   const languageBlock = language && language !== 'hinglish'
     ? `\n\n---\n## LANGUAGE OVERRIDE\nThe user has set their preferred language to: **${language}**. Respond in this language unless the user writes in a different language mid-conversation.`
@@ -366,7 +559,8 @@ export async function POST(req: NextRequest) {
     BASE_SYSTEM_PROMPT +
     languageBlock +
     buildPersonalizationBlock(personalization) +
-    (userMemory ? `\n\n---\n\n## What You Know About This User\n${userMemory}` : '')
+    (userMemory ? `\n\n---\n\n## What You Know About This User\n${userMemory}` : '') +
+    buildModeBlock(think, search, searchResults)   // ← Think/Search block appended last
 
   const containsImage = hasImageContent(messages)
 
@@ -412,7 +606,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (modelPref === 'groq') {
-    try { return await callGroq(SYSTEM_PROMPT, flatMessages) }
+    try { return await callGroq(SYSTEM_PROMPT, flatMessages, 4096, think ? 0.2 : 0.7) }
     catch { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_PROMPT, flatMessages)).catch(() => NextResponse.json({ error: 'AI service unavailable.' }, { status: 503 })) }
   }
 
@@ -421,7 +615,42 @@ export async function POST(req: NextRequest) {
     catch { return NextResponse.json({ error: 'AI service unavailable.' }, { status: 503 }) }
   }
 
-  // ══ AUTO ROUTING (default) ════════════════════════════════════════════
+  // ══ AUTO ROUTING ══════════════════════════════════════════════════════
+
+  // ── TIER 0: Ultra-simple → instant local reply (zero API cost) ─────────
+  // Skip local reply if Think or Search is ON — user expects a real response
+  const lastText = getLastUserText(messages)
+  if (!think && !search && lastText) {
+    const localReply = getUltraSimpleReply(lastText)
+    if (localReply) return localStream(localReply)
+  }
+
+  // ── Think Mode ON → DeepSeek R1 (purpose-built reasoning model) ────────
+  // DeepSeek R1 is ideal here — it does chain-of-thought natively.
+  // Search results are already in SYSTEM_PROMPT so both modes work together.
+  if (think) {
+    try { return await callDeepSeek(SYSTEM_PROMPT, flatMessages) }
+    catch {
+      // Fallback: Groq with low temperature for structured reasoning
+      try { return await callGroq(SYSTEM_PROMPT, flatMessages, 4096, 0.2) }
+      catch {
+        try { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_PROMPT, flatMessages)) }
+        catch { return NextResponse.json({ error: 'AI service unavailable. Please try again.' }, { status: 503 }) }
+      }
+    }
+  }
+
+  // ── Search Mode ON (Think OFF) → Groq for fast factual response ─────────
+  // Results already injected in prompt. Groq is faster than DeepSeek here.
+  if (search) {
+    try { return await callGroq(SYSTEM_PROMPT, flatMessages, 4096, 0.5) }
+    catch {
+      try { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_PROMPT, flatMessages)) }
+      catch { return NextResponse.json({ error: 'AI service unavailable. Please try again.' }, { status: 503 }) }
+    }
+  }
+
+  // ── TIER 2: Code / reasoning → DeepSeek → Groq → Gemini ───────────────
   if (isCodeOrReasoningRequest(messages)) {
     try { return await callDeepSeek(SYSTEM_PROMPT, flatMessages) }
     catch {
@@ -433,12 +662,19 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // General / Casual / Hinglish → Groq Llama
+  // ── TIER 1: Casual short chat → Groq 512 tokens ────────────────────────
+  if (isCasualShort(messages)) {
+    try { return await callGroq(SYSTEM_PROMPT, flatMessages, 512) }
+    catch {
+      try { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_PROMPT, flatMessages)) }
+      catch { return NextResponse.json({ error: 'AI service unavailable. Please try again.' }, { status: 503 }) }
+    }
+  }
+
+  // ── General Hinglish / open-ended chat → Groq full tokens ──────────────
   try { return await callGroq(SYSTEM_PROMPT, flatMessages) }
   catch {
     try { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_PROMPT, flatMessages)) }
     catch { return NextResponse.json({ error: 'AI service unavailable. Please try again.' }, { status: 503 }) }
   }
-                                                   }
-
-  
+          }

@@ -678,7 +678,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
             </button>
 
             {/* Projects */}
-            <button onClick={() => setActiveMenuItem(activeMenuItem === 'projects' ? null : 'projects')}
+            <button onClick={() => { setActiveMenuItem(activeMenuItem === 'projects' ? null : 'projects'); setShowProjectsPanel(prev => !prev) }}
               className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all ${
                 activeMenuItem === 'projects'
                   ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm'

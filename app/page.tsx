@@ -6,6 +6,7 @@ import LoginScreen from '@/components/login-screen'
 import ChatScreen from '@/components/chat-screen'
 import OnboardingScreen from '@/components/onboarding-screen'
 import type { User } from '@supabase/supabase-js'
+import { profileKey } from '@/components/settings/settings-store'
 
 export default function Home() {
   const [user, setUser]                   = useState<User | null>(null)
@@ -20,9 +21,8 @@ export default function Home() {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
 
-      // Check onboarding for logged-in user here (in effect, not in render)
       if (user) {
-        const existing = localStorage.getItem('grozl_user_profile')
+        const existing = localStorage.getItem(profileKey(user.id))
         if (!existing) setNeedsOnboarding(true)
       }
 
@@ -36,8 +36,7 @@ export default function Home() {
       setUser(newUser)
       if (newUser) {
         setIsGuest(false)
-        // Check onboarding on auth change too
-        const existing = localStorage.getItem('grozl_user_profile')
+        const existing = localStorage.getItem(profileKey(newUser.id))
         if (!existing) setNeedsOnboarding(true)
       }
     })
@@ -47,13 +46,15 @@ export default function Home() {
   }, [])
 
   const handleGuestContinue = () => {
-    const existing = localStorage.getItem('grozl_user_profile')
+    const existing = localStorage.getItem(profileKey(null))
     setIsGuest(true)
     if (!existing) setNeedsOnboarding(true)
   }
 
   const handleOnboardingComplete = (fullName: string, nickname: string) => {
-    localStorage.setItem('grozl_user_profile', JSON.stringify({ fullName, nickname }))
+    // Store with user-specific key so different accounts don't share profile
+    const key = user ? profileKey(user.id) : profileKey(null)
+    localStorage.setItem(key, JSON.stringify({ fullName, nickname }))
     setNeedsOnboarding(false)
   }
 
@@ -79,6 +80,4 @@ export default function Home() {
 
   // Not logged in → login
   return <LoginScreen onGuestContinue={handleGuestContinue} />
-      }
-
-      
+}

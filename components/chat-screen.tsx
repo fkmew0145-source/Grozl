@@ -90,8 +90,10 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
   const photoInputRef  = useRef<HTMLInputElement>(null)
   const fileInputRef   = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const recognitionRef = useRef<SpeechRecognition | null>(null)
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const recognitionRef   = useRef<SpeechRecognition | null>(null)
+  const longPressTimer   = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Memory update throttle — fires on 1st message, then every 5th after that
+  const memoryCallCount  = useRef(0)
 
   const supabase = createClient()
 
@@ -430,6 +432,8 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
           model: loadSettings().defaultModel,
           language: loadSettings().language,
           personalization: loadPersonalization(user?.id),
+          think: activeChips.has('think'),
+          search: activeChips.has('search'),
         }) })
       if (!res.ok) {
         const err = await res.json()
@@ -449,7 +453,13 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       setMessages([...newMessages, { role: 'assistant', content: 'Network error. Please check your connection.' }])
     } finally {
       setIsLoading(false); setIsStreaming(false)
-      if (user) { fetch('/api/memory/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: newMessages }) }).catch(() => { /* ignore */ }) }
+      if (user) {
+        memoryCallCount.current += 1
+        // Fire on 1st message, then every 5th — avoids wasting Groq API on every send
+        if (memoryCallCount.current === 1 || memoryCallCount.current % 5 === 0) {
+          fetch('/api/memory/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: newMessages }) }).catch(() => { /* ignore */ })
+        }
+      }
     }
   }
 

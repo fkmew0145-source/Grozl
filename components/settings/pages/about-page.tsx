@@ -242,22 +242,6 @@ export default function AboutPage({ onBack }: AboutPageProps) {
           </button>
         </div>
 
-        {/* Help */}
-        <div className="mb-6 overflow-hidden rounded-2xl bg-white">
-          <button
-            onClick={() => setSubPage('help')}
-            className="flex w-full items-center justify-between px-4 py-4 transition active:bg-gray-50"
-          >
-            <div className="flex items-center gap-3">
-              <svg className="h-5 w-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-              <span className="text-[15px] text-gray-800">Help &amp; Feedback</span>
-            </div>
-            <ChevronRight className="h-4 w-4 text-gray-400" />
-          </button>
-        </div>
-
         <p className="text-center text-[11px] text-gray-400">
           AI-generated content is for reference only. Use legally.
         </p>
@@ -272,4 +256,4 @@ export default function AboutPage({ onBack }: AboutPageProps) {
     </div>
   )
           }
-      
+

@@ -11,6 +11,20 @@ interface DataControlsPageProps {
   onBack: () => void
 }
 
+
+function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      onClick={() => onChange(!value)}
+      className={`relative flex h-7 w-12 items-center rounded-full transition-colors duration-200 ${value ? 'bg-gray-900' : 'bg-gray-300'}`}
+    >
+      <span
+        className={`absolute left-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-200 ${value ? 'translate-x-5' : 'translate-x-0'}`}
+      />
+    </button>
+  )
+}
+
 export default function DataControlsPage({
   settings,
   onSettingsChange,
@@ -41,44 +55,22 @@ export default function DataControlsPage({
         {/* Chat history toggle */}
         <p className="mb-2 px-1 text-[13px] text-gray-500">History</p>
         <div className="mb-6 overflow-hidden rounded-2xl bg-white">
-          <div className="flex items-center justify-between px-4 py-4">
-            <div className="flex flex-col gap-0.5 flex-1 pr-4">
+          <div className="px-4 py-4">
+            <div className="flex items-center justify-between">
               <span className="text-[15px] text-gray-800">Save Chat History</span>
-              <span className="text-[12px] text-gray-400">Store your conversations locally</span>
+              <Toggle value={settings.saveHistory} onChange={() => toggle('saveHistory')} />
             </div>
-            <button
-              onClick={() => toggle('saveHistory')}
-              className={`relative flex-shrink-0 h-[30px] w-[52px] rounded-full transition-colors duration-300 ${
-                settings.saveHistory ? 'bg-[#34C759]' : 'bg-[#E5E5EA]'
-              }`}
-            >
-              <span
-                className={`absolute top-[2px] h-[26px] w-[26px] rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.25)] transition-transform duration-300 ${
-                  settings.saveHistory ? 'translate-x-[24px]' : 'translate-x-[2px]'
-                }`}
-              />
-            </button>
+            <p className="mt-1 text-[12px] leading-relaxed text-gray-400">Store your conversations locally</p>
           </div>
 
           <div className="mx-4 h-px bg-gray-100" />
 
-          <div className="flex items-center justify-between px-4 py-4">
-            <div className="flex flex-col gap-0.5 flex-1 pr-4">
+          <div className="px-4 py-4">
+            <div className="flex items-center justify-between">
               <span className="text-[15px] text-gray-800">Improve Grozl for Everyone</span>
-              <span className="text-[12px] text-gray-400">Help train better AI models</span>
+              <Toggle value={settings.improveModel} onChange={() => toggle('improveModel')} />
             </div>
-            <button
-              onClick={() => toggle('improveModel')}
-              className={`relative flex-shrink-0 h-[30px] w-[52px] rounded-full transition-colors duration-300 ${
-                settings.improveModel ? 'bg-[#34C759]' : 'bg-[#E5E5EA]'
-              }`}
-            >
-              <span
-                className={`absolute top-[2px] h-[26px] w-[26px] rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.25)] transition-transform duration-300 ${
-                  settings.improveModel ? 'translate-x-[24px]' : 'translate-x-[2px]'
-                }`}
-              />
-            </button>
+            <p className="mt-1 text-[12px] leading-relaxed text-gray-400">Help train better AI models</p>
           </div>
         </div>
 

@@ -124,16 +124,65 @@
   }
 }
 
-/* ── Dark Mode: Full inversion approach ────────────────────────────────── */
-/* Since the app uses hardcoded colors, we invert the entire page for dark  */
+/* ── Dark Mode ──────────────────────────────────────────────────────────── */
 html.dark {
-  filter: invert(1) hue-rotate(180deg);
   color-scheme: dark;
 }
-/* Re-invert media elements so images/logos look correct */
-html.dark img,
-html.dark video,
-html.dark iframe,
-html.dark canvas {
-  filter: invert(1) hue-rotate(180deg);
-  }
+
+/* Sidebar dark mode */
+html.dark .grozl-sidebar {
+  background: #111318 !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+html.dark .grozl-sidebar * {
+  --tw-border-opacity: 0.08;
+}
+html.dark .grozl-sidebar input {
+  background: rgba(255,255,255,0.05) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+  color: rgba(255,255,255,0.85) !important;
+}
+html.dark .grozl-sidebar input::placeholder {
+  color: rgba(255,255,255,0.3) !important;
+}
+
+/* Main chat dark mode */
+html.dark .grozl-main {
+  background: #0d0f14 !important;
+}
+html.dark .grozl-header {
+  background: transparent !important;
+}
+
+/* Message bubbles */
+html.dark .grozl-msg-assistant {
+  background: #1a1d27 !important;
+  border-color: rgba(255,255,255,0.07) !important;
+  color: rgba(255,255,255,0.85) !important;
+}
+
+/* Input box */
+html.dark .grozl-inputbox {
+  background: #1a1d27 !important;
+  border-color: rgba(255,255,255,0.1) !important;
+}
+html.dark .grozl-inputbox textarea {
+  color: rgba(255,255,255,0.85) !important;
+}
+html.dark .grozl-inputbox textarea::placeholder {
+  color: rgba(255,255,255,0.3) !important;
+}
+
+/* Context menu */
+html.dark .grozl-context-menu {
+  background: #1e2130 !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+
+/* Settings screen */
+html.dark .grozl-settings {
+  background: #0d0f14 !important;
+}
+html.dark .grozl-settings-card {
+  background: #1a1d27 !important;
+}

@@ -1,53 +1,48 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-/* ── Premium Background System ───────────────────────── */
+/* ── Light Mode Variables ─────────────────────────────── */
 :root {
-  --bg-light: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-
-  --background: transparent;
+  --background: #ffffff;
   --foreground: oklch(0.145 0 0);
   --card: rgba(255,255,255,0.7);
   --card-foreground: oklch(0.145 0 0);
   --border: rgba(0,0,0,0.06);
 }
 
-/* ── Dark Mode Variables ───────────────────────── */
+/* ── Dark Mode Variables ──────────────────────────────── */
 .dark {
-  --bg-dark: linear-gradient(180deg, #0d0f14 0%, #111318 100%);
-
-  --background: transparent;
-  --foreground: oklch(0.95 0 0);
+  --background: #0d0f14;
+  --foreground: #ececec;
   --card: rgba(255,255,255,0.04);
-  --card-foreground: oklch(0.95 0 0);
+  --card-foreground: #ececec;
   --border: rgba(255,255,255,0.08);
 }
 
-/* ── Apply Background ───────────────────────── */
+/* ── Body Background ──────────────────────────────────── */
+html, body {
+  min-height: 100%;
+}
+
 body {
-  background: var(--bg-light);
+  background-color: var(--background);
   color: var(--foreground);
-  transition: background 0.3s ease, color 0.2s ease;
 }
 
-.dark body {
-  background: var(--bg-dark);
-}
-
-/* ── Base ───────────────────────── */
+/* ── Base ─────────────────────────────────────────────── */
 @layer base {
   * {
     @apply outline-none;
   }
 }
 
-/* ── Glass UI (Reusable) ───────────────────────── */
+/* ── Glass UI ─────────────────────────────────────────── */
 .grozl-glass {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
 
-/* ── Sidebar ───────────────────────── */
+/* ── Sidebar ──────────────────────────────────────────── */
 html .grozl-sidebar {
   background: rgba(255,255,255,0.7) !important;
   border-color: rgba(0,0,0,0.05) !important;
@@ -58,12 +53,12 @@ html.dark .grozl-sidebar {
   border-color: rgba(255,255,255,0.07) !important;
 }
 
-/* ── Main ───────────────────────── */
+/* ── Main ─────────────────────────────────────────────── */
 html .grozl-main {
   background: transparent !important;
 }
 
-/* ── Input Box ───────────────────────── */
+/* ── Input Box ────────────────────────────────────────── */
 html .grozl-inputbox {
   background: rgba(255,255,255,0.6) !important;
   border-color: rgba(0,0,0,0.08) !important;
@@ -78,7 +73,7 @@ html.dark .grozl-inputbox {
   background: transparent !important;
 }
 
-/* ── Settings Cards ───────────────────────── */
+/* ── Settings Cards ───────────────────────────────────── */
 html .grozl-settings-card {
   background: rgba(255,255,255,0.7) !important;
 }
@@ -87,59 +82,18 @@ html.dark .grozl-settings-card {
   background: rgba(255,255,255,0.05) !important;
 }
 
-/* ── Text ───────────────────────── */
-.text-gray-900,
-.text-black {
-  color: #111827 !important;
-}
-
-.dark .text-gray-900,
-.dark .text-black {
-  color: #f3f4f6 !important;
-}
-
-/* ── Borders ───────────────────────── */
-.border-gray-200 {
-  border-color: rgba(0,0,0,0.08) !important;
-}
-
-.dark .border-gray-200 {
-  border-color: rgba(255,255,255,0.08) !important;
-}
-
-/* ── Hover ───────────────────────── */
-.hover\:bg-gray-100:hover {
-  background: rgba(0,0,0,0.05) !important;
-}
-
-.dark .hover\:bg-gray-100:hover {
-  background: rgba(255,255,255,0.07) !important;
-}
-
-/* ── Scrollbar ───────────────────────── */
-::-webkit-scrollbar {
-  width: 4px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
+/* ── Scrollbar ────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: rgba(0,0,0,0.12);
   border-radius: 99px;
 }
-
 .dark ::-webkit-scrollbar-thumb {
   background: rgba(255,255,255,0.12);
 }
 
-/* ── Smooth theme transition ───────────────────────── */
-*, *::before, *::after {
-  transition: background-color 0.25s ease, border-color 0.25s ease;
-}
-
-/* ── Font ───────────────────────── */
+/* ── Font ─────────────────────────────────────────────── */
 :root {
   --chat-font-size: 15px;
 }

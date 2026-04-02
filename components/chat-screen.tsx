@@ -574,7 +574,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       )}
       <textarea
         ref={textareaRef}
-        placeholder={isRecording ? 'Grozl Is Listening...' : 'Ask Grozl anything...'}
+        placeholder=""
         rows={1} value={inputValue} onChange={handleInput}
         onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)}
         disabled={isLoading}

@@ -1,6 +1,6 @@
 export interface GrozlSettings {
   language: 'english' | 'hindi' | 'hinglish' | 'tamil' | 'telugu' | 'marathi' | 'gujarati' | 'kannada' | 'malayalam' | 'punjabi' | 'bengali' | 'urdu' | 'spanish' | 'french' | 'arabic' | 'portuguese' | 'russian' | 'indonesian' | 'german' | 'japanese' | 'chinese' | 'turkish'
-  
+  theme: 'light' | 'dark' | 'system'
   fontSize: number
   voiceLanguage: string
   defaultModel: 'auto' | 'deepseek' | 'groq' | 'gemini'
@@ -21,7 +21,7 @@ export interface GrozlPersonalization {
 
 export const DEFAULT_SETTINGS: GrozlSettings = {
   language:      'hinglish',
-  
+  theme:         'system',
   fontSize:      15,
   voiceLanguage: 'hi-IN',
   defaultModel:  'auto',
@@ -105,4 +105,4 @@ export function patchPersonalization(patch: Partial<GrozlPersonalization>, userI
 
 export function applyFontSize(size: number) {
   document.documentElement.style.setProperty('--chat-font-size', `${size}px`)
-      }
+  }

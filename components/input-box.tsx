@@ -77,10 +77,11 @@ export default function InputBox({
             <button
               key={chip}
               onClick={() => onToggleChip(chip)}
-              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-medium transition-all duration-200 backdrop-blur-md ${
+              style={activeChips.has(chip) ? { boxShadow: '0 0 14px 3px rgba(77,107,254,0.5)' } : {}}
+              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-semibold transition-all duration-300 ${
                 activeChips.has(chip)
-                  ? 'border-[#4D6BFE]/60 bg-[#EEF2FF]/80 dark:bg-[#4D6BFE]/20 dark:border-[#4D6BFE]/60 text-[#4D6BFE] dark:text-[#93c5fd] shadow-sm shadow-[#4D6BFE]/20'
-                  : 'border-black/10 dark:border-[#4D6BFE]/30 bg-white/60 dark:bg-[#4D6BFE]/[0.06] text-black/60 dark:text-[#93c5fd]/80 hover:bg-black/5 dark:hover:bg-[#4D6BFE]/[0.12]'
+                  ? 'border-[#4D6BFE] bg-[#4D6BFE] text-white scale-[1.05]'
+                  : 'border-white/10 bg-white/[0.04] text-white/30 hover:border-white/20 hover:text-white/55 hover:bg-white/[0.08]'
               }`}
             >
               {chip === 'think' ? (
@@ -142,3 +143,4 @@ export default function InputBox({
     </div>
   )
           }
+            

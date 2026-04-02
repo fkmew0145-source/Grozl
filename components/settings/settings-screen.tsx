@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { ChevronLeft, ChevronRight, LogOut } from 'lucide-react'
+import { useTheme } from 'next-themes'
 import type { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
-import { loadSettings, GrozlSettings } from './settings-store'
+import { loadSettings, patchSettings, GrozlSettings } from './settings-store'
 import AccountPage        from './pages/account-page'
 import DataControlsPage  from './pages/data-controls-page'
 import MemoryPage        from './pages/memory-page'
@@ -47,8 +48,15 @@ export default function SettingsScreen({
   const [subPage, setSubPage]   = useState<SubPage>(null)
   const [settings, setSettings] = useState<GrozlSettings>(loadSettings)
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
+  const { theme, setTheme } = useTheme()
 
   useEffect(() => { setSettings(loadSettings()) }, [])
+
+  const handleThemeChange = useCallback((val: 'light' | 'dark' | 'system') => {
+    setTheme(val)
+    const updated = patchSettings({ theme: val })
+    setSettings(updated)
+  }, [setTheme])
 
   const handleLogout = useCallback(async () => {
     if (user) { const supabase = createClient(); await supabase.auth.signOut() }
@@ -115,6 +123,9 @@ export default function SettingsScreen({
       </SettingsWrapper>
     )
 
+  // current theme value (fall back to settings if useTheme not yet mounted)
+  const activeTheme = (theme as 'light' | 'dark' | 'system') ?? settings.theme ?? 'system'
+
   // ── Main settings list ────────────────────────────────────────────────
   return (
     <SettingsWrapper>
@@ -122,7 +133,7 @@ export default function SettingsScreen({
 
         {/* Header */}
         <div className="flex items-center bg-white/70 dark:bg-white/5 backdrop-blur-xl px-4 py-3 pt-12">
-          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition active:bg-gray-200">
+          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 dark:text-white/60 transition active:bg-gray-200 dark:active:bg-white/10">
             <ChevronLeft className="h-5 w-5" />
           </button>
           <h1 className="flex-1 text-center text-[17px] font-semibold text-black dark:text-white">Settings</h1>
@@ -130,6 +141,39 @@ export default function SettingsScreen({
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-3">
+
+          {/* ── Appearance ───────────────────────────────────────── */}
+          <p className="mb-1.5 px-1 text-[13px] text-black/50 dark:text-white/50">Appearance</p>
+          <div className="mb-5 overflow-hidden rounded-2xl bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-black/5 dark:border-white/10">
+            <div className="flex items-center px-4 py-4 gap-3">
+              {/* Icon */}
+              <span className="flex h-5 w-5 items-center justify-center">
+                {activeTheme === 'dark' ? <MoonIcon /> : activeTheme === 'light' ? <SunIcon /> : <SystemIcon />}
+              </span>
+              <span className="flex-1 text-[15px] text-black dark:text-white">Theme</span>
+              {/* 3-way pill toggle */}
+              <div className="flex items-center gap-0.5 rounded-xl bg-black/5 dark:bg-white/10 p-1">
+                {(['light', 'system', 'dark'] as const).map((val) => {
+                  const active = activeTheme === val
+                  const labels: Record<typeof val, string> = { light: 'Light', system: 'Auto', dark: 'Dark' }
+                  return (
+                    <button
+                      key={val}
+                      onClick={() => handleThemeChange(val)}
+                      className={[
+                        'rounded-lg px-3 py-1.5 text-[13px] font-medium transition-all duration-200',
+                        active
+                          ? 'bg-white dark:bg-white/20 text-black dark:text-white shadow-sm'
+                          : 'text-black/40 dark:text-white/40 hover:text-black/70 dark:hover:text-white/70',
+                      ].join(' ')}
+                    >
+                      {labels[val]}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
 
           {/* Profile */}
           <p className="mb-1.5 px-1 text-[13px] text-black/50 dark:text-white/50">Profile</p>
@@ -168,7 +212,7 @@ export default function SettingsScreen({
           <div className="mb-8 overflow-hidden rounded-2xl bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-black/5 dark:border-white/10">
             <button
               onClick={() => setShowLogoutDialog(true)}
-              className="flex w-full items-center gap-3 px-4 py-[14px] text-left transition active:bg-gray-50"
+              className="flex w-full items-center gap-3 px-4 py-[14px] text-left transition active:bg-gray-50 dark:active:bg-white/5"
             >
               <LogOut className="h-5 w-5 text-black/50 dark:text-white/50" />
               <span className="text-[15px] text-black dark:text-white">Log out</span>
@@ -182,14 +226,14 @@ export default function SettingsScreen({
       {/* Log out confirm */}
       {showLogoutDialog && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 px-8">
-          <div className="w-full max-w-[300px] overflow-hidden rounded-2xl bg-white shadow-2xl">
+          <div className="w-full max-w-[300px] overflow-hidden rounded-2xl bg-white dark:bg-[#1c1e26] shadow-2xl">
             <div className="px-5 py-5 text-center">
               <p className="text-[17px] font-semibold text-black dark:text-white">Confirm log out?</p>
               <p className="mt-1.5 text-[13px] leading-relaxed text-black/50 dark:text-white/50">Logging out won't delete any data. You can sign back in anytime.</p>
             </div>
-            <div className="flex border-t border-gray-100">
-              <button onClick={() => setShowLogoutDialog(false)} className="flex-1 border-r border-gray-100 py-3.5 text-[15px] text-gray-600 transition hover:bg-gray-50">Cancel</button>
-              <button onClick={handleLogout} className="flex-1 py-3.5 text-[15px] font-medium text-red-500 transition hover:bg-red-50">Log out</button>
+            <div className="flex border-t border-gray-100 dark:border-white/10">
+              <button onClick={() => setShowLogoutDialog(false)} className="flex-1 border-r border-gray-100 dark:border-white/10 py-3.5 text-[15px] text-gray-600 dark:text-white/60 transition hover:bg-gray-50 dark:hover:bg-white/5">Cancel</button>
+              <button onClick={handleLogout} className="flex-1 py-3.5 text-[15px] font-medium text-red-500 transition hover:bg-red-50 dark:hover:bg-red-500/10">Log out</button>
             </div>
           </div>
         </div>
@@ -203,12 +247,12 @@ function Divider() { return <div className="mx-4 h-px bg-black/5 dark:bg-white/1
 
 function SettingsRow({ icon, label, value, onPress }: { icon: React.ReactNode; label: string; value?: string; onPress: () => void }) {
   return (
-    <button onClick={onPress} className="flex w-full items-center justify-between px-4 py-4 text-left transition active:bg-gray-50">
+    <button onClick={onPress} className="flex w-full items-center justify-between px-4 py-4 text-left transition active:bg-gray-50 dark:active:bg-white/5">
       <div className="flex items-center gap-3">
         <span className="flex h-5 w-5 items-center justify-center">{icon}</span>
         <span className="text-[15px] text-black dark:text-white">{label}</span>
       </div>
-      <div className="flex items-center gap-1 text-gray-400">
+      <div className="flex items-center gap-1 text-gray-400 dark:text-white/30">
         {value && <span className="text-[14px]">{value}</span>}
         <ChevronRight className="h-4 w-4" />
       </div>
@@ -226,10 +270,10 @@ function UserIcon()    { return <svg {...s}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4
 function DataIcon()    { return <svg {...s}><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg> }
 function LangIcon()    { return <svg {...s}><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg> }
 function SunIcon()     { return <svg {...s}><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg> }
+function MoonIcon()    { return <svg {...s}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> }
+function SystemIcon()  { return <svg {...s}><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg> }
 function InfoIcon()    { return <svg {...s}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> }
 function HelpIcon()    { return <svg {...s}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> }
 function PersonIcon()  { return <svg {...s}><path d="M12 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/><path d="M20 21a8 8 0 1 0-16 0"/><path d="M15 10l1.5 1.5L19 9"/></svg> }
 function MemoryIcon()  { return <svg {...s}><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="8" cy="10" r="1.5"/><circle cx="16" cy="10" r="1.5"/><path d="M8 10h8"/></svg> }
-
-
       

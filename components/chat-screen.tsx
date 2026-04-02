@@ -585,7 +585,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
 
   // ── Render ───────────────────────────────────────────────────────────
   return (
-    <div className="flex h-dvh overflow-hidden bg-[#F5F3EF] dark:bg-[#1a1a1a]">
+    <div className="flex h-dvh overflow-hidden bg-transparent">
 
       {/* ── Chat column ──────────────────────────────────────────────── */}
       <div className={`flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${rightPanelOpen ? 'flex-1 min-w-0' : 'w-full'}`}>
@@ -733,13 +733,13 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       {/* Projects Right Panel */}
       {showProjectsPanel && (
         <>
-          <div className="hidden md:flex md:w-[380px] shrink-0 flex-col border-l border-gray-200 dark:border-white/[0.07] bg-white dark:bg-[#1a1a1a] shadow-xl">
+          <div className="hidden md:flex md:w-[380px] shrink-0 flex-col border-l border-black/5 dark:border-white/10 bg-white/70 dark:bg-black/80 backdrop-blur-xl shadow-xl">
             <ProjectsPanel
               currentSessionId={currentSessionId}
               onClose={() => { setShowProjectsPanel(false); setActiveMenuItem(null) }}
             />
           </div>
-          <div className="fixed inset-0 z-50 flex flex-col md:hidden bg-white dark:bg-[#1a1a1a]">
+          <div className="fixed inset-0 z-50 flex flex-col md:hidden bg-white/80 dark:bg-black/80 backdrop-blur-xl">
             <ProjectsPanel
               currentSessionId={currentSessionId}
               onClose={() => { setShowProjectsPanel(false); setActiveMenuItem(null); setSidebarOpen(false) }}

@@ -38,7 +38,7 @@ export default function LoginScreen({ onGuestContinue }: LoginScreenProps) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F5F3EF] dark:bg-[#1a1a1a] p-4">
+    <div className="flex min-h-screen items-center justify-center bg-transparent p-4">
       <div className="w-full max-w-md text-center">
         {/* Logo */}
         <div className="mx-auto mb-5 h-[90px] w-[90px]">
@@ -109,4 +109,5 @@ export default function LoginScreen({ onGuestContinue }: LoginScreenProps) {
     </div>
   )
     }
-      
+
+          

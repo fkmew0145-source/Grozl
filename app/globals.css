@@ -226,7 +226,9 @@ html.dark .grozl-settings-card {
 .dark textarea::placeholder {
   color: rgba(255,255,255,0.28);
 }
-
+.grozl-inputbox textarea {
+  background: transparent !important;
+}
 /* Keep user message bubble color */
 .dark .bg-\[\#4D6BFE\] { background-color: #4D6BFE !important; }
 

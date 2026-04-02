@@ -1,16 +1,21 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-/* ── Light Mode Variables ─────────────────────────────── */
+/* ── CRITICAL: Tell Tailwind v4 to use .dark CLASS for dark: utilities ── */
+/* Without this, dark: classes use OS media query instead of next-themes   */
+@variant dark (&:where(.dark, .dark *));
+
+/* ── Light Mode Variables ────────────────────────────────────────────── */
 :root {
   --background: #ffffff;
   --foreground: oklch(0.145 0 0);
   --card: rgba(255,255,255,0.7);
   --card-foreground: oklch(0.145 0 0);
   --border: rgba(0,0,0,0.06);
+  --chat-font-size: 15px;
 }
 
-/* ── Dark Mode Variables ──────────────────────────────── */
+/* ── Dark Mode Variables ─────────────────────────────────────────────── */
 .dark {
   --background: #0d0f14;
   --foreground: #ececec;
@@ -19,7 +24,7 @@
   --border: rgba(255,255,255,0.08);
 }
 
-/* ── Body Background ──────────────────────────────────── */
+/* ── Body ────────────────────────────────────────────────────────────── */
 html, body {
   min-height: 100%;
 }
@@ -27,38 +32,23 @@ html, body {
 body {
   background-color: var(--background);
   color: var(--foreground);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* ── Base ─────────────────────────────────────────────── */
+/* ── Base ────────────────────────────────────────────────────────────── */
 @layer base {
   * {
     @apply outline-none;
   }
 }
 
-/* ── Glass UI ─────────────────────────────────────────── */
+/* ── Glass UI ────────────────────────────────────────────────────────── */
 .grozl-glass {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
 
-/* ── Sidebar ──────────────────────────────────────────── */
-html .grozl-sidebar {
-  background: rgba(255,255,255,0.7) !important;
-  border-color: rgba(0,0,0,0.05) !important;
-}
-
-html.dark .grozl-sidebar {
-  background: rgba(255,255,255,0.04) !important;
-  border-color: rgba(255,255,255,0.07) !important;
-}
-
-/* ── Main ─────────────────────────────────────────────── */
-html .grozl-main {
-  background: transparent !important;
-}
-
-/* ── Input Box ────────────────────────────────────────── */
+/* ── Input Box (glass style) ─────────────────────────────────────────── */
 html .grozl-inputbox {
   background: rgba(255,255,255,0.6) !important;
   border-color: rgba(0,0,0,0.08) !important;
@@ -73,16 +63,7 @@ html.dark .grozl-inputbox {
   background: transparent !important;
 }
 
-/* ── Settings Cards ───────────────────────────────────── */
-html .grozl-settings-card {
-  background: rgba(255,255,255,0.7) !important;
-}
-
-html.dark .grozl-settings-card {
-  background: rgba(255,255,255,0.05) !important;
-}
-
-/* ── Scrollbar ────────────────────────────────────────── */
+/* ── Scrollbar ───────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
@@ -91,9 +72,4 @@ html.dark .grozl-settings-card {
 }
 .dark ::-webkit-scrollbar-thumb {
   background: rgba(255,255,255,0.12);
-}
-
-/* ── Font ─────────────────────────────────────────────── */
-:root {
-  --chat-font-size: 15px;
-}
+                   }

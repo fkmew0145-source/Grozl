@@ -44,6 +44,7 @@ export default function InputBox({
       }`}
     >
 
+      {/* Attached files */}
       {attachedFiles.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-2">
           {attachedFiles.map((file, i) => (
@@ -56,6 +57,7 @@ export default function InputBox({
         </div>
       )}
 
+      {/* Textarea */}
       <textarea
         ref={textareaRef}
         placeholder={isRecording ? 'Grozl Is Listening...' : 'Ask Grozl anything...'}
@@ -68,43 +70,75 @@ export default function InputBox({
         className="w-full resize-none bg-transparent text-base text-gray-800 dark:text-[#ececec] outline-none placeholder:text-gray-400 dark:placeholder:text-white/30 disabled:opacity-50 overflow-x-hidden"
       />
 
+      {/* Bottom bar */}
       <div className="mt-3.5 flex items-center justify-between">
         <div className="flex gap-2.5">
           {['think', 'search'].map(chip => (
             <button
               key={chip}
               onClick={() => onToggleChip(chip)}
-              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-medium transition-all ${
+              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-medium transition-all duration-200 backdrop-blur-md ${
                 activeChips.has(chip)
-                  ? 'border-[#4D6BFE]/60 bg-[#EEF2FF] dark:bg-[#4D6BFE]/20 text-[#4D6BFE]'
-                  : 'border-gray-200 dark:border-white/[0.08] text-gray-500 dark:text-white/50'
+                  ? 'border-[#4D6BFE]/50 bg-[#EEF2FF]/70 dark:bg-[#4D6BFE]/20 text-[#4D6BFE] shadow-sm'
+                  : 'border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 text-black/60 dark:text-white/50 hover:bg-black/5 dark:hover:bg-white/10'
               }`}
             >
+              {chip === 'think' ? (
+                <svg className="h-[15px] w-[15px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" />
+                  <path d="M9 21h6" />
+                  <path d="M12 6v1" />
+                  <path d="M9.5 9h5" />
+                </svg>
+              ) : (
+                <svg className="h-[15px] w-[15px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                  <path d="M2 12h20" />
+                </svg>
+              )}
               {chip}
             </button>
           ))}
         </div>
 
         <div className="flex items-center gap-4">
-          <button onClick={onToggleAttachMenu} className="text-gray-500 dark:text-white/50">
+          {/* Attach */}
+          <button
+            onClick={onToggleAttachMenu}
+            className="text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white transition"
+          >
             <Plus className="h-5 w-5" />
           </button>
 
+          {/* Mic / Send */}
           {!hasText && attachedFiles.length === 0 ? (
-            <button onClick={onMicClick}>
-              {isRecording ? <MicOff className="h-5 w-5 text-red-500" /> : <Mic className="h-5 w-5" />}
+            <button
+              onClick={onMicClick}
+              className={`transition ${
+                isRecording
+                  ? 'animate-pulse text-red-500'
+                  : 'text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white'
+              }`}
+            >
+              {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
             </button>
           ) : (
-            <button onClick={onSend} disabled={isLoading}>
+            <button
+              onClick={onSend}
+              disabled={isLoading}
+              className="text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 transition disabled:opacity-50"
+            >
               {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
             </button>
           )}
         </div>
       </div>
 
+      {/* Hidden inputs */}
       <input ref={cameraInputRef} type="file" className="hidden" onChange={onFileChange} />
       <input ref={photoInputRef} type="file" multiple className="hidden" onChange={onFileChange} />
       <input ref={fileInputRef} type="file" multiple className="hidden" onChange={onFileChange} />
     </div>
   )
-              }
+  }

@@ -125,62 +125,62 @@ export default function SettingsScreen({
   // ── Main settings list ────────────────────────────────────────────────
   return (
     <SettingsWrapper>
-      <div className="flex h-full flex-col bg-[#F2F2F7]">
+      <div className="flex h-full flex-col bg-transparent">
 
         {/* Header */}
-        <div className="flex items-center bg-[#F2F2F7] px-4 py-3 pt-12">
+        <div className="flex items-center bg-white/70 dark:bg-white/5 backdrop-blur-xl px-4 py-3 pt-12">
           <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition active:bg-gray-200">
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <h1 className="flex-1 text-center text-[17px] font-semibold text-gray-900">Settings</h1>
+          <h1 className="flex-1 text-center text-[17px] font-semibold text-black dark:text-white">Settings</h1>
           <div className="h-8 w-8" />
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-3">
 
           {/* Profile */}
-          <p className="mb-1.5 px-1 text-[13px] text-gray-500">Profile</p>
-          <div className="mb-5 overflow-hidden rounded-2xl bg-white shadow-sm">
+          <p className="mb-1.5 px-1 text-[13px] text-black/50 dark:text-white/50">Profile</p>
+          <div className="mb-5 overflow-hidden rounded-2xl bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-black/5 dark:border-white/10">
             <SettingsRow icon={<UserIcon />} label="Account settings" onPress={() => setSubPage('account')} />
             <Divider />
             <SettingsRow icon={<DataIcon />} label="Data controls" onPress={() => setSubPage('data-controls')} />
           </div>
 
           {/* Personalise */}
-          <p className="mb-1.5 px-1 text-[13px] text-gray-500">Personalise</p>
-          <div className="mb-5 overflow-hidden rounded-2xl bg-white shadow-sm">
+          <p className="mb-1.5 px-1 text-[13px] text-black/50 dark:text-white/50">Personalise</p>
+          <div className="mb-5 overflow-hidden rounded-2xl bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-black/5 dark:border-white/10">
             <SettingsRow icon={<PersonIcon />} label="Personalization" onPress={() => setSubPage('personalization')} />
             <Divider />
             <SettingsRow icon={<MemoryIcon />} label="Memory" onPress={() => setSubPage('memory')} />
           </div>
 
           {/* App */}
-          <p className="mb-1.5 px-1 text-[13px] text-gray-500">App</p>
-          <div className="mb-5 overflow-hidden rounded-2xl bg-white shadow-sm">
+          <p className="mb-1.5 px-1 text-[13px] text-black/50 dark:text-white/50">App</p>
+          <div className="mb-5 overflow-hidden rounded-2xl bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-black/5 dark:border-white/10">
             <SettingsRow icon={<LangIcon />} label="Language" value={langLabel} onPress={() => setSubPage('language')} />
             <Divider />
             <SettingsRow icon={<SunIcon />} label="Appearance" value={appearanceLabel} onPress={() => setSubPage('appearance')} />
           </div>
 
           {/* About */}
-          <p className="mb-1.5 px-1 text-[13px] text-gray-500">About</p>
-          <div className="mb-5 overflow-hidden rounded-2xl bg-white shadow-sm">
+          <p className="mb-1.5 px-1 text-[13px] text-black/50 dark:text-white/50">About</p>
+          <div className="mb-5 overflow-hidden rounded-2xl bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-black/5 dark:border-white/10">
             <SettingsRow icon={<InfoIcon />} label="Check for updates" value="1.0.0" onPress={() => setSubPage('about')} />
           </div>
 
           {/* Help & Feedback */}
-          <div className="mb-5 overflow-hidden rounded-2xl bg-white shadow-sm">
+          <div className="mb-5 overflow-hidden rounded-2xl bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-black/5 dark:border-white/10">
             <SettingsRow icon={<HelpIcon />} label="Help & Feedback" onPress={() => setSubPage('feedback')} />
           </div>
 
           {/* Log out */}
-          <div className="mb-8 overflow-hidden rounded-2xl bg-white shadow-sm">
+          <div className="mb-8 overflow-hidden rounded-2xl bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-black/5 dark:border-white/10">
             <button
               onClick={() => setShowLogoutDialog(true)}
               className="flex w-full items-center gap-3 px-4 py-[14px] text-left transition active:bg-gray-50"
             >
-              <LogOut className="h-5 w-5 text-gray-500" />
-              <span className="text-[15px] text-gray-800">Log out</span>
+              <LogOut className="h-5 w-5 text-black/50 dark:text-white/50" />
+              <span className="text-[15px] text-black dark:text-white">Log out</span>
             </button>
           </div>
 
@@ -193,8 +193,8 @@ export default function SettingsScreen({
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 px-8">
           <div className="w-full max-w-[300px] overflow-hidden rounded-2xl bg-white shadow-2xl">
             <div className="px-5 py-5 text-center">
-              <p className="text-[17px] font-semibold text-gray-900">Confirm log out?</p>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-gray-500">Logging out won't delete any data. You can sign back in anytime.</p>
+              <p className="text-[17px] font-semibold text-black dark:text-white">Confirm log out?</p>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-black/50 dark:text-white/50">Logging out won't delete any data. You can sign back in anytime.</p>
             </div>
             <div className="flex border-t border-gray-100">
               <button onClick={() => setShowLogoutDialog(false)} className="flex-1 border-r border-gray-100 py-3.5 text-[15px] text-gray-600 transition hover:bg-gray-50">Cancel</button>
@@ -208,14 +208,14 @@ export default function SettingsScreen({
 }
 
 // ── Reusable components ───────────────────────────────────────────────────
-function Divider() { return <div className="mx-4 h-px bg-gray-100" /> }
+function Divider() { return <div className="mx-4 h-px bg-black/5 dark:bg-white/10" /> }
 
 function SettingsRow({ icon, label, value, onPress }: { icon: React.ReactNode; label: string; value?: string; onPress: () => void }) {
   return (
     <button onClick={onPress} className="flex w-full items-center justify-between px-4 py-4 text-left transition active:bg-gray-50">
       <div className="flex items-center gap-3">
         <span className="flex h-5 w-5 items-center justify-center">{icon}</span>
-        <span className="text-[15px] text-gray-800">{label}</span>
+        <span className="text-[15px] text-black dark:text-white">{label}</span>
       </div>
       <div className="flex items-center gap-1 text-gray-400">
         {value && <span className="text-[14px]">{value}</span>}
@@ -226,11 +226,11 @@ function SettingsRow({ icon, label, value, onPress }: { icon: React.ReactNode; l
 }
 
 function SettingsWrapper({ children }: { children: React.ReactNode }) {
-  return <div className="fixed inset-0 z-[100] bg-[#F2F2F7]">{children}</div>
+  return <div className="fixed inset-0 z-[100] bg-transparent grozl-glass">{children}</div>
 }
 
 // ── Icon components ───────────────────────────────────────────────────────
-const s = { className: 'h-5 w-5 text-gray-500', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '1.75', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+const s = { className: 'h-5 w-5 text-black/50 dark:text-white/50', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '1.75', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
 function UserIcon()    { return <svg {...s}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> }
 function DataIcon()    { return <svg {...s}><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg> }
 function LangIcon()    { return <svg {...s}><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg> }
@@ -239,4 +239,5 @@ function InfoIcon()    { return <svg {...s}><circle cx="12" cy="12" r="10"/><lin
 function HelpIcon()    { return <svg {...s}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> }
 function PersonIcon()  { return <svg {...s}><path d="M12 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/><path d="M20 21a8 8 0 1 0-16 0"/><path d="M15 10l1.5 1.5L19 9"/></svg> }
 function MemoryIcon()  { return <svg {...s}><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="8" cy="10" r="1.5"/><circle cx="16" cy="10" r="1.5"/><path d="M8 10h8"/></svg> }
-    
+
+          

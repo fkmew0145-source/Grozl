@@ -578,7 +578,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
         rows={1} value={inputValue} onChange={handleInput}
         onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)}
         disabled={isLoading}
-        className="w-full resize-none bg-transparent text-base text-gray-800 dark:text-[#ececec] outline-none placeholder:text-gray-400 dark:placeholder:text-white/30 disabled:opacity-50 [border:none] [box-shadow:none] overflow-x-hidden"
+        className="w-full resize-none bg-transparent appearance-none text-base text-gray-800 dark:text-[#ececec] outline-none placeholder:text-gray-400 dark:placeholder:text-white/30 disabled:opacity-50 [border:none] [box-shadow:none] overflow-x-hidden"
         />
       <div className="mt-3.5 flex items-center justify-between">
         <div className="flex gap-2.5">

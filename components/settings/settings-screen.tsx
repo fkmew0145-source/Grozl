@@ -272,4 +272,4 @@ function InfoIcon()   { return <svg {...s}><circle cx="12" cy="12" r="10"/><line
 function HelpIcon()   { return <svg {...s}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> }
 function PersonIcon() { return <svg {...s}><path d="M12 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/><path d="M20 21a8 8 0 1 0-16 0"/><path d="M15 10l1.5 1.5L19 9"/></svg> }
 function MemoryIcon() { return <svg {...s}><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="8" cy="10" r="1.5"/><circle cx="16" cy="10" r="1.5"/><path d="M8 10h8"/></svg> }
-                     
+              

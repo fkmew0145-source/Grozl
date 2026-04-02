@@ -3,19 +3,6 @@ import Groq from 'groq-sdk'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { createClient } from '@/lib/supabase/server'
 
-export async function POST(req: Request) {
-  try {
-    const body = await req.json()
-    const { messages } = body
-
-    // ❗ check
-    if (!messages) {
-      return new Response(
-        JSON.stringify({ error: 'No messages' }),
-        { status: 400 }
-      )
-    }
-
 const groq  = new Groq({ apiKey: process.env.GROQ_API_KEY })
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 

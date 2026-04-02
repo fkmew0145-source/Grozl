@@ -2,8 +2,12 @@
 @import 'tw-animate-css';
 
 /* ── CRITICAL: Tell Tailwind v4 to use .dark CLASS for dark: utilities ── */
-/* Without this, dark: classes use OS media query instead of next-themes   */
 @variant dark (&:where(.dark, .dark *));
+
+/* ── Font ─────────────────────────────────────────────────────────────── */
+@theme {
+  --font-jakarta: var(--font-jakarta), 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+}
 
 /* ── Light Mode Variables ────────────────────────────────────────────── */
 :root {
@@ -27,6 +31,7 @@
 /* ── Body ────────────────────────────────────────────────────────────── */
 html, body {
   min-height: 100%;
+  font-family: var(--font-jakarta, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif);
 }
 
 body {
@@ -63,6 +68,17 @@ html.dark .grozl-inputbox {
   background: transparent !important;
 }
 
+/* ── Input Box Focus Glow Animation ──────────────────────────────────── */
+@keyframes grozl-focus-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(77,107,254,0.25), 0 4px 20px rgba(77,107,254,0.08); }
+  50%  { box-shadow: 0 0 0 4px rgba(77,107,254,0.10), 0 4px 24px rgba(77,107,254,0.15); }
+  100% { box-shadow: 0 0 0 0 rgba(77,107,254,0.25), 0 4px 20px rgba(77,107,254,0.08); }
+}
+
+.grozl-inputbox-focused {
+  animation: grozl-focus-pulse 2s ease-in-out infinite;
+}
+
 /* ── Scrollbar ───────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -72,4 +88,4 @@ html.dark .grozl-inputbox {
 }
 .dark ::-webkit-scrollbar-thumb {
   background: rgba(255,255,255,0.12);
-                   }
+}

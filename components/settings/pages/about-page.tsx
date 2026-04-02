@@ -97,163 +97,121 @@ For privacy-related questions or data requests:
 Email: grozlteam@gmail.com`
 
 export default function AboutPage({ onBack }: AboutPageProps) {
-  const [subPage, setSubPage] = useState<'main' | 'terms' | 'privacy' | 'help'>('main')
+  const [subPage, setSubPage]       = useState<'main' | 'terms' | 'privacy' | 'help'>('main')
   const [versionToast, setVersionToast] = useState(false)
 
-  const showVersionToast = () => {
-    setVersionToast(true)
-    setTimeout(() => setVersionToast(false), 2500)
-  }
+  const showVersionToast = () => { setVersionToast(true); setTimeout(() => setVersionToast(false), 2500) }
 
-  if (subPage === 'terms') {
-    return (
-      <div className="flex h-full flex-col bg-[#F2F2F7]">
-        <div className="flex items-center gap-3 bg-[#F2F2F7] px-4 py-4 pt-6">
-          <button onClick={() => setSubPage('main')} className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition hover:bg-gray-200">
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <h1 className="text-[17px] font-semibold text-gray-900">Terms of Use</h1>
-        </div>
-        <div className="flex-1 overflow-y-auto px-4 py-2">
-          <div className="rounded-2xl bg-white px-4 py-5">
-            <pre className="whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700 font-sans">{TERMS_OF_USE}</pre>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (subPage === 'privacy') {
-    return (
-      <div className="flex h-full flex-col bg-[#F2F2F7]">
-        <div className="flex items-center gap-3 bg-[#F2F2F7] px-4 py-4 pt-6">
-          <button onClick={() => setSubPage('main')} className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition hover:bg-gray-200">
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <h1 className="text-[17px] font-semibold text-gray-900">Privacy Policy</h1>
-        </div>
-        <div className="flex-1 overflow-y-auto px-4 py-2">
-          <div className="rounded-2xl bg-white px-4 py-5">
-            <pre className="whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700 font-sans">{PRIVACY_POLICY}</pre>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (subPage === 'help') {
-    return (
-      <div className="flex h-full flex-col bg-[#F2F2F7]">
-        <div className="flex items-center gap-3 bg-[#F2F2F7] px-4 py-4 pt-6">
-          <button onClick={() => setSubPage('main')} className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition hover:bg-gray-200">
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <h1 className="text-[17px] font-semibold text-gray-900">Help &amp; Feedback</h1>
-        </div>
-        <div className="flex-1 overflow-y-auto px-4 py-2">
-          <div className="overflow-hidden rounded-2xl bg-white">
-            <a
-              href="mailto:grozlteam@gmail.com?subject=Bug Report&body=Describe the bug here..."
-              className="flex w-full items-center justify-between px-4 py-4 transition active:bg-gray-50"
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-[20px]">📧</span>
-                <div>
-                  <p className="text-[15px] text-gray-800">Email Support</p>
-                  <p className="text-[12px] text-gray-400">grozlteam@gmail.com</p>
-                </div>
-              </div>
-              <ChevronRight className="h-4 w-4 text-gray-400" />
-            </a>
-          </div>
-          <p className="mt-4 px-1 text-center text-[12px] text-gray-400">
-            We typically respond within 24–48 hours.
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex h-full flex-col bg-[#F2F2F7]">
-      {/* Header */}
-      <div className="flex items-center gap-3 bg-[#F2F2F7] px-4 py-4 pt-6">
-        <button onClick={onBack} className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition hover:bg-gray-200">
+  const SubLayout = ({ title, onBack: goBack, children }: { title: string; onBack: () => void; children: React.ReactNode }) => (
+    <div className="flex h-full flex-col bg-[#F2F2F7] dark:bg-[#0d0f14]">
+      <div className="flex items-center gap-3 bg-[#F2F2F7] dark:bg-[#0d0f14] px-4 py-4 pt-6">
+        <button onClick={goBack} className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 dark:text-white/60 transition hover:bg-gray-200 dark:hover:bg-white/10">
           <ChevronLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-[17px] font-semibold text-gray-900">About</h1>
+        <h1 className="text-[17px] font-semibold text-gray-900 dark:text-white">{title}</h1>
+      </div>
+      <div className="flex-1 overflow-y-auto px-4 py-2">{children}</div>
+    </div>
+  )
+
+  if (subPage === 'terms') return (
+    <SubLayout title="Terms of Use" onBack={() => setSubPage('main')}>
+      <div className="rounded-2xl bg-white dark:bg-white/5 px-4 py-5">
+        <pre className="whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700 dark:text-white/70 font-sans">{TERMS_OF_USE}</pre>
+      </div>
+    </SubLayout>
+  )
+
+  if (subPage === 'privacy') return (
+    <SubLayout title="Privacy Policy" onBack={() => setSubPage('main')}>
+      <div className="rounded-2xl bg-white dark:bg-white/5 px-4 py-5">
+        <pre className="whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700 dark:text-white/70 font-sans">{PRIVACY_POLICY}</pre>
+      </div>
+    </SubLayout>
+  )
+
+  if (subPage === 'help') return (
+    <SubLayout title="Help & Feedback" onBack={() => setSubPage('main')}>
+      <div className="overflow-hidden rounded-2xl bg-white dark:bg-white/5">
+        <a href="mailto:grozlteam@gmail.com?subject=Bug Report&body=Describe the bug here..." className="flex w-full items-center justify-between px-4 py-4 transition active:bg-gray-50 dark:active:bg-white/5">
+          <div className="flex items-center gap-3">
+            <span className="text-[20px]">📧</span>
+            <div>
+              <p className="text-[15px] text-gray-800 dark:text-white/90">Email Support</p>
+              <p className="text-[12px] text-gray-400 dark:text-white/30">grozlteam@gmail.com</p>
+            </div>
+          </div>
+          <ChevronRight className="h-4 w-4 text-gray-400 dark:text-white/30" />
+        </a>
+      </div>
+      <p className="mt-4 px-1 text-center text-[12px] text-gray-400 dark:text-white/30">We typically respond within 24–48 hours.</p>
+    </SubLayout>
+  )
+
+  return (
+    <div className="flex h-full flex-col bg-[#F2F2F7] dark:bg-[#0d0f14]">
+      <div className="flex items-center gap-3 bg-[#F2F2F7] dark:bg-[#0d0f14] px-4 py-4 pt-6">
+        <button onClick={onBack} className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 dark:text-white/60 transition hover:bg-gray-200 dark:hover:bg-white/10">
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+        <h1 className="text-[17px] font-semibold text-gray-900 dark:text-white">About</h1>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-2">
-        {/* App info card */}
-        <div className="mb-6 flex flex-col items-center rounded-2xl bg-white px-4 py-6">
+        <div className="mb-6 flex flex-col items-center rounded-2xl bg-white dark:bg-white/5 px-4 py-6">
           <img src="/logo.png" alt="Grozl" className="mb-3 h-16 w-16 object-contain" />
-          <p className="text-[19px] font-bold text-gray-900">Grozl AI</p>
-          <p className="text-[13px] text-gray-400">All the World's Best AI. One Platform.</p>
+          <p className="text-[19px] font-bold text-gray-900 dark:text-white">Grozl AI</p>
+          <p className="text-[13px] text-gray-400 dark:text-white/30">All the World's Best AI. One Platform.</p>
         </div>
 
-        {/* About section */}
-        <p className="mb-2 px-1 text-[13px] text-gray-500">About</p>
-        <div className="mb-6 overflow-hidden rounded-2xl bg-white">
-          <button
-            onClick={showVersionToast}
-            className="flex w-full items-center justify-between px-4 py-4 transition active:bg-gray-50"
-          >
+        <p className="mb-2 px-1 text-[13px] text-gray-500 dark:text-white/50">About</p>
+        <div className="mb-6 overflow-hidden rounded-2xl bg-white dark:bg-white/5">
+          <button onClick={showVersionToast} className="flex w-full items-center justify-between px-4 py-4 transition active:bg-gray-50 dark:active:bg-white/5">
             <div className="flex items-center gap-3">
-              <svg className="h-5 w-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="h-5 w-5 text-gray-500 dark:text-white/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
-              <span className="text-[15px] text-gray-800">Check for updates</span>
+              <span className="text-[15px] text-gray-800 dark:text-white/90">Check for updates</span>
             </div>
-            <div className="flex items-center gap-1 text-gray-400">
+            <div className="flex items-center gap-1 text-gray-400 dark:text-white/30">
               <span className="text-[13px]">v1.0.0</span>
               <ChevronRight className="h-4 w-4" />
             </div>
           </button>
         </div>
 
-        {/* Service agreement */}
-        <p className="mb-2 px-1 text-[13px] text-gray-500">Legal</p>
-        <div className="mb-6 overflow-hidden rounded-2xl bg-white">
-          <button
-            onClick={() => setSubPage('terms')}
-            className="flex w-full items-center justify-between px-4 py-4 transition active:bg-gray-50"
-          >
+        <p className="mb-2 px-1 text-[13px] text-gray-500 dark:text-white/50">Legal</p>
+        <div className="mb-6 overflow-hidden rounded-2xl bg-white dark:bg-white/5">
+          <button onClick={() => setSubPage('terms')} className="flex w-full items-center justify-between px-4 py-4 transition active:bg-gray-50 dark:active:bg-white/5">
             <div className="flex items-center gap-3">
-              <svg className="h-5 w-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="h-5 w-5 text-gray-500 dark:text-white/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
               </svg>
-              <span className="text-[15px] text-gray-800">Terms of Use</span>
+              <span className="text-[15px] text-gray-800 dark:text-white/90">Terms of Use</span>
             </div>
-            <ChevronRight className="h-4 w-4 text-gray-400" />
+            <ChevronRight className="h-4 w-4 text-gray-400 dark:text-white/30" />
           </button>
-          <div className="mx-4 h-px bg-gray-100" />
-          <button
-            onClick={() => setSubPage('privacy')}
-            className="flex w-full items-center justify-between px-4 py-4 transition active:bg-gray-50"
-          >
+          <div className="mx-4 h-px bg-gray-100 dark:bg-white/10" />
+          <button onClick={() => setSubPage('privacy')} className="flex w-full items-center justify-between px-4 py-4 transition active:bg-gray-50 dark:active:bg-white/5">
             <div className="flex items-center gap-3">
-              <svg className="h-5 w-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="h-5 w-5 text-gray-500 dark:text-white/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
-              <span className="text-[15px] text-gray-800">Privacy Policy</span>
+              <span className="text-[15px] text-gray-800 dark:text-white/90">Privacy Policy</span>
             </div>
-            <ChevronRight className="h-4 w-4 text-gray-400" />
+            <ChevronRight className="h-4 w-4 text-gray-400 dark:text-white/30" />
           </button>
         </div>
 
-        <p className="text-center text-[11px] text-gray-400">
-          AI-generated content is for reference only. Use legally.
-        </p>
+        <p className="text-center text-[11px] text-gray-400 dark:text-white/25">AI-generated content is for reference only. Use legally.</p>
       </div>
 
-      {/* Version toast */}
       {versionToast && (
-        <div className="pointer-events-none fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-2xl bg-gray-900 px-5 py-3 text-[14px] font-medium text-white shadow-xl">
+        <div className="pointer-events-none fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-2xl bg-gray-900 dark:bg-white/10 px-5 py-3 text-[14px] font-medium text-white shadow-xl backdrop-blur-xl">
           You are already on the latest version.
         </div>
       )}
     </div>
   )
-          }
-
+    }
+              

@@ -12,10 +12,26 @@
   --border: rgba(0,0,0,0.06);
 }
 
+/* ── Dark Mode Variables ───────────────────────── */
+.dark {
+  --bg-dark: linear-gradient(180deg, #0d0f14 0%, #111318 100%);
+
+  --background: transparent;
+  --foreground: oklch(0.95 0 0);
+  --card: rgba(255,255,255,0.04);
+  --card-foreground: oklch(0.95 0 0);
+  --border: rgba(255,255,255,0.08);
+}
+
 /* ── Apply Background ───────────────────────── */
 body {
   background: var(--bg-light);
   color: var(--foreground);
+  transition: background 0.3s ease, color 0.2s ease;
+}
+
+.dark body {
+  background: var(--bg-dark);
 }
 
 /* ── Base ───────────────────────── */
@@ -37,6 +53,11 @@ html .grozl-sidebar {
   border-color: rgba(0,0,0,0.05) !important;
 }
 
+html.dark .grozl-sidebar {
+  background: rgba(255,255,255,0.04) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+
 /* ── Main ───────────────────────── */
 html .grozl-main {
   background: transparent !important;
@@ -48,6 +69,11 @@ html .grozl-inputbox {
   border-color: rgba(0,0,0,0.08) !important;
 }
 
+html.dark .grozl-inputbox {
+  background: rgba(255,255,255,0.05) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+}
+
 .grozl-inputbox textarea {
   background: transparent !important;
 }
@@ -57,10 +83,19 @@ html .grozl-settings-card {
   background: rgba(255,255,255,0.7) !important;
 }
 
+html.dark .grozl-settings-card {
+  background: rgba(255,255,255,0.05) !important;
+}
+
 /* ── Text ───────────────────────── */
 .text-gray-900,
 .text-black {
   color: #111827 !important;
+}
+
+.dark .text-gray-900,
+.dark .text-black {
+  color: #f3f4f6 !important;
 }
 
 /* ── Borders ───────────────────────── */
@@ -68,9 +103,40 @@ html .grozl-settings-card {
   border-color: rgba(0,0,0,0.08) !important;
 }
 
+.dark .border-gray-200 {
+  border-color: rgba(255,255,255,0.08) !important;
+}
+
 /* ── Hover ───────────────────────── */
 .hover\:bg-gray-100:hover {
   background: rgba(0,0,0,0.05) !important;
+}
+
+.dark .hover\:bg-gray-100:hover {
+  background: rgba(255,255,255,0.07) !important;
+}
+
+/* ── Scrollbar ───────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.12);
+  border-radius: 99px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.12);
+}
+
+/* ── Smooth theme transition ───────────────────────── */
+*, *::before, *::after {
+  transition: background-color 0.25s ease, border-color 0.25s ease;
 }
 
 /* ── Font ───────────────────────── */

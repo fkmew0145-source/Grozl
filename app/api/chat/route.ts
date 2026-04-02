@@ -671,17 +671,24 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── General Hinglish / open-ended chat → Groq full tokens ──────────────
-  try { return await callGroq(SYSTEM_PROMPT, flatMessages) }
-  catch {
-    try { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_PROMPT, flatMessages)) }
-    catch { return NextResponse.json({ error: 'AI service unavailable. Please try again.' }, { status: 503 }) }
+// ── General Hinglish / open-ended chat → Groq full tokens ──────────────
+try {
+  return await callGroq(SYSTEM_PROMPT, flatMessages)
+} catch {
+  try {
+    return await callGeminiStreaming(
+      toGeminiTextParts(SYSTEM_PROMPT, flatMessages)
+    )
+  } catch {
+    return NextResponse.json(
+      { error: 'AI service unavailable. Please try again.' },
+      { status: 503 }
+    )
   }
+}
 
 // (AI call / processing)
-}  // ← ये missing था
-
-catch (error) {
+} catch (error) {
   return new Response(
     JSON.stringify({ error: 'Server error' }),
     { status: 500 }

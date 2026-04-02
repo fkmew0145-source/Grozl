@@ -63,13 +63,16 @@ export default function SettingsScreen({
     onLogout()
   }, [user, onLogout])
 
-  const langLabel       = { english: 'English', hindi: 'Hindi', hinglish: 'Hinglish',
+  const langLabel = { english: 'English', hindi: 'Hindi', hinglish: 'Hinglish',
     tamil: 'Tamil', telugu: 'Telugu', marathi: 'Marathi', gujarati: 'Gujarati',
     kannada: 'Kannada', malayalam: 'Malayalam', punjabi: 'Punjabi', bengali: 'Bengali',
     urdu: 'Urdu', spanish: 'Spanish', french: 'French', arabic: 'Arabic',
     portuguese: 'Portuguese', russian: 'Russian', indonesian: 'Indonesian',
     german: 'German', japanese: 'Japanese', chinese: 'Chinese', turkish: 'Turkish',
   }[settings.language] ?? settings.language
+
+  const activeTheme = (theme as 'light' | 'dark' | 'system') ?? settings.theme ?? 'system'
+  const themeLabel  = { light: 'Light', dark: 'Dark', system: 'Auto' }[activeTheme] ?? 'Auto'
 
   // ── Sub-page routing ──────────────────────────────────────────────────
   if (subPage === 'account')
@@ -95,6 +98,7 @@ export default function SettingsScreen({
 
   if (subPage === 'language')
     return <SettingsWrapper><LanguagePage settings={settings} onSettingsChange={setSettings} onBack={() => setSubPage(null)} /></SettingsWrapper>
+
   if (subPage === 'font-size')
     return <SettingsWrapper><FontSizePage settings={settings} onSettingsChange={setSettings} onBack={() => setSubPage(null)} /></SettingsWrapper>
 
@@ -123,9 +127,6 @@ export default function SettingsScreen({
       </SettingsWrapper>
     )
 
-  // current theme value (fall back to settings if useTheme not yet mounted)
-  const activeTheme = (theme as 'light' | 'dark' | 'system') ?? settings.theme ?? 'system'
-
   // ── Main settings list ────────────────────────────────────────────────
   return (
     <SettingsWrapper>
@@ -141,39 +142,6 @@ export default function SettingsScreen({
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-3">
-
-          {/* ── Appearance ───────────────────────────────────────── */}
-          <p className="mb-1.5 px-1 text-[13px] text-black/50 dark:text-white/50">Appearance</p>
-          <div className="mb-5 overflow-hidden rounded-2xl bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-black/5 dark:border-white/10">
-            <div className="flex items-center px-4 py-4 gap-3">
-              {/* Icon */}
-              <span className="flex h-5 w-5 items-center justify-center">
-                {activeTheme === 'dark' ? <MoonIcon /> : activeTheme === 'light' ? <SunIcon /> : <SystemIcon />}
-              </span>
-              <span className="flex-1 text-[15px] text-black dark:text-white">Theme</span>
-              {/* 3-way pill toggle */}
-              <div className="flex items-center gap-0.5 rounded-xl bg-black/5 dark:bg-white/10 p-1">
-                {(['light', 'system', 'dark'] as const).map((val) => {
-                  const active = activeTheme === val
-                  const labels: Record<typeof val, string> = { light: 'Light', system: 'Auto', dark: 'Dark' }
-                  return (
-                    <button
-                      key={val}
-                      onClick={() => handleThemeChange(val)}
-                      className={[
-                        'rounded-lg px-3 py-1.5 text-[13px] font-medium transition-all duration-200',
-                        active
-                          ? 'bg-white dark:bg-white/20 text-black dark:text-white shadow-sm'
-                          : 'text-black/40 dark:text-white/40 hover:text-black/70 dark:hover:text-white/70',
-                      ].join(' ')}
-                    >
-                      {labels[val]}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
 
           {/* Profile */}
           <p className="mb-1.5 px-1 text-[13px] text-black/50 dark:text-white/50">Profile</p>
@@ -191,10 +159,38 @@ export default function SettingsScreen({
             <SettingsRow icon={<MemoryIcon />} label="Memory" onPress={() => setSubPage('memory')} />
           </div>
 
-          {/* App */}
+          {/* App — Language + Theme together */}
           <p className="mb-1.5 px-1 text-[13px] text-black/50 dark:text-white/50">App</p>
           <div className="mb-5 overflow-hidden rounded-2xl bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-black/5 dark:border-white/10">
             <SettingsRow icon={<LangIcon />} label="Language" value={langLabel} onPress={() => setSubPage('language')} />
+            <Divider />
+            {/* Theme — inline 3-way pill, no sub-page */}
+            <div className="flex items-center px-4 py-[14px] gap-3">
+              <span className="flex h-5 w-5 items-center justify-center shrink-0">
+                {activeTheme === 'dark' ? <MoonIcon /> : activeTheme === 'light' ? <SunIcon /> : <SystemIcon />}
+              </span>
+              <span className="flex-1 text-[15px] text-black dark:text-white">Theme</span>
+              <div className="flex items-center gap-0.5 rounded-xl bg-black/[0.06] dark:bg-white/[0.08] p-[3px]">
+                {(['light', 'system', 'dark'] as const).map((val) => {
+                  const active = activeTheme === val
+                  const labels: Record<typeof val, string> = { light: 'Light', system: 'Auto', dark: 'Dark' }
+                  return (
+                    <button
+                      key={val}
+                      onClick={() => handleThemeChange(val)}
+                      className={[
+                        'rounded-[9px] px-3 py-1.5 text-[12px] font-medium transition-all duration-200',
+                        active
+                          ? 'bg-white dark:bg-white/20 text-black dark:text-white shadow-sm'
+                          : 'text-black/40 dark:text-white/40',
+                      ].join(' ')}
+                    >
+                      {labels[val]}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           </div>
 
           {/* About */}
@@ -219,7 +215,7 @@ export default function SettingsScreen({
             </button>
           </div>
 
-          <p className="mb-6 text-center text-[11px] text-gray-400">AI-generated, for reference only. Use legally.</p>
+          <p className="mb-6 text-center text-[11px] text-gray-400 dark:text-white/25">AI-generated, for reference only. Use legally.</p>
         </div>
       </div>
 
@@ -264,16 +260,16 @@ function SettingsWrapper({ children }: { children: React.ReactNode }) {
   return <div className="fixed inset-0 z-[100] bg-[#f8fafc] dark:bg-[#0d0f14]">{children}</div>
 }
 
-// ── Icon components ───────────────────────────────────────────────────────
+// ── Icons ─────────────────────────────────────────────────────────────────
 const s = { className: 'h-5 w-5 text-black/50 dark:text-white/50', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '1.75', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
-function UserIcon()    { return <svg {...s}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> }
-function DataIcon()    { return <svg {...s}><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg> }
-function LangIcon()    { return <svg {...s}><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg> }
-function SunIcon()     { return <svg {...s}><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg> }
-function MoonIcon()    { return <svg {...s}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> }
-function SystemIcon()  { return <svg {...s}><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg> }
-function InfoIcon()    { return <svg {...s}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> }
-function HelpIcon()    { return <svg {...s}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> }
-function PersonIcon()  { return <svg {...s}><path d="M12 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/><path d="M20 21a8 8 0 1 0-16 0"/><path d="M15 10l1.5 1.5L19 9"/></svg> }
-function MemoryIcon()  { return <svg {...s}><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="8" cy="10" r="1.5"/><circle cx="16" cy="10" r="1.5"/><path d="M8 10h8"/></svg> }
-      
+function UserIcon()   { return <svg {...s}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> }
+function DataIcon()   { return <svg {...s}><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg> }
+function LangIcon()   { return <svg {...s}><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg> }
+function SunIcon()    { return <svg {...s}><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg> }
+function MoonIcon()   { return <svg {...s}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> }
+function SystemIcon() { return <svg {...s}><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg> }
+function InfoIcon()   { return <svg {...s}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> }
+function HelpIcon()   { return <svg {...s}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> }
+function PersonIcon() { return <svg {...s}><path d="M12 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/><path d="M20 21a8 8 0 1 0-16 0"/><path d="M15 10l1.5 1.5L19 9"/></svg> }
+function MemoryIcon() { return <svg {...s}><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="8" cy="10" r="1.5"/><circle cx="16" cy="10" r="1.5"/><path d="M8 10h8"/></svg> }
+                     

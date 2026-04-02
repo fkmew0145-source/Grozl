@@ -1,12 +1,9 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-@custom-variant dark (&:is(.dark *));
-
 /* ── Premium Background System ───────────────────────── */
 :root {
   --bg-light: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  --bg-dark: radial-gradient(circle at top, #111827 0%, #050505 100%);
 
   --background: transparent;
   --foreground: oklch(0.145 0 0);
@@ -15,22 +12,10 @@
   --border: rgba(0,0,0,0.06);
 }
 
-.dark {
-  --background: transparent;
-  --foreground: #ececec;
-  --card: rgba(255,255,255,0.05);
-  --card-foreground: #ececec;
-  --border: rgba(255,255,255,0.1);
-}
-
 /* ── Apply Background ───────────────────────── */
 body {
   background: var(--bg-light);
   color: var(--foreground);
-}
-
-.dark body {
-  background: var(--bg-dark);
 }
 
 /* ── Base ───────────────────────── */
@@ -47,28 +32,17 @@ body {
 }
 
 /* ── Sidebar ───────────────────────── */
-html.dark .grozl-sidebar {
-  background: rgba(0,0,0,0.6) !important;
-  border-color: rgba(255,255,255,0.08) !important;
-}
 html .grozl-sidebar {
   background: rgba(255,255,255,0.7) !important;
   border-color: rgba(0,0,0,0.05) !important;
 }
 
 /* ── Main ───────────────────────── */
-html.dark .grozl-main {
-  background: transparent !important;
-}
 html .grozl-main {
   background: transparent !important;
 }
 
 /* ── Input Box ───────────────────────── */
-html.dark .grozl-inputbox {
-  background: rgba(255,255,255,0.05) !important;
-  border-color: rgba(255,255,255,0.1) !important;
-}
 html .grozl-inputbox {
   background: rgba(255,255,255,0.6) !important;
   border-color: rgba(0,0,0,0.08) !important;
@@ -79,36 +53,22 @@ html .grozl-inputbox {
 }
 
 /* ── Settings Cards ───────────────────────── */
-html.dark .grozl-settings-card {
-  background: rgba(255,255,255,0.05) !important;
-}
 html .grozl-settings-card {
   background: rgba(255,255,255,0.7) !important;
 }
 
 /* ── Text ───────────────────────── */
-.dark .text-gray-900,
-.dark .text-black {
-  color: #ececec !important;
-}
-
 .text-gray-900,
 .text-black {
   color: #111827 !important;
 }
 
 /* ── Borders ───────────────────────── */
-.dark .border-gray-200 {
-  border-color: rgba(255,255,255,0.1) !important;
-}
 .border-gray-200 {
   border-color: rgba(0,0,0,0.08) !important;
 }
 
 /* ── Hover ───────────────────────── */
-.dark .hover\:bg-gray-100:hover {
-  background: rgba(255,255,255,0.08) !important;
-}
 .hover\:bg-gray-100:hover {
   background: rgba(0,0,0,0.05) !important;
 }

@@ -661,17 +661,25 @@ export async function POST(req: NextRequest) {
       }
     }
   }
-
-  // ── TIER 1: Casual short chat → Groq 512 tokens ────────────────────────
-  if (isCasualShort(messages)) {
-    try { return await callGroq(SYSTEM_PROMPT, flatMessages, 512) }
-    catch {
-      try { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_PROMPT, flatMessages)) }
-      catch { return NextResponse.json({ error: 'AI service unavailable. Please try again.' }, { status: 503 }) }
+// ── TIER 1: Casual short chat → Groq 512 tokens ────────────────────────
+if (isCasualShort(messages)) {
+  try {
+    return await callGroq(SYSTEM_PROMPT, flatMessages, 512)
+  } catch {
+    try {
+      return await callGeminiStreaming(
+        toGeminiTextParts(SYSTEM_PROMPT, flatMessages)
+      )
+    } catch {
+      return NextResponse.json(
+        { error: 'AI service unavailable. Please try again.' },
+        { status: 503 }
+      )
     }
   }
+}
 
-// ── General Hinglish / open-ended chat → Groq full tokens ──────────────
+// ── General Hinglish / open-ended chat ────────────────────────────────
 try {
   return await callGroq(SYSTEM_PROMPT, flatMessages)
 } catch {
@@ -684,11 +692,5 @@ try {
       { error: 'AI service unavailable. Please try again.' },
       { status: 503 }
     )
-
-  // (AI call / processing)
-} catch (error) {
-  return new Response(
-    JSON.stringify({ error: 'Server error' }),
-    { status: 500 }
-  )
+  }
 }

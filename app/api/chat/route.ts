@@ -677,13 +677,13 @@ export async function POST(req: NextRequest) {
     try { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_PROMPT, flatMessages)) }
     catch { return NextResponse.json({ error: 'AI service unavailable. Please try again.' }, { status: 503 }) }
   }
-  
- // (AI call / processing)
-    
-  } catch (error) {
-    return new Response(
-      JSON.stringify({ error: 'Server error' }),
-      { status: 500 }
-    )
+
+// (AI call / processing)
+}  // ← ये missing था
+
+catch (error) {
+  return new Response(
+    JSON.stringify({ error: 'Server error' }),
+    { status: 500 }
+  )
   }
-                                }

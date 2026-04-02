@@ -82,19 +82,19 @@ export default function AccountPage({ user, onBack, onLogout }: AccountPageProps
     : (profile.nickname || user?.email?.split('@')[0] || 'U').slice(0, 2).toUpperCase()
 
   return (
-    <div className="flex h-full flex-col bg-[#F2F2F7]">
+    <div className="flex h-full flex-col bg-[#F2F2F7] dark:bg-[#0d0f14]">
       {/* Header */}
-      <div className="flex items-center gap-3 bg-[#F2F2F7] px-4 py-4 pt-6">
-        <button onClick={onBack} className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition hover:bg-gray-200">
+      <div className="flex items-center gap-3 bg-[#F2F2F7] dark:bg-[#0d0f14] px-4 py-4 pt-6">
+        <button onClick={onBack} className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition hover:bg-gray-200 dark:hover:bg-white/10">
           <ChevronLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-[17px] font-semibold text-gray-900">Account settings</h1>
+        <h1 className="text-[17px] font-semibold text-gray-900 dark:text-white">Account settings</h1>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-2">
 
         {/* Profile card */}
-        <div className="mb-6 flex flex-col items-center rounded-2xl bg-white px-4 py-6">
+        <div className="mb-6 flex flex-col items-center rounded-2xl bg-white dark:bg-white/5 px-4 py-6">
           <div className="relative mb-3">
             {profile.avatarUrl ? (
               <img src={profile.avatarUrl} alt="Profile" className="h-20 w-20 rounded-full object-cover" />
@@ -104,36 +104,36 @@ export default function AccountPage({ user, onBack, onLogout }: AccountPageProps
               </div>
             )}
           </div>
-          <p className="text-[17px] font-semibold text-gray-900">{profile.fullName || profile.nickname || user?.email?.split('@')[0] || 'Guest'}</p>
+          <p className="text-[17px] font-semibold text-gray-900 dark:text-white">{profile.fullName || profile.nickname || user?.email?.split('@')[0] || 'Guest'}</p>
           {profile.nickname && profile.fullName && (
-            <p className="text-[13px] text-gray-400">{profile.nickname}</p>
+            <p className="text-[13px] text-gray-400 dark:text-white/30">{profile.nickname}</p>
           )}
           {profile.bio && (
             <p className="mt-2 text-center text-[13px] text-gray-500 px-4">{profile.bio}</p>
           )}
           <button
             onClick={openEditProfile}
-            className="mt-4 rounded-xl border border-gray-200 px-5 py-2 text-[14px] font-medium text-gray-700 transition hover:bg-gray-50"
+            className="mt-4 rounded-xl border border-gray-200 px-5 py-2 text-[14px] font-medium text-gray-700 transition hover:bg-gray-50 dark:hover:bg-white/5"
           >
             Edit Profile
           </button>
         </div>
 
         {/* Account info */}
-        <p className="mb-2 px-1 text-[13px] text-gray-500">Account</p>
-        <div className="mb-6 overflow-hidden rounded-2xl bg-white">
+        <p className="mb-2 px-1 text-[13px] text-gray-500 dark:text-white/50">Account</p>
+        <div className="mb-6 overflow-hidden rounded-2xl bg-white dark:bg-white/5 dark:bg-white/5">
           {user?.email && (
             <div className="flex items-center justify-between px-4 py-3.5">
               <div className="flex items-center gap-3">
-                <Mail className="h-5 w-5 text-gray-500" />
-                <span className="text-[15px] text-gray-800">Email</span>
+                <Mail className="h-5 w-5 text-gray-500 dark:text-white/50" />
+                <span className="text-[15px] text-gray-800 dark:text-white/90">Email</span>
               </div>
-              <span className="text-[13px] text-gray-400">{maskedEmail}</span>
+              <span className="text-[13px] text-gray-400 dark:text-white/30">{maskedEmail}</span>
             </div>
           )}
           {user?.app_metadata?.provider === 'google' && (
             <>
-              {user?.email && <div className="mx-4 h-px bg-gray-100" />}
+              {user?.email && <div className="mx-4 h-px bg-gray-100 dark:bg-white/10" />}
               <div className="flex items-center justify-between px-4 py-3.5">
                 <div className="flex items-center gap-3">
                   <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -142,15 +142,15 @@ export default function AccountPage({ user, onBack, onLogout }: AccountPageProps
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                   </svg>
-                  <span className="text-[15px] text-gray-800">Google</span>
+                  <span className="text-[15px] text-gray-800 dark:text-white/90">Google</span>
                 </div>
-                <span className="text-[13px] text-gray-400">Linked</span>
+                <span className="text-[13px] text-gray-400 dark:text-white/30">Linked</span>
               </div>
             </>
           )}
           {!user && (
             <div className="px-4 py-3.5">
-              <span className="text-[15px] text-gray-500">Guest account — no login</span>
+              <span className="text-[15px] text-gray-500 dark:text-white/50">Guest account — no login</span>
             </div>
           )}
         </div>
@@ -158,28 +158,28 @@ export default function AccountPage({ user, onBack, onLogout }: AccountPageProps
         {/* Danger actions */}
         {user ? (
           <>
-            <div className="mb-3 overflow-hidden rounded-2xl bg-white">
+            <div className="mb-3 overflow-hidden rounded-2xl bg-white dark:bg-white/5 dark:bg-white/5">
               <button
                 onClick={() => setShowLogoutDialog(true)}
-                className="w-full px-4 py-4 text-left text-[15px] font-medium text-red-500 transition active:bg-gray-50"
+                className="w-full px-4 py-4 text-left text-[15px] font-medium text-red-500 transition active:bg-gray-50 dark:active:bg-white/5"
               >
                 Log out of all devices
               </button>
             </div>
-            <div className="overflow-hidden rounded-2xl bg-white">
+            <div className="overflow-hidden rounded-2xl bg-white dark:bg-white/5 dark:bg-white/5">
               <button
                 onClick={() => setShowDeleteDialog(true)}
-                className="w-full px-4 py-4 text-left text-[15px] font-medium text-red-500 transition active:bg-gray-50"
+                className="w-full px-4 py-4 text-left text-[15px] font-medium text-red-500 transition active:bg-gray-50 dark:active:bg-white/5"
               >
                 Delete account
               </button>
             </div>
           </>
         ) : (
-          <div className="overflow-hidden rounded-2xl bg-white">
+          <div className="overflow-hidden rounded-2xl bg-white dark:bg-white/5 dark:bg-white/5">
             <button
               onClick={handleGuestLogout}
-              className="w-full px-4 py-4 text-left text-[15px] font-medium text-red-500 transition active:bg-gray-50"
+              className="w-full px-4 py-4 text-left text-[15px] font-medium text-red-500 transition active:bg-gray-50 dark:active:bg-white/5"
             >
               Clear data &amp; restart
             </button>
@@ -190,10 +190,10 @@ export default function AccountPage({ user, onBack, onLogout }: AccountPageProps
       {/* Edit Profile Sheet */}
       {showEditProfile && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
-          <div className="w-full max-w-lg rounded-t-3xl bg-white px-4 pb-8 pt-4">
+          <div className="w-full max-w-lg rounded-t-3xl bg-white dark:bg-white/5 px-4 pb-8 pt-4">
             <div className="mb-5 flex items-center justify-between">
-              <button onClick={() => setShowEditProfile(false)} className="text-[15px] text-gray-500">Cancel</button>
-              <p className="text-[17px] font-semibold text-gray-900">Edit Profile</p>
+              <button onClick={() => setShowEditProfile(false)} className="text-[15px] text-gray-500 dark:text-white/50">Cancel</button>
+              <p className="text-[17px] font-semibold text-gray-900 dark:text-white">Edit Profile</p>
               <button
                 onClick={handleSaveProfile}
                 disabled={savingProfile}
@@ -232,27 +232,27 @@ export default function AccountPage({ user, onBack, onLogout }: AccountPageProps
               { label: 'Nickname', key: 'nickname', placeholder: 'What should Grozl call you?' },
             ].map(field => (
               <div key={field.key} className="mb-4">
-                <p className="mb-1.5 text-[13px] text-gray-500">{field.label}</p>
+                <p className="mb-1.5 text-[13px] text-gray-500 dark:text-white/50">{field.label}</p>
                 <div className="rounded-2xl bg-gray-100 px-4 py-3">
                   <input
                     type="text"
                     value={editProfile[field.key as 'fullName' | 'nickname']}
                     onChange={e => setEditProfile(prev => ({ ...prev, [field.key]: e.target.value }))}
                     placeholder={field.placeholder}
-                    className="w-full bg-transparent text-[15px] text-gray-800 outline-none placeholder:text-gray-400"
+                    className="w-full bg-transparent text-[15px] text-gray-800 outline-none placeholder:text-gray-400 dark:text-white/30"
                   />
                 </div>
               </div>
             ))}
             <div className="mb-4">
-              <p className="mb-1.5 text-[13px] text-gray-500">Bio</p>
+              <p className="mb-1.5 text-[13px] text-gray-500 dark:text-white/50">Bio</p>
               <div className="rounded-2xl bg-gray-100 px-4 py-3">
                 <textarea
                   value={editProfile.bio}
                   onChange={e => setEditProfile(prev => ({ ...prev, bio: e.target.value }))}
                   placeholder="A little about yourself..."
                   rows={3}
-                  className="w-full resize-none bg-transparent text-[15px] text-gray-800 outline-none placeholder:text-gray-400"
+                  className="w-full resize-none bg-transparent text-[15px] text-gray-800 outline-none placeholder:text-gray-400 dark:text-white/30"
                 />
               </div>
             </div>
@@ -263,18 +263,18 @@ export default function AccountPage({ user, onBack, onLogout }: AccountPageProps
       {/* Logout confirm dialog */}
       {showLogoutDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-8">
-          <div className="w-full max-w-[300px] overflow-hidden rounded-2xl bg-white shadow-2xl">
+          <div className="w-full max-w-[300px] overflow-hidden rounded-2xl bg-white dark:bg-white/5 dark:bg-white/5 shadow-2xl">
             <div className="px-5 py-5 text-center">
-              <p className="text-[17px] font-semibold text-gray-900">Confirm log out?</p>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-gray-500">
+              <p className="text-[17px] font-semibold text-gray-900 dark:text-white">Confirm log out?</p>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-gray-500 dark:text-white/50">
                 Logging out won't delete any data. You can sign back in anytime.
               </p>
             </div>
-            <div className="flex border-t border-gray-100">
-              <button onClick={() => setShowLogoutDialog(false)} className="flex-1 py-3.5 text-[15px] text-gray-600 transition hover:bg-gray-50 border-r border-gray-100">
+            <div className="flex border-t border-gray-100 dark:border-white/10">
+              <button onClick={() => setShowLogoutDialog(false)} className="flex-1 py-3.5 text-[15px] text-gray-600 transition hover:bg-gray-50 dark:hover:bg-white/5 border-r border-gray-100 dark:border-white/10">
                 Cancel
               </button>
-              <button onClick={handleLogout} className="flex-1 py-3.5 text-[15px] font-medium text-red-500 transition hover:bg-red-50">
+              <button onClick={handleLogout} className="flex-1 py-3.5 text-[15px] font-medium text-red-500 transition hover:bg-red-50 dark:hover:bg-red-500/10">
                 Log out
               </button>
             </div>
@@ -285,15 +285,15 @@ export default function AccountPage({ user, onBack, onLogout }: AccountPageProps
       {/* Delete confirm dialog */}
       {showDeleteDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-8">
-          <div className="w-full max-w-[300px] overflow-hidden rounded-2xl bg-white shadow-2xl">
+          <div className="w-full max-w-[300px] overflow-hidden rounded-2xl bg-white dark:bg-white/5 dark:bg-white/5 shadow-2xl">
             <div className="px-5 py-5 text-center">
-              <p className="text-[17px] font-semibold text-gray-900">Delete account?</p>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-gray-500">
+              <p className="text-[17px] font-semibold text-gray-900 dark:text-white">Delete account?</p>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-gray-500 dark:text-white/50">
                 This will permanently delete all your chats and memory. This cannot be undone.
               </p>
             </div>
-            <div className="flex border-t border-gray-100">
-              <button onClick={() => setShowDeleteDialog(false)} className="flex-1 py-3.5 text-[15px] text-gray-600 transition hover:bg-gray-50 border-r border-gray-100">
+            <div className="flex border-t border-gray-100 dark:border-white/10">
+              <button onClick={() => setShowDeleteDialog(false)} className="flex-1 py-3.5 text-[15px] text-gray-600 transition hover:bg-gray-50 dark:hover:bg-white/5 border-r border-gray-100 dark:border-white/10">
                 Cancel
               </button>
               <button
@@ -303,7 +303,7 @@ export default function AccountPage({ user, onBack, onLogout }: AccountPageProps
                   localStorage.clear()
                   onLogout()
                 }}
-                className="flex-1 py-3.5 text-[15px] font-medium text-red-500 transition hover:bg-red-50"
+                className="flex-1 py-3.5 text-[15px] font-medium text-red-500 transition hover:bg-red-50 dark:hover:bg-red-500/10"
               >
                 Delete
               </button>
@@ -314,4 +314,5 @@ export default function AccountPage({ user, onBack, onLogout }: AccountPageProps
     </div>
   )
   }
-            
+
+    

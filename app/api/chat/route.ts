@@ -684,13 +684,11 @@ try {
       { error: 'AI service unavailable. Please try again.' },
       { status: 503 }
     )
-  }
-}
 
-// (AI call / processing)
+  // (AI call / processing)
 } catch (error) {
   return new Response(
     JSON.stringify({ error: 'Server error' }),
     { status: 500 }
   )
-  }
+}

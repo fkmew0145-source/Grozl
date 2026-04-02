@@ -9,7 +9,6 @@ import AccountPage        from './pages/account-page'
 import DataControlsPage  from './pages/data-controls-page'
 import MemoryPage        from './pages/memory-page'
 import LanguagePage      from './pages/language-page'
-import AppearancePage    from './pages/appearance-page'
 import FontSizePage      from './pages/font-size-page'
 import ModelPage         from './pages/model-page'
 import AboutPage         from './pages/about-page'
@@ -22,7 +21,6 @@ type SubPage =
   | 'data-controls'
   | 'memory'
   | 'language'
-  | 'appearance'
   | 'font-size'
   | 'model'
   | 'about'
@@ -64,7 +62,6 @@ export default function SettingsScreen({
     portuguese: 'Portuguese', russian: 'Russian', indonesian: 'Indonesian',
     german: 'German', japanese: 'Japanese', chinese: 'Chinese', turkish: 'Turkish',
   }[settings.language] ?? settings.language
-  const appearanceLabel = { system: 'System', light: 'Light', dark: 'Dark' }[settings.appearance]
 
   // ── Sub-page routing ──────────────────────────────────────────────────
   if (subPage === 'account')
@@ -90,10 +87,6 @@ export default function SettingsScreen({
 
   if (subPage === 'language')
     return <SettingsWrapper><LanguagePage settings={settings} onSettingsChange={setSettings} onBack={() => setSubPage(null)} /></SettingsWrapper>
-
-  if (subPage === 'appearance')
-    return <SettingsWrapper><AppearancePage settings={settings} onSettingsChange={setSettings} onBack={() => setSubPage(null)} /></SettingsWrapper>
-
   if (subPage === 'font-size')
     return <SettingsWrapper><FontSizePage settings={settings} onSettingsChange={setSettings} onBack={() => setSubPage(null)} /></SettingsWrapper>
 
@@ -158,8 +151,6 @@ export default function SettingsScreen({
           <p className="mb-1.5 px-1 text-[13px] text-black/50 dark:text-white/50">App</p>
           <div className="mb-5 overflow-hidden rounded-2xl bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-black/5 dark:border-white/10">
             <SettingsRow icon={<LangIcon />} label="Language" value={langLabel} onPress={() => setSubPage('language')} />
-            <Divider />
-            <SettingsRow icon={<SunIcon />} label="Appearance" value={appearanceLabel} onPress={() => setSubPage('appearance')} />
           </div>
 
           {/* About */}

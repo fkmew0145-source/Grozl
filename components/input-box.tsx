@@ -79,7 +79,7 @@ export default function InputBox({
               onClick={() => onToggleChip(chip)}
               className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-medium transition-all duration-200 backdrop-blur-md ${
                 activeChips.has(chip)
-                  ? 'border-[#4D6BFE]/50 bg-[#EEF2FF]/70 dark:bg-[#4D6BFE]/20 text-[#4D6BFE] shadow-sm'
+                  ? 'border-[#4D6BFE]/50 dark:border-[#93c5fd]/30 bg-[#EEF2FF]/70 dark:bg-[#93c5fd]/[0.08] text-[#4D6BFE] dark:text-[#93c5fd] shadow-sm dark:shadow-[#93c5fd]/10'
                   : 'border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 text-black/60 dark:text-white/50 hover:bg-black/5 dark:hover:bg-white/10'
               }`}
             >
@@ -141,4 +141,5 @@ export default function InputBox({
       <input ref={fileInputRef} type="file" multiple className="hidden" onChange={onFileChange} />
     </div>
   )
-  }
+        }
+                

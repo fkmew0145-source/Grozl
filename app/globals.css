@@ -219,7 +219,6 @@ html.dark .grozl-settings-card {
 .dark input,
 .dark textarea {
   background-color: transparent !important;
-}
   color: #ececec;
   border-color: rgba(255,255,255,0.08);
 }

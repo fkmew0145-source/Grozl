@@ -4,15 +4,15 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import {
-  Menu, Plus, Search, FolderOpen, MessageSquarePlus,
-  Mic, MicOff, Send, Camera, Image, FileText, Loader2, MessageSquare,
-  Code2, ExternalLink, X, Settings,
+  Menu, Plus, Loader2, Code2, ExternalLink, X,
 } from 'lucide-react'
 import ArtifactPanel from './artifact-panel'
 import ProjectsPanel from './projects-panel'
-import ArtifactsList from './artifacts-list'
 import SettingsScreen from './settings/settings-screen'
 import { profileKey, sessionsKey, loadSettings, loadPersonalization } from './settings/settings-store'
+import InputBox from './input-box'
+import MessageList from './message-list'
+import Sidebar from './sidebar'
 
 interface ContentPart {
   type: 'text' | 'image_url'
@@ -149,10 +149,11 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
     setAllArtifacts(found)
   }, [messages, chatSessions])
 
-  // ── Load sessions ────────────────────────────────────────────────────
+  // ── Load sessions — STRICT separation ────────────────────────────────
   useEffect(() => {
     const loadSessions = async () => {
       if (user) {
+        // Logged-in: DB ONLY — no localStorage
         try {
           const res = await fetch('/api/chat/sessions')
           const { sessions } = await res.json()
@@ -169,16 +170,10 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
               timestamp: new Date(s.updated_at).getTime(),
             }))
             setChatSessions(mapped)
-            localStorage.setItem(SESSIONS_KEY, JSON.stringify(mapped))
-          } else {
-            const stored = localStorage.getItem(SESSIONS_KEY)
-            if (stored) { try { setChatSessions(JSON.parse(stored)) } catch { /* ignore */ } }
           }
-        } catch {
-          const stored = localStorage.getItem(SESSIONS_KEY)
-          if (stored) { try { setChatSessions(JSON.parse(stored)) } catch { /* ignore */ } }
-        }
+        } catch { /* ignore */ }
       } else {
+        // Guest: localStorage ONLY — no API
         const stored = localStorage.getItem(SESSIONS_KEY)
         if (stored) { try { setChatSessions(JSON.parse(stored)) } catch { /* ignore */ } }
       }
@@ -199,7 +194,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading])
 
-  // ── Session helpers ──────────────────────────────────────────────────
+  // ── Session helpers — STRICT separation ──────────────────────────────
   const saveSession = useCallback(async (msgs: Message[], sessionId: string) => {
     const firstUser  = msgs.find(m => m.role === 'user')
     const rawContent = firstUser?.content
@@ -212,16 +207,14 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
     const title = rawTitle.slice(0, 45) + (rawTitle.length > 45 ? '...' : '')
     const session: ChatSession = { id: sessionId, title, messages: msgs, timestamp: Date.now() }
 
-    setChatSessions(prev => {
-      const existing = prev.find(s => s.id === sessionId)
-      const merged   = { ...session, pinned: existing?.pinned, favorite: existing?.favorite }
-      const filtered = prev.filter(s => s.id !== sessionId)
-      const updated  = [merged, ...filtered].slice(0, 50)
-      localStorage.setItem(SESSIONS_KEY, JSON.stringify(updated))
-      return updated
-    })
-
     if (user) {
+      // Logged-in: API ONLY — no localStorage
+      setChatSessions(prev => {
+        const existing = prev.find(s => s.id === sessionId)
+        const merged   = { ...session, pinned: existing?.pinned, favorite: existing?.favorite }
+        const filtered = prev.filter(s => s.id !== sessionId)
+        return [merged, ...filtered].slice(0, 50)
+      })
       try {
         const existing = chatSessions.find(s => s.id === sessionId)
         await fetch('/api/chat/sessions', {
@@ -233,13 +226,26 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
           }),
         })
       } catch { /* ignore */ }
+    } else {
+      // Guest: localStorage ONLY — no API
+      setChatSessions(prev => {
+        const existing = prev.find(s => s.id === sessionId)
+        const merged   = { ...session, pinned: existing?.pinned, favorite: existing?.favorite }
+        const filtered = prev.filter(s => s.id !== sessionId)
+        const updated  = [merged, ...filtered].slice(0, 50)
+        localStorage.setItem(SESSIONS_KEY, JSON.stringify(updated))
+        return updated
+      })
     }
   }, [user, chatSessions, SESSIONS_KEY])
 
+  // updateSessions — writes localStorage only for guests
   const updateSessions = (updater: (sessions: ChatSession[]) => ChatSession[]) => {
     setChatSessions(prev => {
       const updated = updater(prev)
-      localStorage.setItem(SESSIONS_KEY, JSON.stringify(updated))
+      if (!user) {
+        localStorage.setItem(SESSIONS_KEY, JSON.stringify(updated))
+      }
       return updated
     })
   }
@@ -276,8 +282,8 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
   const handleClearChats = useCallback(async () => {
     setChatSessions([])
     setMessages([])
-    localStorage.removeItem(SESSIONS_KEY)
     if (user) {
+      // Logged-in: DB ONLY
       try {
         const supabaseClient = createClient()
         const { data: { user: authUser } } = await supabaseClient.auth.getUser()
@@ -285,6 +291,9 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
           await supabaseClient.from('chat_sessions').delete().eq('user_id', authUser.id)
         }
       } catch { /* ignore */ }
+    } else {
+      // Guest: localStorage ONLY
+      localStorage.removeItem(SESSIONS_KEY)
     }
   }, [user, SESSIONS_KEY])
 
@@ -472,6 +481,16 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
   const stripArtifactTags = (text: string) => text.replace(/<artifact[\s\S]*?<\/artifact>/g, '').trim()
 
   // ── Render message content ───────────────────────────────────────────
+  const parseArtifact = (text: string): ArtifactData | null => {
+    const regex = /<artifact\s+type="([^"]+)"(?:\s+language="([^"]+)")?(?:\s+title="([^"]+)")?[^>]*>([\s\S]*?)<\/artifact>/
+    const match = text.match(regex)
+    if (!match) return null
+    return { type: match[1] as 'html' | 'react' | 'code', language: match[2], title: match[3] || 'Artifact', content: match[4].trim() }
+  }
+
+  const stripArtifactTags = (text: string) => text.replace(/<artifact[\s\S]*?<\/artifact>/g, '').trim()
+
+  // ── Render message content ───────────────────────────────────────────
   const renderContent = (content: string | ContentPart[], isAssistant: boolean, isLast: boolean) => {
     if (content === '' && isAssistant) {
       if (activeChips.has('think')) {
@@ -547,103 +566,32 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
     : displayName.slice(0, 2).toUpperCase()
 
   // ── Derived flags ────────────────────────────────────────────────────
-  const hasText     = inputValue.trim().length > 0
-  const hasMessages = messages.length > 0
-  const isActive    = isFocused || hasText || attachedFiles.length > 0
+  const hasMessages     = messages.length > 0
+  const rightPanelOpen  = (activeArtifact && showArtifactModal) || showProjectsPanel
 
-  // ── Right panel open? (for layout split) ─────────────────────────────
-  const rightPanelOpen = (activeArtifact && showArtifactModal) || showProjectsPanel
+  // ── Sidebar callbacks ─────────────────────────────────────────────────
+  const handleProjectsClick = () => {
+    const isOpen = activeMenuItem === 'projects'
+    setActiveMenuItem(isOpen ? null : 'projects')
+    setShowProjectsPanel(!isOpen)
+    setShowArtifactsList(false)
+    setActiveArtifact(null)
+    setShowArtifactModal(false)
+    setSidebarOpen(false)
+  }
 
-  // ── Input box ────────────────────────────────────────────────────────
-  const InputBox = (
-    <div className={`w-full rounded-3xl border p-4 shadow-sm transition-all duration-200 ${
-      isActive
-        ? 'border-[#4D6BFE]/60 dark:border-[#4D6BFE]/40 bg-gradient-to-b from-[#EEF2FF] to-[#F0F4FF] dark:bg-none dark:bg-[#252535] shadow-lg shadow-[#4D6BFE]/10 dark:shadow-none'
-        : 'border-gray-200 dark:border-white/[0.08] bg-white dark:bg-[#252525]'
-    }`}>
-      {attachedFiles.length > 0 && (
-        <div className="mb-2 flex flex-wrap gap-2">
-          {attachedFiles.map((file, i) => (
-            <div key={i} className="flex items-center gap-1.5 rounded-xl border border-indigo-100 dark:border-indigo-500/30 bg-indigo-50 dark:bg-indigo-500/20 px-3 py-1.5 text-[13px] text-indigo-700 dark:text-indigo-300">
-              {file.type.startsWith('image/') ? <Image className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
-              <span className="max-w-[120px] truncate">{file.name}</span>
-              <button onClick={() => removeFile(i)} className="ml-1 opacity-50 hover:opacity-100">✕</button>
-            </div>
-          ))}
-        </div>
-      )}
-      <textarea
-        ref={textareaRef}
-        placeholder={isRecording ? 'Grozl Is Listening...' : 'Ask Grozl anything...'}
-        rows={1} value={inputValue} onChange={handleInput}
-        onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)}
-        disabled={isLoading}
-        className="w-full resize-none bg-transparent appearance-none text-base text-gray-800 dark:text-[#ececec] outline-none placeholder:text-gray-400 dark:placeholder:text-white/30 disabled:opacity-50 [border:none] [box-shadow:none] overflow-x-hidden"
-        style={{ WebkitAppearance: 'none' }}
-        />
-      <div className="mt-3.5 flex items-center justify-between">
-        <div className="flex gap-2.5">
-          {['think', 'search'].map(chip => (
-            <button key={chip} onClick={() => toggleChip(chip)}
-              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-medium transition-all duration-250 ease-out capitalize ${
-                activeChips.has(chip)
-                  ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] dark:from-[#4D6BFE]/20 dark:to-[#4D6BFE]/15 dark:bg-none text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10'
-                  : 'border-gray-200 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] text-gray-500 dark:text-white/50 hover:border-gray-300 dark:hover:border-white/[0.14] hover:bg-white dark:hover:bg-white/[0.07] hover:text-gray-600 dark:hover:text-white/70 hover:shadow-sm'
-              }`}
-            >
-              {chip === 'think' ? (
-                <svg className="h-[15px] w-[15px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" />
-                  <path d="M9 21h6" /><path d="M12 6v1" /><path d="M9.5 9h5" />
-                </svg>
-              ) : (
-                <svg className="h-[15px] w-[15px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                  <path d="M2 12h20" />
-                </svg>
-              )}
-              {chip}
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            {showAttachMenu && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowAttachMenu(false)} />
-                <div className="absolute bottom-9 right-0 z-50 w-[160px] overflow-hidden rounded-2xl border border-gray-100 dark:border-white/[0.08] bg-white dark:bg-[#212121] shadow-2xl">
-                  {[
-                    { label: 'Camera', ref: cameraInputRef, icon: <Camera className="h-5 w-5" /> },
-                    { label: 'Photos', ref: photoInputRef,  icon: <Image className="h-5 w-5" /> },
-                    { label: 'Files',  ref: fileInputRef,   icon: <FileText className="h-5 w-5" /> },
-                  ].map((item, idx, arr) => (
-                    <button key={item.label} onClick={() => { item.ref.current?.click(); setShowAttachMenu(false) }}
-                      className={`flex w-full items-center gap-3 px-4 py-3 text-[14px] font-medium text-gray-700 dark:text-[#ececec] transition hover:bg-indigo-50 dark:hover:bg-white/[0.07] hover:text-indigo-600 dark:hover:text-white/80 ${idx < arr.length - 1 ? 'border-b border-gray-100 dark:border-white/[0.07]' : ''}`}
-                    >
-                      {item.icon} {item.label}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-            <button onClick={() => setShowAttachMenu(!showAttachMenu)} className="text-gray-500 dark:text-white/50 transition hover:text-gray-700 dark:hover:text-white/70">
-              <Plus className="h-5 w-5" />
-            </button>
-          </div>
-          {!hasText && attachedFiles.length === 0 ? (
-            <button onClick={handleMicClick} className={`transition ${isRecording ? 'animate-pulse text-red-500' : 'text-gray-500 dark:text-white/50 hover:text-gray-700 dark:hover:text-white/70'}`}>
-              {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-            </button>
-          ) : (
-            <button onClick={handleSend} disabled={isLoading} className="text-indigo-600 dark:text-indigo-400 transition hover:text-indigo-700 dark:hover:text-indigo-300 disabled:opacity-50">
-              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  )
+  const handleArtifactsClick = () => {
+    const isOpen = activeMenuItem === 'artifacts'
+    setActiveMenuItem(isOpen ? null : 'artifacts')
+    setShowArtifactsList(prev => !prev)
+    setShowProjectsPanel(false)
+  }
+
+  const handleOpenArtifact = (art: ArtifactData) => {
+    setActiveArtifact(art)
+    setShowArtifactModal(true)
+    setShowProjectsPanel(false)
+  }
 
   // ── Render ───────────────────────────────────────────────────────────
   return (
@@ -652,192 +600,41 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       {/* ── Chat column ──────────────────────────────────────────────── */}
       <div className={`flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${rightPanelOpen ? 'flex-1 min-w-0' : 'w-full'}`}>
 
-        {/* Hidden file inputs */}
-        <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
-        <input ref={photoInputRef}  type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
-        <input ref={fileInputRef}   type="file" multiple className="hidden" onChange={handleFileChange} />
-
         {/* ── Sidebar ──────────────────────────────────────────────────── */}
-        <div className={`fixed left-0 top-0 z-50 flex h-full w-72 -translate-x-full flex-col border-r border-gray-200 dark:border-white/[0.07] bg-white dark:bg-[#141414] shadow-xl transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : ''}`}>
-
-          {/* Scrollable content */}
-          <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-6 pb-2">
-            {/* Search */}
-            <div className="relative mb-5">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-white/30" />
-              <input type="text" placeholder="Search chats..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-white/[0.05] py-2.5 pl-9 pr-3 text-sm text-gray-800 dark:text-[#ececec] outline-none focus:border-indigo-300 dark:focus:border-indigo-500/50 placeholder:text-gray-400 dark:placeholder:text-white/28"
-              />
-            </div>
-
-            {/* New Chat */}
-            <button onClick={() => { setActiveMenuItem(activeMenuItem === 'newchat' ? null : 'newchat'); newChat() }}
-              className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all ${
-                activeMenuItem === 'newchat'
-                  ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] dark:bg-none dark:from-[#4D6BFE]/20 dark:to-[#4D6BFE]/15 text-[#4D6BFE] shadow-sm'
-                  : 'border-gray-200 dark:border-white/[0.07] bg-white dark:bg-transparent text-gray-600 dark:text-[#ececec] hover:border-gray-300 dark:hover:border-white/[0.14] hover:bg-gray-50 dark:hover:bg-white/[0.05]'
-              }`}
-            >
-              <MessageSquarePlus className={`h-5 w-5 ${activeMenuItem === 'newchat' ? 'text-[#4D6BFE]' : 'text-gray-400 dark:text-white/30'}`} />
-              New Chat
-            </button>
-
-            {/* Projects button */}
-            <button
-              onClick={() => {
-                const isOpen = activeMenuItem === 'projects'
-                setActiveMenuItem(isOpen ? null : 'projects')
-                setShowProjectsPanel(!isOpen)
-                setShowArtifactsList(false)
-                setActiveArtifact(null)
-                setShowArtifactModal(false)
-                setSidebarOpen(false)
-              }}
-              className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all ${
-                activeMenuItem === 'projects'
-                  ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] dark:bg-none dark:from-[#4D6BFE]/20 dark:to-[#4D6BFE]/15 text-[#4D6BFE] shadow-sm'
-                  : 'border-gray-200 dark:border-white/[0.07] bg-white dark:bg-transparent text-gray-600 dark:text-[#ececec] hover:border-gray-300 dark:hover:border-white/[0.14] hover:bg-gray-50 dark:hover:bg-white/[0.05]'
-              }`}
-            >
-              <FolderOpen className={`h-5 w-5 ${activeMenuItem === 'projects' ? 'text-[#4D6BFE]' : 'text-gray-400 dark:text-white/30'}`} />
-              Projects
-            </button>
-
-            {/* Artifacts button */}
-            <button
-              onClick={() => {
-                const isOpen = activeMenuItem === 'artifacts'
-                setActiveMenuItem(isOpen ? null : 'artifacts')
-                setShowArtifactsList(prev => !prev)
-                setShowProjectsPanel(false)
-              }}
-              className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all ${
-                activeMenuItem === 'artifacts'
-                  ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] dark:bg-none dark:from-[#4D6BFE]/20 dark:to-[#4D6BFE]/15 text-[#4D6BFE] shadow-sm'
-                  : 'border-gray-200 dark:border-white/[0.07] bg-white dark:bg-transparent text-gray-600 dark:text-[#ececec] hover:border-gray-300 dark:hover:border-white/[0.14] hover:bg-gray-50 dark:hover:bg-white/[0.05]'
-              }`}
-            >
-              <svg className={`h-5 w-5 ${activeMenuItem === 'artifacts' ? 'text-[#4D6BFE]' : 'text-gray-400 dark:text-white/30'}`}
-                viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
-              >
-                <rect x="3" y="3" width="7" height="7" rx="1" />
-                <rect x="14" y="3" width="7" height="7" rx="1" />
-                <rect x="3" y="14" width="7" height="7" rx="1" />
-                <circle cx="17.5" cy="17.5" r="3.5" />
-              </svg>
-              Artifacts
-              {allArtifacts.length > 0 && (
-                <span className={`ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                  activeMenuItem === 'artifacts' ? 'bg-[#4D6BFE]/20 text-[#4D6BFE]' : 'bg-gray-100 dark:bg-white/[0.08] text-gray-500 dark:text-white/40'
-                }`}>
-                  {allArtifacts.length}
-                </span>
-              )}
-            </button>
-
-            {/* Artifacts dropdown */}
-            {showArtifactsList && (
-              <ArtifactsList
-                artifacts={allArtifacts}
-                onOpen={(art) => {
-                  setActiveArtifact(art)
-                  setShowArtifactModal(true)
-                  setShowProjectsPanel(false)
-                  setSidebarOpen(false)
-                }}
-              />
-            )}
-
-            {/* Recent Chats */}
-            <span className="ml-1 mt-4 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-white/28">Recent Chats</span>
-            <div className="flex flex-col gap-1">
-              {sortedSessions.length === 0 ? (
-                <p className="px-2 py-3 text-[13px] italic text-gray-400 dark:text-white/28">
-                  {searchQuery ? 'No matching chats' : 'No recent chats yet'}
-                </p>
-              ) : (
-                sortedSessions.map(session => (
-                  <div key={session.id} className="relative">
-                    {renamingId === session.id ? (
-                      <div className="flex items-center gap-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/20 px-3 py-2">
-                        <input autoFocus value={renameValue} onChange={e => setRenameValue(e.target.value)}
-                          onKeyDown={e => { if (e.key === 'Enter') confirmRename(); if (e.key === 'Escape') setRenamingId(null) }}
-                          onBlur={confirmRename}
-                          className="flex-1 bg-transparent text-[14px] text-indigo-700 dark:text-indigo-300 outline-none"
-                        />
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => loadSession(session)}
-                        onMouseDown={e => handleLongPressStart(e, session.id)}
-                        onMouseUp={handleLongPressEnd} onMouseLeave={handleLongPressEnd}
-                        onTouchStart={e => handleLongPressStart(e, session.id)} onTouchEnd={handleLongPressEnd}
-                        onContextMenu={e => {
-                          e.preventDefault()
-                          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-                          setContextMenu({ sessionId: session.id, x: rect.left, y: rect.bottom + 4 })
-                        }}
-                        className={`flex w-full items-start gap-2.5 rounded-xl px-3 py-2.5 text-left text-[14px] text-gray-600 dark:text-white/60 transition hover:bg-indigo-50 dark:hover:bg-white/[0.05] hover:text-indigo-600 dark:hover:text-white/80 ${session.id === currentSessionId ? 'bg-indigo-50 dark:bg-white/[0.07] text-indigo-600 dark:text-white/80' : ''}`}
-                      >
-                        <div className="mt-0.5 shrink-0">
-                          {session.pinned ? (
-                            <svg className="h-4 w-4 text-[#4D6BFE]" viewBox="0 0 24 24" fill="currentColor"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
-                          ) : session.favorite ? (
-                            <svg className="h-4 w-4 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                          ) : (
-                            <MessageSquare className="h-4 w-4 text-gray-400 dark:text-white/28" />
-                          )}
-                        </div>
-                        <span className="line-clamp-2 leading-snug">{session.title}</span>
-                      </button>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Context Menu */}
-          {contextMenu && (
-      <>
-              <div className="fixed inset-0 z-[60]" onClick={() => setContextMenu(null)} />
-              <div className="fixed z-[70] w-44 overflow-hidden rounded-2xl border border-gray-100 dark:border-white/[0.08] bg-white dark:bg-[#212121] shadow-2xl"
-                style={{ top: Math.min(contextMenu.y, window.innerHeight - 230), left: Math.min(contextMenu.x, window.innerWidth - 185) }}
-              >
-                {[
-                  { label: chatSessions.find(s => s.id === contextMenu.sessionId)?.pinned ? 'Unpin' : 'Pin', action: () => handlePin(contextMenu.sessionId) },
-                  { label: chatSessions.find(s => s.id === contextMenu.sessionId)?.favorite ? 'Unfavorite' : 'Favorite', action: () => handleFavorite(contextMenu.sessionId) },
-                  { label: 'Rename', action: () => { const s = chatSessions.find(x => x.id === contextMenu.sessionId); if (s) startRename(s) } },
-                ].map((item, i) => (
-                  <button key={i} onClick={item.action} className="flex w-full items-center gap-3 border-b border-gray-100 dark:border-white/[0.07] px-4 py-3 text-[14px] font-medium text-gray-700 dark:text-[#ececec] transition hover:bg-indigo-50 dark:hover:bg-white/[0.07] hover:text-indigo-600 dark:hover:text-indigo-400">
-                    {item.label}
-                  </button>
-                ))}
-                <button onClick={() => handleDelete(contextMenu.sessionId)} className="flex w-full items-center gap-3 px-4 py-3 text-[14px] font-medium text-rose-500 transition hover:bg-red-50 dark:hover:bg-red-500/10">
-                  Delete
-                </button>
-              </div>
-            </>
-          )}
-
-          {/* ── Bottom user bar ───────────────────────────────────────── */}
-          <div className="flex items-center justify-between border-t border-gray-100 dark:border-white/[0.07] px-5 py-4">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-900 dark:bg-white/[0.12] text-[13px] font-bold text-white">
-                {initials}
-              </div>
-              <span className="truncate text-[15px] font-medium text-gray-800 dark:text-[#ececec]">{displayName}</span>
-            </div>
-            <button
-              onClick={() => setShowSettings(true)}
-              className="ml-3 shrink-0 rounded-xl p-2 text-gray-400 dark:text-white/40 transition hover:bg-gray-100 dark:hover:bg-white/[0.08] hover:text-gray-700 dark:hover:text-white/70"
-            >
-              <Settings className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-
-        {sidebarOpen && <div className="fixed inset-0 z-40 bg-black/20 dark:bg-black/50" onClick={() => setSidebarOpen(false)} />}
+        <Sidebar
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          sortedSessions={sortedSessions}
+          currentSessionId={currentSessionId}
+          renamingId={renamingId}
+          setRenamingId={setRenamingId}
+          renameValue={renameValue}
+          setRenameValue={setRenameValue}
+          contextMenu={contextMenu}
+          setContextMenu={setContextMenu}
+          displayName={displayName}
+          initials={initials}
+          chatSessions={chatSessions}
+          activeMenuItem={activeMenuItem}
+          setActiveMenuItem={setActiveMenuItem}
+          allArtifacts={allArtifacts}
+          showArtifactsList={showArtifactsList}
+          onNewChat={newChat}
+          onLoadSession={loadSession}
+          onStartRename={startRename}
+          onConfirmRename={confirmRename}
+          onPin={handlePin}
+          onFavorite={handleFavorite}
+          onDelete={handleDelete}
+          onLongPressStart={handleLongPressStart}
+          onLongPressEnd={handleLongPressEnd}
+          onOpenSettings={() => setShowSettings(true)}
+          onProjectsClick={handleProjectsClick}
+          onArtifactsClick={handleArtifactsClick}
+          onOpenArtifact={handleOpenArtifact}
+        />
 
         {/* ── Header ───────────────────────────────────────────────────── */}
         <header className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between p-4">
@@ -860,36 +657,66 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
                 <h1 className="mb-7 text-center text-[28px] font-semibold tracking-tight text-gray-900 dark:text-white/70">
                   Your Mind, Amplified By Grozl
                 </h1>
-                {InputBox}
+                <InputBox
+                  inputValue={inputValue}
+                  isRecording={isRecording}
+                  isLoading={isLoading}
+                  attachedFiles={attachedFiles}
+                  activeChips={activeChips}
+                  isFocused={isFocused}
+                  showAttachMenu={showAttachMenu}
+                  textareaRef={textareaRef}
+                  cameraInputRef={cameraInputRef}
+                  photoInputRef={photoInputRef}
+                  fileInputRef={fileInputRef}
+                  onInput={handleInput}
+                  onSend={handleSend}
+                  onMicClick={handleMicClick}
+                  onFileChange={handleFileChange}
+                  onRemoveFile={removeFile}
+                  onToggleChip={toggleChip}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                  onToggleAttachMenu={() => setShowAttachMenu(!showAttachMenu)}
+                  onCloseAttachMenu={() => setShowAttachMenu(false)}
+                />
               </div>
             </div>
           ) : (
-            <div className="flex-1 overflow-y-auto px-4 pb-4 pt-16">
-              <div className="mx-auto flex w-full max-w-[700px] flex-col gap-5">
-                {messages.map((msg, i) => (
-                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    {msg.role === 'assistant' && (
-                      <div className="mr-2.5 mt-1 h-7 w-7 shrink-0 overflow-hidden rounded-full">
-                        <img src="/logo.png" alt="Grozl" className="h-full w-full object-contain" />
-                      </div>
-                    )}
-                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-[15px] leading-relaxed ${
-                      msg.role === 'user'
-                        ? 'bg-[#4D6BFE] text-white'
-                        : 'border border-gray-100 dark:border-transparent bg-white dark:bg-transparent text-gray-800 dark:text-[#ececec] shadow-sm dark:shadow-none'
-                    }`}>
-                      {renderContent(msg.content, msg.role === 'assistant', i === messages.length - 1)}
-                    </div>
-                  </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
-            </div>
+            <MessageList
+              messages={messages}
+              messagesEndRef={messagesEndRef}
+              renderContent={renderContent}
+            />
           )}
 
           {hasMessages && (
             <div className="w-full px-4 pb-4">
-              <div className="mx-auto w-full max-w-[650px]">{InputBox}</div>
+              <div className="mx-auto w-full max-w-[650px]">
+                <InputBox
+                  inputValue={inputValue}
+                  isRecording={isRecording}
+                  isLoading={isLoading}
+                  attachedFiles={attachedFiles}
+                  activeChips={activeChips}
+                  isFocused={isFocused}
+                  showAttachMenu={showAttachMenu}
+                  textareaRef={textareaRef}
+                  cameraInputRef={cameraInputRef}
+                  photoInputRef={photoInputRef}
+                  fileInputRef={fileInputRef}
+                  onInput={handleInput}
+                  onSend={handleSend}
+                  onMicClick={handleMicClick}
+                  onFileChange={handleFileChange}
+                  onRemoveFile={removeFile}
+                  onToggleChip={toggleChip}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                  onToggleAttachMenu={() => setShowAttachMenu(!showAttachMenu)}
+                  onCloseAttachMenu={() => setShowAttachMenu(false)}
+                />
+              </div>
             </div>
           )}
         </main>
@@ -943,4 +770,4 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       )}
     </div>
   )
-          }
+    }

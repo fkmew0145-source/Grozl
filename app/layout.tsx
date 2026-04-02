@@ -13,12 +13,7 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
+        url: '/icon-light-32x32.png'
       },
       {
         url: '/icon.svg',
@@ -33,13 +28,4 @@ export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
-}>) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="font-sans antialiased">
-        {children}
-<Analytics />
-      </body>
-    </html>
-  )
-}
+}>)

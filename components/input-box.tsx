@@ -73,32 +73,34 @@ export default function InputBox({
       {/* Bottom bar */}
       <div className="mt-3.5 flex items-center justify-between">
         <div className="flex gap-2.5">
-          {['think', 'search'].map(chip => (
+          {(['think', 'search'] as const).map(chip => (
             <button
               key={chip}
               onClick={() => onToggleChip(chip)}
-              style={activeChips.has(chip) ? { boxShadow: '0 0 14px 3px rgba(77,107,254,0.5)' } : {}}
-              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-semibold transition-all duration-300 ${
+              style={activeChips.has(chip) ? { boxShadow: '0 0 10px 2px rgba(77,107,254,0.4)' } : {}}
+              className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] font-semibold transition-all duration-200 select-none ${
                 activeChips.has(chip)
-                  ? 'border-[#4D6BFE] bg-[#4D6BFE] text-white scale-[1.05]'
-                  : 'border-white/10 bg-white/[0.04] text-white/30 hover:border-white/20 hover:text-white/55 hover:bg-white/[0.08]'
+                  ? 'border-[#4D6BFE] bg-[#4D6BFE] text-white'
+                  : 'border-white/10 bg-transparent text-white/35 active:bg-white/[0.06]'
               }`}
             >
               {chip === 'think' ? (
-                <svg className="h-[15px] w-[15px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" />
-                  <path d="M9 21h6" />
-                  <path d="M12 6v1" />
-                  <path d="M9.5 9h5" />
+                /* DeepSeek-style think icon — neural/brain spark */
+                <svg className="h-[14px] w-[14px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v0A2.5 2.5 0 0 1 9.5 7H9a3 3 0 0 0 0 6h.5A2.5 2.5 0 0 1 12 15.5v0A2.5 2.5 0 0 1 9.5 18"/>
+                  <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v0A2.5 2.5 0 0 0 14.5 7H15a3 3 0 0 1 0 6h-.5A2.5 2.5 0 0 0 12 15.5v0A2.5 2.5 0 0 0 14.5 18"/>
+                  <path d="M12 18v4"/>
+                  <path d="M9 22h6"/>
+                  <path d="M12 2v2"/>
                 </svg>
               ) : (
-                <svg className="h-[15px] w-[15px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="h-[14px] w-[14px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10" />
                   <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
                   <path d="M2 12h20" />
                 </svg>
               )}
-              {chip}
+              {chip === 'think' ? 'Think' : 'Search'}
             </button>
           ))}
         </div>
@@ -143,4 +145,4 @@ export default function InputBox({
     </div>
   )
           }
-            
+          

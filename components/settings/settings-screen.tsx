@@ -188,11 +188,12 @@ export default function SettingsScreen({
       {/* ── Theme picker modal ───────────────────────────────────────── */}
       {showThemeModal && (
         <div
-          className="fixed inset-0 z-[300] flex items-center justify-center bg-black/40 px-6"
+          className="fixed inset-0 z-[300] flex items-center justify-center bg-black/40 px-8"
           onClick={() => setShowThemeModal(false)}
         >
           <div
-            className="w-full max-w-sm overflow-hidden rounded-2xl bg-white dark:bg-[#1c1e26] shadow-2xl"
+            className="w-full max-w-[260px] overflow-hidden rounded-2xl shadow-2xl"
+            style={{ backgroundColor: "var(--background)", border: "1px solid var(--border)" }}
             onClick={e => e.stopPropagation()}
           >
             {/* Title */}
@@ -230,7 +231,7 @@ export default function SettingsScreen({
             <div className="border-t border-gray-100 dark:border-white/10 px-5 py-4">
               <button
                 onClick={confirmTheme}
-                className="w-full py-3.5 text-[16px] font-medium text-blue-500 transition active:opacity-70"
+                className="w-full py-3 text-[15px] font-medium text-red-500 transition active:opacity-70"
               >
                 Confirm
               </button>
@@ -260,7 +261,7 @@ export default function SettingsScreen({
 
 // ── Tiny helpers ──────────────────────────────────────────────────────────
 function W({ children }: { children: React.ReactNode }) {
-  return <div className="fixed inset-0 z-[100] bg-[#f8fafc] dark:bg-[#0d0f14]">{children}</div>
+  return <div className="fixed inset-0 z-[100]" style={{ backgroundColor: "var(--background)" }}>{children}</div>
 }
 function Div() { return <div className="mx-4 h-px bg-black/5 dark:bg-white/10" /> }
 function Row({ icon, label, value, onPress }: { icon: React.ReactNode; label: string; value?: string; onPress: () => void }) {
@@ -288,4 +289,5 @@ function InfoIcon()       { return <svg {...ic}><circle cx="12" cy="12" r="10"/>
 function HelpIcon()       { return <svg {...ic}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> }
 function PersonIcon()     { return <svg {...ic}><path d="M12 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/><path d="M20 21a8 8 0 1 0-16 0"/></svg> }
 function MemoryIcon()     { return <svg {...ic}><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="8" cy="10" r="1.5"/><circle cx="16" cy="10" r="1.5"/><path d="M8 10h8"/></svg> }
+
     

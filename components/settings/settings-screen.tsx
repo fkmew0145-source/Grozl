@@ -15,10 +15,12 @@ import AboutPage          from './pages/about-page'
 import FeedbackPage       from './pages/feedback-page'
 import HistoryPage        from './pages/history-page'
 import PersonalizationPage from './pages/personalization-page'
+import FontSizePage       from './pages/font-size-page'
 
 type SubPage =
   | 'account' | 'data-controls' | 'memory' | 'language'
   | 'model' | 'about' | 'feedback' | 'history' | 'personalization'
+  | 'font-size'
   | null
 
 type ThemeVal = 'system' | 'light' | 'dark'
@@ -44,7 +46,6 @@ export default function SettingsScreen({
 
   useEffect(() => { setSettings(loadSettings()) }, [])
 
-  // sync pendingTheme when modal opens
   const openThemeModal = () => {
     setPendingTheme((theme as ThemeVal) ?? settings.theme ?? 'system')
     setShowThemeModal(true)
@@ -73,6 +74,7 @@ export default function SettingsScreen({
 
   const activeTheme = (theme as ThemeVal) ?? settings.theme ?? 'system'
   const themeLabel  = { system:'System', light:'Light', dark:'Dark' }[activeTheme] ?? 'System'
+  const fontSizeLabel = `${settings.fontSize ?? 15}px`
 
   // ── Sub-page routing ──────────────────────────────────────────────────
   if (subPage === 'account')
@@ -105,6 +107,9 @@ export default function SettingsScreen({
 
   if (subPage === 'feedback')
     return <W><FeedbackPage onBack={() => setSubPage(null)} /></W>
+
+  if (subPage === 'font-size')
+    return <W><FontSizePage settings={settings} onSettingsChange={setSettings} onBack={() => setSubPage(null)} /></W>
 
   if (subPage === 'history')
     return (
@@ -154,9 +159,11 @@ export default function SettingsScreen({
           {/* App */}
           <p className="mb-1.5 px-1 text-[13px] text-black/50 dark:text-white/50">App</p>
           <div className="mb-5 overflow-hidden rounded-2xl bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-black/5 dark:border-white/10">
-            <Row icon={<LangIcon />}       label="Language"   value={langLabel}   onPress={() => setSubPage('language')} />
+            <Row icon={<LangIcon />}       label="Language"   value={langLabel}      onPress={() => setSubPage('language')} />
             <Div />
-            <Row icon={<AppearanceIcon />} label="Appearance" value={themeLabel}  onPress={openThemeModal} />
+            <Row icon={<AppearanceIcon />} label="Appearance" value={themeLabel}     onPress={openThemeModal} />
+            <Div />
+            <Row icon={<FontIcon />}       label="Font Size"  value={fontSizeLabel}  onPress={() => setSubPage('font-size')} />
           </div>
 
           {/* About */}
@@ -196,19 +203,16 @@ export default function SettingsScreen({
             style={{ backgroundColor: "var(--background)", border: "1px solid var(--border)" }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Title */}
             <p className="border-b border-gray-100 dark:border-white/10 px-5 py-4 text-center text-[17px] font-semibold text-black dark:text-white">
               Appearance
             </p>
 
-            {/* Options */}
             {(['system', 'light', 'dark'] as ThemeVal[]).map((val, i, arr) => (
               <div key={val}>
                 <button
                   onClick={() => setPendingTheme(val)}
                   className="flex w-full items-center gap-4 px-5 py-4 text-left transition active:bg-gray-50 dark:active:bg-white/5"
                 >
-                  {/* Radio */}
                   <span className={[
                     'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
                     pendingTheme === val
@@ -227,7 +231,6 @@ export default function SettingsScreen({
               </div>
             ))}
 
-            {/* Confirm */}
             <div className="border-t border-gray-100 dark:border-white/10 px-5 py-4">
               <button
                 onClick={confirmTheme}
@@ -285,9 +288,9 @@ function UserIcon()       { return <svg {...ic}><path d="M20 21v-2a4 4 0 0 0-4-4
 function DataIcon()       { return <svg {...ic}><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg> }
 function LangIcon()       { return <svg {...ic}><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg> }
 function AppearanceIcon() { return <svg {...ic}><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg> }
+function FontIcon()       { return <svg {...ic}><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg> }
 function InfoIcon()       { return <svg {...ic}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> }
 function HelpIcon()       { return <svg {...ic}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> }
 function PersonIcon()     { return <svg {...ic}><path d="M12 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/><path d="M20 21a8 8 0 1 0-16 0"/></svg> }
 function MemoryIcon()     { return <svg {...ic}><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="8" cy="10" r="1.5"/><circle cx="16" cy="10" r="1.5"/><path d="M8 10h8"/></svg> }
-
-    
+      

@@ -644,7 +644,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
                 <div className="mb-5 h-[90px] w-[90px]">
                   <img src="/logo.png" alt="Grozl" className="h-full w-full object-contain" />
                 </div>
-                <h1 className="mb-7 text-center text-[28px] font-semibold tracking-tight text-gray-900 dark:text-white/70">
+                <h1 className="mb-7 bg-gradient-to-b from-gray-900 to-gray-700 bg-clip-text text-center text-[28px] font-semibold tracking-tight text-transparent dark:from-white dark:to-white/60">
                   Your Mind, Amplified By Grozl
                 </h1>
                 <InputBox

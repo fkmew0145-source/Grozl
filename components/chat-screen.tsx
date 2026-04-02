@@ -244,7 +244,6 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
     })
   }
 
-  // ── CHANGE 1: loadSession closes both panels ─────────────────────────
   const loadSession = (session: ChatSession) => {
     setMessages(session.messages)
     setCurrentSessionId(session.id)
@@ -257,7 +256,6 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
     setShowProjectsPanel(false)
   }
 
-  // ── CHANGE 2: newChat closes both panels ─────────────────────────────
   const newChat = useCallback(() => {
     if (messages.length >= 2) saveSession(messages, currentSessionId)
     setMessages([])
@@ -489,7 +487,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
           </div>
         )
       }
-      return <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+      return <Loader2 className="h-4 w-4 animate-spin text-gray-400 dark:text-white/30" />
     }
 
     if (typeof content === 'string') {
@@ -501,22 +499,22 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
             <span style={{ whiteSpace: 'pre-wrap', fontSize: 'var(--chat-font-size, 15px)' }}>
               {cleanText}
               {isAssistant && isLast && isStreaming && cleanText !== '' && (
-                <span className="ml-0.5 inline-block animate-pulse font-light text-gray-400">▌</span>
+                <span className="ml-0.5 inline-block animate-pulse font-light text-gray-400 dark:text-white/30">▌</span>
               )}
             </span>
           )}
           {isAssistant && isLast && isStreaming && !artifact && content.includes('<artifact') && (
-            <div className="flex items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-2.5 text-[13px] text-indigo-500">
+            <div className="flex items-center gap-2 rounded-xl border border-indigo-100 dark:border-indigo-500/30 bg-indigo-50 dark:bg-indigo-500/15 px-4 py-2.5 text-[13px] text-indigo-500 dark:text-indigo-400">
               <Loader2 className="h-3.5 w-3.5 animate-spin" /> Building artifact...
             </div>
           )}
           {artifact && !isStreaming && (
             <button
               onClick={() => { setActiveArtifact(artifact); setShowArtifactModal(true); setShowProjectsPanel(false) }}
-              className="flex items-center gap-2.5 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 to-blue-50 px-4 py-3 text-left text-[13px] font-medium text-indigo-700 transition hover:border-indigo-300 hover:shadow-sm"
+              className="flex items-center gap-2.5 rounded-xl border border-indigo-200 dark:border-indigo-500/30 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-500/10 dark:to-blue-500/10 px-4 py-3 text-left text-[13px] font-medium text-indigo-700 dark:text-indigo-300 transition hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:shadow-sm"
             >
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-100">
-                <Code2 className="h-3.5 w-3.5 text-indigo-500" />
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-500/20">
+                <Code2 className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="truncate font-semibold">{artifact.title}</div>
@@ -560,13 +558,13 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
   const InputBox = (
     <div className={`w-full rounded-3xl border p-4 shadow-sm transition-all duration-200 ${
       isActive
-        ? 'border-[#4D6BFE]/60 bg-gradient-to-b from-[#EEF2FF] to-[#F0F4FF] shadow-lg shadow-[#4D6BFE]/10'
-        : 'border-gray-200 bg-white'
+        ? 'border-[#4D6BFE]/60 dark:border-[#4D6BFE]/40 bg-gradient-to-b from-[#EEF2FF] to-[#F0F4FF] dark:bg-none dark:bg-[#252535] shadow-lg shadow-[#4D6BFE]/10 dark:shadow-none'
+        : 'border-gray-200 dark:border-white/[0.08] bg-white dark:bg-[#252525]'
     }`}>
       {attachedFiles.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-2">
           {attachedFiles.map((file, i) => (
-            <div key={i} className="flex items-center gap-1.5 rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-1.5 text-[13px] text-indigo-700">
+            <div key={i} className="flex items-center gap-1.5 rounded-xl border border-indigo-100 dark:border-indigo-500/30 bg-indigo-50 dark:bg-indigo-500/20 px-3 py-1.5 text-[13px] text-indigo-700 dark:text-indigo-300">
               {file.type.startsWith('image/') ? <Image className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
               <span className="max-w-[120px] truncate">{file.name}</span>
               <button onClick={() => removeFile(i)} className="ml-1 opacity-50 hover:opacity-100">✕</button>
@@ -580,7 +578,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
         rows={1} value={inputValue} onChange={handleInput}
         onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)}
         disabled={isLoading}
-        className="w-full resize-none bg-transparent text-base text-gray-800 outline-none placeholder:text-gray-400 disabled:opacity-50"
+        className="w-full resize-none bg-transparent text-base text-gray-800 dark:text-[#ececec] outline-none placeholder:text-gray-400 dark:placeholder:text-white/30 disabled:opacity-50"
       />
       <div className="mt-3.5 flex items-center justify-between">
         <div className="flex gap-2.5">
@@ -588,8 +586,8 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
             <button key={chip} onClick={() => toggleChip(chip)}
               className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-medium transition-all duration-250 ease-out capitalize ${
                 activeChips.has(chip)
-                  ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10'
-                  : 'border-gray-200 bg-white/80 text-gray-500 hover:border-gray-300 hover:bg-white hover:text-gray-600 hover:shadow-sm'
+                  ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] dark:from-[#4D6BFE]/20 dark:to-[#4D6BFE]/15 dark:bg-none text-[#4D6BFE] shadow-sm shadow-[#4D6BFE]/10'
+                  : 'border-gray-200 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] text-gray-500 dark:text-white/50 hover:border-gray-300 dark:hover:border-white/[0.14] hover:bg-white dark:hover:bg-white/[0.07] hover:text-gray-600 dark:hover:text-white/70 hover:shadow-sm'
               }`}
             >
               {chip === 'think' ? (
@@ -613,14 +611,14 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
             {showAttachMenu && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowAttachMenu(false)} />
-                <div className="absolute bottom-9 right-0 z-50 w-[160px] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl">
+                <div className="absolute bottom-9 right-0 z-50 w-[160px] overflow-hidden rounded-2xl border border-gray-100 dark:border-white/[0.08] bg-white dark:bg-[#212121] shadow-2xl">
                   {[
                     { label: 'Camera', ref: cameraInputRef, icon: <Camera className="h-5 w-5" /> },
                     { label: 'Photos', ref: photoInputRef,  icon: <Image className="h-5 w-5" /> },
                     { label: 'Files',  ref: fileInputRef,   icon: <FileText className="h-5 w-5" /> },
                   ].map((item, idx, arr) => (
                     <button key={item.label} onClick={() => { item.ref.current?.click(); setShowAttachMenu(false) }}
-                      className={`flex w-full items-center gap-3 px-4 py-3 text-[14px] font-medium text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-600 ${idx < arr.length - 1 ? 'border-b border-gray-100' : ''}`}
+                      className={`flex w-full items-center gap-3 px-4 py-3 text-[14px] font-medium text-gray-700 dark:text-[#ececec] transition hover:bg-indigo-50 dark:hover:bg-white/[0.07] hover:text-indigo-600 dark:hover:text-white/80 ${idx < arr.length - 1 ? 'border-b border-gray-100 dark:border-white/[0.07]' : ''}`}
                     >
                       {item.icon} {item.label}
                     </button>
@@ -628,16 +626,16 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
                 </div>
               </>
             )}
-            <button onClick={() => setShowAttachMenu(!showAttachMenu)} className="text-gray-500 transition hover:text-gray-700">
+            <button onClick={() => setShowAttachMenu(!showAttachMenu)} className="text-gray-500 dark:text-white/50 transition hover:text-gray-700 dark:hover:text-white/70">
               <Plus className="h-5 w-5" />
             </button>
           </div>
           {!hasText && attachedFiles.length === 0 ? (
-            <button onClick={handleMicClick} className={`transition ${isRecording ? 'animate-pulse text-red-500' : 'text-gray-500 hover:text-gray-700'}`}>
+            <button onClick={handleMicClick} className={`transition ${isRecording ? 'animate-pulse text-red-500' : 'text-gray-500 dark:text-white/50 hover:text-gray-700 dark:hover:text-white/70'}`}>
               {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
             </button>
           ) : (
-            <button onClick={handleSend} disabled={isLoading} className="text-indigo-600 transition hover:text-indigo-700 disabled:opacity-50">
+            <button onClick={handleSend} disabled={isLoading} className="text-indigo-600 dark:text-indigo-400 transition hover:text-indigo-700 dark:hover:text-indigo-300 disabled:opacity-50">
               {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
             </button>
           )}
@@ -648,8 +646,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
 
   // ── Render ───────────────────────────────────────────────────────────
   return (
-    // CHANGE 6: outer wrapper is always flex-row, chat shrinks when panel opens
-    <div className="flex h-dvh overflow-hidden bg-gradient-to-b from-slate-50 to-indigo-50">
+    <div className="flex h-dvh overflow-hidden bg-[#F5F3EF] dark:bg-[#1a1a1a]">
 
       {/* ── Chat column ──────────────────────────────────────────────── */}
       <div className={`flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${rightPanelOpen ? 'flex-1 min-w-0' : 'w-full'}`}>
@@ -660,15 +657,15 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
         <input ref={fileInputRef}   type="file" multiple className="hidden" onChange={handleFileChange} />
 
         {/* ── Sidebar ──────────────────────────────────────────────────── */}
-        <div className={`fixed left-0 top-0 z-50 flex h-full w-72 -translate-x-full flex-col border-r border-gray-200 bg-white shadow-xl transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : ''}`}>
+        <div className={`fixed left-0 top-0 z-50 flex h-full w-72 -translate-x-full flex-col border-r border-gray-200 dark:border-white/[0.07] bg-white dark:bg-[#141414] shadow-xl transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : ''}`}>
 
           {/* Scrollable content */}
           <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-6 pb-2">
             {/* Search */}
             <div className="relative mb-5">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-white/30" />
               <input type="text" placeholder="Search chats..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-3 text-sm text-gray-800 outline-none focus:border-indigo-300 placeholder:text-gray-400"
+                className="w-full rounded-xl border border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-white/[0.05] py-2.5 pl-9 pr-3 text-sm text-gray-800 dark:text-[#ececec] outline-none focus:border-indigo-300 dark:focus:border-indigo-500/50 placeholder:text-gray-400 dark:placeholder:text-white/28"
               />
             </div>
 
@@ -676,15 +673,15 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
             <button onClick={() => { setActiveMenuItem(activeMenuItem === 'newchat' ? null : 'newchat'); newChat() }}
               className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all ${
                 activeMenuItem === 'newchat'
-                  ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm'
-                  : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                  ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] dark:bg-none dark:from-[#4D6BFE]/20 dark:to-[#4D6BFE]/15 text-[#4D6BFE] shadow-sm'
+                  : 'border-gray-200 dark:border-white/[0.07] bg-white dark:bg-transparent text-gray-600 dark:text-[#ececec] hover:border-gray-300 dark:hover:border-white/[0.14] hover:bg-gray-50 dark:hover:bg-white/[0.05]'
               }`}
             >
-              <MessageSquarePlus className={`h-5 w-5 ${activeMenuItem === 'newchat' ? 'text-[#4D6BFE]' : 'text-gray-400'}`} />
+              <MessageSquarePlus className={`h-5 w-5 ${activeMenuItem === 'newchat' ? 'text-[#4D6BFE]' : 'text-gray-400 dark:text-white/30'}`} />
               New Chat
             </button>
 
-            {/* CHANGE 3: Projects button — opens right panel, closes artifacts */}
+            {/* Projects button */}
             <button
               onClick={() => {
                 const isOpen = activeMenuItem === 'projects'
@@ -697,15 +694,15 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
               }}
               className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all ${
                 activeMenuItem === 'projects'
-                  ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm'
-                  : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                  ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] dark:bg-none dark:from-[#4D6BFE]/20 dark:to-[#4D6BFE]/15 text-[#4D6BFE] shadow-sm'
+                  : 'border-gray-200 dark:border-white/[0.07] bg-white dark:bg-transparent text-gray-600 dark:text-[#ececec] hover:border-gray-300 dark:hover:border-white/[0.14] hover:bg-gray-50 dark:hover:bg-white/[0.05]'
               }`}
             >
-              <FolderOpen className={`h-5 w-5 ${activeMenuItem === 'projects' ? 'text-[#4D6BFE]' : 'text-gray-400'}`} />
+              <FolderOpen className={`h-5 w-5 ${activeMenuItem === 'projects' ? 'text-[#4D6BFE]' : 'text-gray-400 dark:text-white/30'}`} />
               Projects
             </button>
 
-            {/* CHANGE 4: Artifacts button — closes projects panel */}
+            {/* Artifacts button */}
             <button
               onClick={() => {
                 const isOpen = activeMenuItem === 'artifacts'
@@ -715,11 +712,11 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
               }}
               className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all ${
                 activeMenuItem === 'artifacts'
-                  ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] text-[#4D6BFE] shadow-sm'
-                  : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                  ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] dark:bg-none dark:from-[#4D6BFE]/20 dark:to-[#4D6BFE]/15 text-[#4D6BFE] shadow-sm'
+                  : 'border-gray-200 dark:border-white/[0.07] bg-white dark:bg-transparent text-gray-600 dark:text-[#ececec] hover:border-gray-300 dark:hover:border-white/[0.14] hover:bg-gray-50 dark:hover:bg-white/[0.05]'
               }`}
             >
-              <svg className={`h-5 w-5 ${activeMenuItem === 'artifacts' ? 'text-[#4D6BFE]' : 'text-gray-400'}`}
+              <svg className={`h-5 w-5 ${activeMenuItem === 'artifacts' ? 'text-[#4D6BFE]' : 'text-gray-400 dark:text-white/30'}`}
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
               >
                 <rect x="3" y="3" width="7" height="7" rx="1" />
@@ -730,14 +727,14 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
               Artifacts
               {allArtifacts.length > 0 && (
                 <span className={`ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                  activeMenuItem === 'artifacts' ? 'bg-[#4D6BFE]/20 text-[#4D6BFE]' : 'bg-gray-100 text-gray-500'
+                  activeMenuItem === 'artifacts' ? 'bg-[#4D6BFE]/20 text-[#4D6BFE]' : 'bg-gray-100 dark:bg-white/[0.08] text-gray-500 dark:text-white/40'
                 }`}>
                   {allArtifacts.length}
                 </span>
               )}
             </button>
 
-            {/* CHANGE 5: Artifacts dropdown — uses ArtifactsList component */}
+            {/* Artifacts dropdown */}
             {showArtifactsList && (
               <ArtifactsList
                 artifacts={allArtifacts}
@@ -751,21 +748,21 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
             )}
 
             {/* Recent Chats */}
-            <span className="ml-1 mt-4 text-xs font-semibold uppercase tracking-wide text-gray-400">Recent Chats</span>
+            <span className="ml-1 mt-4 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-white/28">Recent Chats</span>
             <div className="flex flex-col gap-1">
               {sortedSessions.length === 0 ? (
-                <p className="px-2 py-3 text-[13px] italic text-gray-400">
+                <p className="px-2 py-3 text-[13px] italic text-gray-400 dark:text-white/28">
                   {searchQuery ? 'No matching chats' : 'No recent chats yet'}
                 </p>
               ) : (
                 sortedSessions.map(session => (
                   <div key={session.id} className="relative">
                     {renamingId === session.id ? (
-                      <div className="flex items-center gap-1.5 rounded-xl bg-indigo-50 px-3 py-2">
+                      <div className="flex items-center gap-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/20 px-3 py-2">
                         <input autoFocus value={renameValue} onChange={e => setRenameValue(e.target.value)}
                           onKeyDown={e => { if (e.key === 'Enter') confirmRename(); if (e.key === 'Escape') setRenamingId(null) }}
                           onBlur={confirmRename}
-                          className="flex-1 bg-transparent text-[14px] text-indigo-700 outline-none"
+                          className="flex-1 bg-transparent text-[14px] text-indigo-700 dark:text-indigo-300 outline-none"
                         />
                       </div>
                     ) : (
@@ -779,7 +776,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
                           const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
                           setContextMenu({ sessionId: session.id, x: rect.left, y: rect.bottom + 4 })
                         }}
-                        className={`flex w-full items-start gap-2.5 rounded-xl px-3 py-2.5 text-left text-[14px] text-gray-600 transition hover:bg-indigo-50 hover:text-indigo-600 ${session.id === currentSessionId ? 'bg-indigo-50 text-indigo-600' : ''}`}
+                        className={`flex w-full items-start gap-2.5 rounded-xl px-3 py-2.5 text-left text-[14px] text-gray-600 dark:text-white/60 transition hover:bg-indigo-50 dark:hover:bg-white/[0.05] hover:text-indigo-600 dark:hover:text-white/80 ${session.id === currentSessionId ? 'bg-indigo-50 dark:bg-white/[0.07] text-indigo-600 dark:text-white/80' : ''}`}
                       >
                         <div className="mt-0.5 shrink-0">
                           {session.pinned ? (
@@ -787,7 +784,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
                           ) : session.favorite ? (
                             <svg className="h-4 w-4 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                           ) : (
-                            <MessageSquare className="h-4 w-4 text-gray-400" />
+                            <MessageSquare className="h-4 w-4 text-gray-400 dark:text-white/28" />
                           )}
                         </div>
                         <span className="line-clamp-2 leading-snug">{session.title}</span>
@@ -801,9 +798,9 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
 
           {/* Context Menu */}
           {contextMenu && (
-            <>
+      <>
               <div className="fixed inset-0 z-[60]" onClick={() => setContextMenu(null)} />
-              <div className="fixed z-[70] w-44 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl"
+              <div className="fixed z-[70] w-44 overflow-hidden rounded-2xl border border-gray-100 dark:border-white/[0.08] bg-white dark:bg-[#212121] shadow-2xl"
                 style={{ top: Math.min(contextMenu.y, window.innerHeight - 230), left: Math.min(contextMenu.x, window.innerWidth - 185) }}
               >
                 {[
@@ -811,11 +808,11 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
                   { label: chatSessions.find(s => s.id === contextMenu.sessionId)?.favorite ? 'Unfavorite' : 'Favorite', action: () => handleFavorite(contextMenu.sessionId) },
                   { label: 'Rename', action: () => { const s = chatSessions.find(x => x.id === contextMenu.sessionId); if (s) startRename(s) } },
                 ].map((item, i) => (
-                  <button key={i} onClick={item.action} className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-[14px] font-medium text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-600">
+                  <button key={i} onClick={item.action} className="flex w-full items-center gap-3 border-b border-gray-100 dark:border-white/[0.07] px-4 py-3 text-[14px] font-medium text-gray-700 dark:text-[#ececec] transition hover:bg-indigo-50 dark:hover:bg-white/[0.07] hover:text-indigo-600 dark:hover:text-indigo-400">
                     {item.label}
                   </button>
                 ))}
-                <button onClick={() => handleDelete(contextMenu.sessionId)} className="flex w-full items-center gap-3 px-4 py-3 text-[14px] font-medium text-rose-500 transition hover:bg-red-50">
+                <button onClick={() => handleDelete(contextMenu.sessionId)} className="flex w-full items-center gap-3 px-4 py-3 text-[14px] font-medium text-rose-500 transition hover:bg-red-50 dark:hover:bg-red-500/10">
                   Delete
                 </button>
               </div>
@@ -823,30 +820,30 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
           )}
 
           {/* ── Bottom user bar ───────────────────────────────────────── */}
-          <div className="flex items-center justify-between border-t border-gray-100 px-5 py-4">
+          <div className="flex items-center justify-between border-t border-gray-100 dark:border-white/[0.07] px-5 py-4">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-900 text-[13px] font-bold text-white">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-900 dark:bg-white/[0.12] text-[13px] font-bold text-white">
                 {initials}
               </div>
-              <span className="truncate text-[15px] font-medium text-gray-800">{displayName}</span>
+              <span className="truncate text-[15px] font-medium text-gray-800 dark:text-[#ececec]">{displayName}</span>
             </div>
             <button
               onClick={() => setShowSettings(true)}
-              className="ml-3 shrink-0 rounded-xl p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+              className="ml-3 shrink-0 rounded-xl p-2 text-gray-400 dark:text-white/40 transition hover:bg-gray-100 dark:hover:bg-white/[0.08] hover:text-gray-700 dark:hover:text-white/70"
             >
               <Settings className="h-5 w-5" />
             </button>
           </div>
         </div>
 
-        {sidebarOpen && <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setSidebarOpen(false)} />}
+        {sidebarOpen && <div className="fixed inset-0 z-40 bg-black/20 dark:bg-black/50" onClick={() => setSidebarOpen(false)} />}
 
         {/* ── Header ───────────────────────────────────────────────────── */}
         <header className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between p-4">
-          <button onClick={() => setSidebarOpen(true)} className="text-gray-500 transition hover:text-gray-700">
+          <button onClick={() => setSidebarOpen(true)} className="text-gray-500 dark:text-white/50 transition hover:text-gray-700 dark:hover:text-white/70">
             <Menu className="h-6 w-6" />
           </button>
-          <button onClick={newChat} className="text-gray-500 transition hover:text-gray-700">
+          <button onClick={newChat} className="text-gray-500 dark:text-white/50 transition hover:text-gray-700 dark:hover:text-white/70">
             <Plus className="h-6 w-6" />
           </button>
         </header>
@@ -859,7 +856,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
                 <div className="mb-5 h-[90px] w-[90px]">
                   <img src="/logo.png" alt="Grozl" className="h-full w-full object-contain" />
                 </div>
-                <h1 className="mb-7 text-center text-[28px] font-semibold tracking-tight text-gray-900">
+                <h1 className="mb-7 text-center text-[28px] font-semibold tracking-tight text-gray-900 dark:text-white/70">
                   Your Mind, Amplified By Grozl
                 </h1>
                 {InputBox}
@@ -878,7 +875,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
                     <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-[15px] leading-relaxed ${
                       msg.role === 'user'
                         ? 'bg-[#4D6BFE] text-white'
-                        : 'border border-gray-100 bg-white text-gray-800 shadow-sm'
+                        : 'border border-gray-100 dark:border-transparent bg-white dark:bg-transparent text-gray-800 dark:text-[#ececec] shadow-sm dark:shadow-none'
                     }`}>
                       {renderContent(msg.content, msg.role === 'assistant', i === messages.length - 1)}
                     </div>
@@ -897,17 +894,15 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
         </main>
       </div>
 
-      {/* CHANGE 7A: Artifact Right Panel — Desktop split + Mobile fullscreen */}
+      {/* Artifact Right Panel */}
       {activeArtifact && showArtifactModal && (
         <>
-          {/* Desktop: persistent right panel, true split view */}
           <div className="hidden md:flex md:w-[46%] shrink-0 flex-col border-l border-white/10">
             <ArtifactPanel
               artifact={activeArtifact}
               onClose={() => { setActiveArtifact(null); setShowArtifactModal(false) }}
             />
           </div>
-          {/* Mobile: full screen dark overlay */}
           <div className="fixed inset-0 z-50 flex flex-col md:hidden bg-[#0f1117]">
             <ArtifactPanel
               artifact={activeArtifact}
@@ -917,18 +912,16 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
         </>
       )}
 
-      {/* CHANGE 7B: Projects Right Panel — Desktop split + Mobile fullscreen */}
+      {/* Projects Right Panel */}
       {showProjectsPanel && (
         <>
-          {/* Desktop: persistent right panel */}
-          <div className="hidden md:flex md:w-[380px] shrink-0 flex-col border-l border-gray-200 bg-white shadow-xl">
+          <div className="hidden md:flex md:w-[380px] shrink-0 flex-col border-l border-gray-200 dark:border-white/[0.07] bg-white dark:bg-[#1a1a1a] shadow-xl">
             <ProjectsPanel
               currentSessionId={currentSessionId}
               onClose={() => { setShowProjectsPanel(false); setActiveMenuItem(null) }}
             />
           </div>
-          {/* Mobile: full screen */}
-          <div className="fixed inset-0 z-50 flex flex-col md:hidden bg-white">
+          <div className="fixed inset-0 z-50 flex flex-col md:hidden bg-white dark:bg-[#1a1a1a]">
             <ProjectsPanel
               currentSessionId={currentSessionId}
               onClose={() => { setShowProjectsPanel(false); setActiveMenuItem(null); setSidebarOpen(false) }}
@@ -949,5 +942,4 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       )}
     </div>
   )
-      }
-
+          }

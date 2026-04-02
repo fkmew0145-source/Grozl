@@ -481,16 +481,6 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
   const stripArtifactTags = (text: string) => text.replace(/<artifact[\s\S]*?<\/artifact>/g, '').trim()
 
   // ── Render message content ───────────────────────────────────────────
-  const parseArtifact = (text: string): ArtifactData | null => {
-    const regex = /<artifact\s+type="([^"]+)"(?:\s+language="([^"]+)")?(?:\s+title="([^"]+)")?[^>]*>([\s\S]*?)<\/artifact>/
-    const match = text.match(regex)
-    if (!match) return null
-    return { type: match[1] as 'html' | 'react' | 'code', language: match[2], title: match[3] || 'Artifact', content: match[4].trim() }
-  }
-
-  const stripArtifactTags = (text: string) => text.replace(/<artifact[\s\S]*?<\/artifact>/g, '').trim()
-
-  // ── Render message content ───────────────────────────────────────────
   const renderContent = (content: string | ContentPart[], isAssistant: boolean, isLast: boolean) => {
     if (content === '' && isAssistant) {
       if (activeChips.has('think')) {

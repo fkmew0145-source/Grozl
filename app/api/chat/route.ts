@@ -88,11 +88,19 @@ You never say "As an AI..." or "I apologize for...". You speak with confidence, 
 ## LANGUAGE & TONE ADAPTATION (STRICT MIRRORING)
 Instantly detect and mirror the user's language and energy. 
 
-**STRICTEST RULE (DO NOT BREAK):** You have no fixed language. Mirror the user's last message exactly. 
-1. **No Mixed Response:** If the user speaks English (e.g., "How are you?"), reply ONLY in English. No Hindi, no Hinglish.
-2. **Hinglish Consistency:** If the user speaks Hinglish (e.g., "Bhai, kaise ho?"), reply ONLY in Hinglish. 
-3. **ZERO TRANSLATION:** Strictly forbidden to provide English translations in brackets () or explain your response in a second language. 
-4. **No Bridging:** Never start in one language and switch to another unless the user's message is itself mixed.
+**STRICTEST RULE (DO NOT BREAK):** You have no fixed language. Mirror the user's LAST message exactly — every single reply.
+1. **No Mixed Response:** If the user speaks English → reply ONLY in English. Zero Hindi. Zero Hinglish.
+2. **Hinglish Consistency:** If the user speaks Hinglish → reply ONLY in Hinglish.
+3. **Pure Hindi:** If the user writes in Devanagari/Hindi → reply ONLY in Hindi.
+4. **ZERO TRANSLATION:** Forbidden to mix languages or add translations in brackets.
+5. **No Bridging:** Never start in one language and drift into another.
+6. **OVERRIDE:** This language rule overrides everything else — including your default personality.
+
+**EXAMPLES — MUST FOLLOW:**
+- User: "How are you?" → You: "I'm doing great! How about you?" (ONLY English)
+- User: "Kese ho?" → You: "Main theek hoon yaar! Tu kese hai?" (ONLY Hinglish)
+- User: "Hello" → You: "Hello! How can I help?" (ONLY English)
+- User: "Assalamualaikum" → You: "Walaikum assalam! Kya haal hai?" (Hinglish)
 
 | Situation | Tone | Style |
 | :--- | :--- | :--- |
@@ -299,40 +307,42 @@ function getLastUserText(messages: IncomingMessage[]): string {
 }
 
 // ── TIER 0 — Ultra-simple local replies (zero API cost) ──────────────────
-const GREETING_REPLIES = [
-  'Hey! Kya chal raha hai? Kuch kaam hai? 😊',
-  'Haan bolo! Main yahan hoon. 🙂',
-  'Hello! Batao, kya help chahiye?',
-  'Hey yaar! Kya scene hai? 😄',
-  'Hi! Bol do kya chahiye. 😊',
-]
-const THANKS_REPLIES = [
-  'Koi baat nahi yaar! 🙌',
-  'Always! Aur kuch chahiye?',
-  'Mention not! Kabhi bhi bolo. 😊',
-  'Arrey koi baat nahi! 🙏',
-]
-const BYE_REPLIES = [
-  'Bye! Take care 👋',
-  'Alvida! Jab zarurat ho wapas aana. 😊',
-  'See you! Kal milte hain. 🙂',
-  'Bye bye! 👋 Kuch aur chahiye toh bolo.',
-]
-const ACK_REPLIES  = ['👍', 'Theek hai!', 'Alright! Aur kuch?', 'Okay 👌']
-const NICE_REPLIES = ['😊', 'Shukriya yaar!', '🙌 Acha laga!', 'Glad to help!']
+
+// Detect language of user message
+function detectMsgLanguage(text: string): 'hindi' | 'hinglish' | 'english' {
+  if (/[\u0900-\u097F]/.test(text)) return 'hindi'
+  const hinglishWords = ['bhai', 'yaar', 'kya', 'hai', 'ho', 'karo', 'nahi', 'haan', 'kese', 'kaise', 'theek', 'acha', 'bilkul', 'bolo', 'batao', 'chal', 'mera', 'tera', 'kuch', 'toh', 'abhi', 'scene', 'zarurat', 'assalamualaikum', 'walaikum', 'shukriya', 'alvida', 'namaste', 'salaam']
+  const t = text.toLowerCase()
+  if (hinglishWords.some(w => t.includes(w))) return 'hinglish'
+  return 'english'
+}
+
+const GREETING_REPLIES_HI = ['Hey! Kya chal raha hai? Kuch kaam hai? 😊', 'Haan bolo! Main yahan hoon. 🙂', 'Hello! Batao, kya help chahiye?', 'Hey yaar! Kya scene hai? 😄', 'Hi! Bol do kya chahiye. 😊']
+const GREETING_REPLIES_EN = ["Hey! What's up? Need help? 😊", "Hello! How can I assist you? 🙂", "Hi there! What can I do for you? 😊", "Hey! What's on your mind? 😄"]
+const THANKS_REPLIES_HI   = ['Koi baat nahi yaar! 🙌', 'Always! Aur kuch chahiye?', 'Mention not! Kabhi bhi bolo. 😊', 'Arrey koi baat nahi! 🙏']
+const THANKS_REPLIES_EN   = ["You're welcome! 🙌", "Happy to help! Anything else?", "No problem at all! 😊", "Anytime! 🙏"]
+const BYE_REPLIES_HI      = ['Bye! Take care 👋', 'Alvida! Jab zarurat ho wapas aana. 😊', 'See you! Kal milte hain. 🙂']
+const BYE_REPLIES_EN      = ['Bye! Take care 👋', 'See you! Come back anytime. 😊', 'Goodbye! Feel free to ask anytime. 👋']
+const ACK_REPLIES_HI      = ['👍', 'Theek hai!', 'Alright! Aur kuch?', 'Okay 👌']
+const ACK_REPLIES_EN      = ['👍', 'Got it!', 'Alright! Anything else?', 'Okay 👌']
+const NICE_REPLIES_HI     = ['😊', 'Shukriya yaar!', '🙌 Acha laga!', 'Glad to help!']
+const NICE_REPLIES_EN     = ['😊', 'Thank you!', '🙌 Glad you liked it!', 'Appreciate it!']
 
 function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
 function getUltraSimpleReply(text: string): string | null {
-  const t = text.toLowerCase().trim()
-  if (t.length > 0 && t.length <= 12 && !/[a-z0-9\u0900-\u097F]/.test(t)) return pick(NICE_REPLIES)
-  if (/^(hi+|hello+|hey+|hiya|helo|howdy|namaste|namaskar|sat sri akal|salaam|assalaamu|jai hind|sup|wassup)[\s!.?😊🙂]*$/.test(t)) return pick(GREETING_REPLIES)
-  if (/^(thanks?|thank(s| you)+|shukriya|dhanyawad|ty|thnx|thx|mehrbani|shukar hai|shukar)[\s!.?😊🙏]*$/.test(t)) return pick(THANKS_REPLIES)
-  if (/^(bye+|goodbye|good bye|alvida|cya|see ya|see you|baad mein|baad me|take care|tc|later|ttyl)[\s!.?👋😊]*$/.test(t)) return pick(BYE_REPLIES)
-  if (/^(ok|okay|k|hmm+|hm+|ohh?|ah+|ahan|acha|thik|theek|haan|han|nahi|nope|yep|yup|yes|no|got it|noted|sure|alright|bilkul)[\s!.?]*$/.test(t)) return pick(ACK_REPLIES)
-  if (/^(nice|great|awesome|wow|wah+|amazing|kya baat|shabash|bahut badhiya|good|cool|superb|perfect|excellent|badhiya|mast|ekdum|sahi|zabardast)[\s!.?😊🔥👏]*$/.test(t)) return pick(NICE_REPLIES)
+  const t    = text.toLowerCase().trim()
+  const lang = detectMsgLanguage(text)
+  const isEn = lang === 'english'
+
+  if (t.length > 0 && t.length <= 12 && !/[a-z0-9\u0900-\u097F]/.test(t)) return pick(isEn ? NICE_REPLIES_EN : NICE_REPLIES_HI)
+  if (/^(hi+|hello+|hey+|hiya|helo|howdy|namaste|namaskar|sat sri akal|salaam|assalamu.*|walaikum|jai hind|sup|wassup)[\s!.?😊🙂]*$/.test(t)) return pick(isEn ? GREETING_REPLIES_EN : GREETING_REPLIES_HI)
+  if (/^(thanks?|thank(s| you)+|shukriya|dhanyawad|ty|thnx|thx|mehrbani|shukar hai|shukar)[\s!.?😊🙏]*$/.test(t)) return pick(isEn ? THANKS_REPLIES_EN : THANKS_REPLIES_HI)
+  if (/^(bye+|goodbye|good bye|alvida|cya|see ya|see you|baad mein|baad me|take care|tc|later|ttyl)[\s!.?👋😊]*$/.test(t)) return pick(isEn ? BYE_REPLIES_EN : BYE_REPLIES_HI)
+  if (/^(ok|okay|k|hmm+|hm+|ohh?|ah+|ahan|acha|thik|theek|haan|han|nahi|nope|yep|yup|yes|no|got it|noted|sure|alright|bilkul)[\s!.?]*$/.test(t)) return pick(isEn ? ACK_REPLIES_EN : ACK_REPLIES_HI)
+  if (/^(nice|great|awesome|wow|wah+|amazing|kya baat|shabash|bahut badhiya|good|cool|superb|perfect|excellent|badhiya|mast|ekdum|sahi|zabardast)[\s!.?😊🔥👏]*$/.test(t)) return pick(isEn ? NICE_REPLIES_EN : NICE_REPLIES_HI)
   return null
 }
 
@@ -694,4 +704,4 @@ try {
     )
   }
 }
-}
+  }

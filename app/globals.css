@@ -40,38 +40,39 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  /* ── Claude-matching dark palette ── */
+  --background: #1a1a1a;
+  --foreground: #ececec;
+  --card: #212121;
+  --card-foreground: #ececec;
+  --popover: #212121;
+  --popover-foreground: #ececec;
+  --primary: #ececec;
+  --primary-foreground: #1a1a1a;
+  --secondary: #2a2a2a;
+  --secondary-foreground: #ececec;
+  --muted: #2a2a2a;
+  --muted-foreground: #8e8e8e;
+  --accent: #2a2a2a;
+  --accent-foreground: #ececec;
   --destructive: oklch(0.396 0.141 25.723);
   --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
+  --border: rgba(255,255,255,0.09);
+  --input: #2a2a2a;
+  --ring: #555555;
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  --sidebar: #141414;
+  --sidebar-foreground: #ececec;
+  --sidebar-primary: #6366f1;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #212121;
+  --sidebar-accent-foreground: #ececec;
+  --sidebar-border: rgba(255,255,255,0.07);
+  --sidebar-ring: #555555;
 }
 
 @theme inline {
@@ -129,114 +130,122 @@ html.dark {
   color-scheme: dark;
 }
 
-/* Sidebar dark mode */
+/* Sidebar */
 html.dark .grozl-sidebar {
-  background: #111318 !important;
+  background: #141414 !important;
   border-color: rgba(255,255,255,0.07) !important;
-}
-html.dark .grozl-sidebar * {
-  --tw-border-opacity: 0.08;
 }
 html.dark .grozl-sidebar input {
   background: rgba(255,255,255,0.05) !important;
-  border-color: rgba(255,255,255,0.1) !important;
-  color: rgba(255,255,255,0.85) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  color: #ececec !important;
 }
 html.dark .grozl-sidebar input::placeholder {
-  color: rgba(255,255,255,0.3) !important;
+  color: rgba(255,255,255,0.28) !important;
 }
 
-/* Main chat dark mode */
+/* Main chat area */
 html.dark .grozl-main {
-  background: #0d0f14 !important;
+  background: #1a1a1a !important;
 }
 html.dark .grozl-header {
   background: transparent !important;
 }
 
-/* Message bubbles */
+/* Assistant message — no bubble, just text like Claude */
 html.dark .grozl-msg-assistant {
-  background: #1a1d27 !important;
-  border-color: rgba(255,255,255,0.07) !important;
-  color: rgba(255,255,255,0.85) !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  color: #ececec !important;
 }
 
 /* Input box */
 html.dark .grozl-inputbox {
-  background: #1a1d27 !important;
-  border-color: rgba(255,255,255,0.1) !important;
+  background: #2a2a2a !important;
+  border-color: rgba(255,255,255,0.08) !important;
 }
 html.dark .grozl-inputbox textarea {
-  color: rgba(255,255,255,0.85) !important;
+  color: #ececec !important;
 }
 html.dark .grozl-inputbox textarea::placeholder {
-  color: rgba(255,255,255,0.3) !important;
+  color: rgba(255,255,255,0.28) !important;
 }
 
 /* Context menu */
 html.dark .grozl-context-menu {
-  background: #1e2130 !important;
+  background: #212121 !important;
   border-color: rgba(255,255,255,0.08) !important;
 }
 
-/* Settings screen */
+/* Settings */
 html.dark .grozl-settings {
-  background: #0d0f14 !important;
+  background: #1a1a1a !important;
 }
 html.dark .grozl-settings-card {
-  background: #1a1d27 !important;
+  background: #212121 !important;
 }
 
-/* ── Grozl Dark Mode Overrides ────────────────────────────────────────── */
+/* ── Tailwind class overrides for dark mode ─────────────────────────── */
 .dark body,
 .dark [data-theme="dark"] {
-  background-color: oklch(0.145 0 0);
-  color: oklch(0.985 0 0);
+  background-color: #1a1a1a;
+  color: #ececec;
 }
 
-/* Chat screen backgrounds */
-.dark .bg-\[\#F5F3EF\] { background-color: oklch(0.18 0 0) !important; }
-.dark .bg-\[\#F2F2F7\] { background-color: oklch(0.18 0 0) !important; }
-.dark .bg-white { background-color: oklch(0.205 0 0) !important; }
-.dark .bg-gray-50 { background-color: oklch(0.22 0 0) !important; }
-.dark .bg-gray-100 { background-color: oklch(0.25 0 0) !important; }
+/* Hardcoded light backgrounds → dark */
+.dark .bg-\[\#F5F3EF\],
+.dark .bg-\[\#F2F2F7\],
+.dark .bg-\[\#FAFAFA\] { background-color: #1a1a1a !important; }
+.dark .bg-white         { background-color: #212121 !important; }
+.dark .bg-gray-50       { background-color: #212121 !important; }
+.dark .bg-gray-100      { background-color: #262626 !important; }
+.dark .bg-gray-200      { background-color: #2a2a2a !important; }
 
-/* Text colors in dark mode */
-.dark .text-gray-900 { color: oklch(0.95 0 0) !important; }
-.dark .text-gray-800 { color: oklch(0.9 0 0) !important; }
-.dark .text-gray-700 { color: oklch(0.85 0 0) !important; }
-.dark .text-gray-600 { color: oklch(0.75 0 0) !important; }
-.dark .text-gray-500 { color: oklch(0.65 0 0) !important; }
-.dark .text-gray-400 { color: oklch(0.55 0 0) !important; }
+/* Text */
+.dark .text-gray-900,
+.dark .text-black        { color: #ececec !important; }
+.dark .text-gray-800     { color: #d4d4d4 !important; }
+.dark .text-gray-700     { color: #b8b8b8 !important; }
+.dark .text-gray-600     { color: #a0a0a0 !important; }
+.dark .text-gray-500     { color: #8e8e8e !important; }
+.dark .text-gray-400     { color: #6e6e6e !important; }
 
-/* Border colors */
-.dark .border-gray-100 { border-color: oklch(0.28 0 0) !important; }
-.dark .border-gray-200 { border-color: oklch(0.32 0 0) !important; }
-.dark .border-gray-300 { border-color: oklch(0.38 0 0) !important; }
-
-/* Sidebar */
-.dark .bg-\[\#F5F3EF\] { background-color: oklch(0.16 0 0) !important; }
+/* Borders */
+.dark .border-gray-100  { border-color: rgba(255,255,255,0.07) !important; }
+.dark .border-gray-200  { border-color: rgba(255,255,255,0.09) !important; }
+.dark .border-gray-300  { border-color: rgba(255,255,255,0.12) !important; }
 
 /* Input / textarea */
-.dark input, .dark textarea {
-  background-color: oklch(0.22 0 0);
-  color: oklch(0.9 0 0);
+.dark input,
+.dark textarea {
+  background-color: #2a2a2a;
+  color: #ececec;
+  border-color: rgba(255,255,255,0.08);
 }
-.dark input::placeholder, .dark textarea::placeholder {
-  color: oklch(0.5 0 0);
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: rgba(255,255,255,0.28);
 }
 
-/* User message bubble stays blue */
+/* Keep user message bubble color */
 .dark .bg-\[\#4D6BFE\] { background-color: #4D6BFE !important; }
 
-/* Assistant message bubble */
+/* Assistant bubble — transparent like Claude */
 .dark .border-gray-100.bg-white {
-  background-color: oklch(0.22 0 0) !important;
-  border-color: oklch(0.3 0 0) !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
 }
+
+/* Hover states */
+.dark .hover\:bg-gray-100:hover { background-color: #262626 !important; }
+.dark .hover\:bg-gray-50:hover  { background-color: #222222 !important; }
+.dark .active\:bg-gray-50:active,
+.dark .active\:bg-gray-100:active { background-color: #2a2a2a !important; }
+
 
 /* ── Chat font size CSS variable ──────────────────────────────────────── */
 :root {
   --chat-font-size: 15px;
   }
-    
+
+  

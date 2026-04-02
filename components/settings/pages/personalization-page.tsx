@@ -62,23 +62,23 @@ export default function PersonalizationPage({ user, onBack }: PersonalizationPag
   }
 
   return (
-    <div className="flex h-full flex-col bg-[#F2F2F7]">
+    <div className="flex h-full flex-col bg-[#F2F2F7] dark:bg-[#0d0f14]">
       {/* Header */}
-      <div className="flex items-center justify-between bg-[#F2F2F7] px-4 py-4 pt-6">
-        <button onClick={onBack} className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition hover:bg-gray-200">
+      <div className="flex items-center justify-between bg-[#F2F2F7] dark:bg-[#0d0f14] px-4 py-4 pt-6">
+        <button onClick={onBack} className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition hover:bg-gray-200 dark:hover:bg-white/10">
           <ChevronLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-[17px] font-semibold text-gray-900">Personalization</h1>
+        <h1 className="text-[17px] font-semibold text-gray-900 dark:text-white">Personalization</h1>
         <button
           onClick={handleSave}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition hover:bg-gray-200"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition hover:bg-gray-200 dark:hover:bg-white/10"
         >
           {saved ? (
             <svg className="h-5 w-5 text-green-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           ) : (
-            <svg className="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <svg className="h-5 w-5 text-gray-600 dark:text-white/60" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <polyline points="20 6 9 17 4 12" />
             </svg>
           )}
@@ -88,32 +88,32 @@ export default function PersonalizationPage({ user, onBack }: PersonalizationPag
       <div className="flex-1 overflow-y-auto px-4 py-3">
 
         {/* Base style and tone */}
-        <div className="mb-2 overflow-hidden rounded-2xl bg-white shadow-sm">
+        <div className="mb-2 overflow-hidden rounded-2xl bg-white dark:bg-white/5 dark:bg-white/5 shadow-sm">
           <button
             onClick={() => setShowToneDialog(true)}
-            className="flex w-full items-center justify-between px-4 py-4 transition active:bg-gray-50"
+            className="flex w-full items-center justify-between px-4 py-4 transition active:bg-gray-50 dark:active:bg-white/5"
           >
             <div className="text-left">
-              <p className="text-[15px] text-gray-800">Base style and tone</p>
-              <p className="text-[13px] text-gray-400">{currentTone.label}</p>
+              <p className="text-[15px] text-gray-800 dark:text-white/90">Base style and tone</p>
+              <p className="text-[13px] text-gray-400 dark:text-white/30">{currentTone.label}</p>
             </div>
-            <ChevronDown className="h-5 w-5 text-gray-400" />
+            <ChevronDown className="h-5 w-5 text-gray-400 dark:text-white/30" />
           </button>
         </div>
 
-        <p className="mb-5 px-1 text-[12px] leading-relaxed text-gray-400">
+        <p className="mb-5 px-1 text-[12px] leading-relaxed text-gray-400 dark:text-white/30">
           This is the main voice and tone Grozl uses in your conversations. This doesn't impact Grozl's capabilities.
         </p>
 
         {/* Characteristics */}
-        <p className="mb-2 px-1 text-[13px] text-gray-500">Characteristics</p>
-        <div className="mb-2 overflow-hidden rounded-2xl bg-white shadow-sm">
+        <p className="mb-2 px-1 text-[13px] text-gray-500 dark:text-white/50">Characteristics</p>
+        <div className="mb-2 overflow-hidden rounded-2xl bg-white dark:bg-white/5 dark:bg-white/5 shadow-sm">
           <button
             onClick={() => setShowCharDialog(true)}
-            className="flex w-full items-center justify-between px-4 py-4 transition active:bg-gray-50"
+            className="flex w-full items-center justify-between px-4 py-4 transition active:bg-gray-50 dark:active:bg-white/5"
           >
-            <span className="text-[15px] text-gray-800">Add characteristics</span>
-            <Plus className="h-5 w-5 text-gray-400" />
+            <span className="text-[15px] text-gray-800 dark:text-white/90">Add characteristics</span>
+            <Plus className="h-5 w-5 text-gray-400 dark:text-white/30" />
           </button>
           {personalization.characteristics.length > 0 && (
             <div className="border-t border-gray-100 px-4 py-3">
@@ -134,13 +134,13 @@ export default function PersonalizationPage({ user, onBack }: PersonalizationPag
           )}
         </div>
 
-        <p className="mb-5 px-1 text-[12px] leading-relaxed text-gray-400">
+        <p className="mb-5 px-1 text-[12px] leading-relaxed text-gray-400 dark:text-white/30">
           Choose some additional customizations on top of your base style and tone.
         </p>
 
         {/* Custom instructions */}
-        <p className="mb-2 px-1 text-[13px] text-gray-500">Custom instructions</p>
-        <div className="mb-2 overflow-hidden rounded-2xl bg-white shadow-sm">
+        <p className="mb-2 px-1 text-[13px] text-gray-500 dark:text-white/50">Custom instructions</p>
+        <div className="mb-2 overflow-hidden rounded-2xl bg-white dark:bg-white/5 dark:bg-white/5 shadow-sm">
           <textarea
             value={personalization.customInstructions}
             onChange={e => patch({ customInstructions: e.target.value })}
@@ -152,7 +152,7 @@ export default function PersonalizationPage({ user, onBack }: PersonalizationPag
           />
         </div>
 
-        <p className="mb-8 px-1 text-[12px] leading-relaxed text-gray-400">
+        <p className="mb-8 px-1 text-[12px] leading-relaxed text-gray-400 dark:text-white/30">
           Grozl will follow these instructions in every conversation. Be specific for best results.
         </p>
       </div>
@@ -160,16 +160,16 @@ export default function PersonalizationPage({ user, onBack }: PersonalizationPag
       {/* Tone dialog */}
       {showToneDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-8">
-          <div className="w-full max-w-[340px] overflow-hidden rounded-3xl bg-white shadow-2xl">
+          <div className="w-full max-w-[340px] overflow-hidden rounded-3xl bg-white dark:bg-white/5 shadow-2xl">
             <div className="px-5 pt-5 pb-3 text-center">
-              <p className="text-[17px] font-semibold text-gray-900">Base Style &amp; Tone</p>
+              <p className="text-[17px] font-semibold text-gray-900 dark:text-white">Base Style &amp; Tone</p>
             </div>
             <div className="max-h-[55vh] overflow-y-auto">
               {BASE_TONES.map((tone, i) => (
                 <button
                   key={tone.id}
                   onClick={() => { patch({ baseTone: tone.id }); setShowToneDialog(false) }}
-                  className={`flex w-full items-start gap-3 px-5 py-4 text-left transition ${i > 0 ? 'border-t border-gray-100' : ''} active:bg-gray-50`}
+                  className={`flex w-full items-start gap-3 px-5 py-4 text-left transition ${i > 0 ? 'border-t border-gray-100' : ''} active:bg-gray-50 dark:active:bg-white/5`}
                 >
                   <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${personalization.baseTone === tone.id ? 'border-gray-900' : 'border-gray-300'}`}>
                     {personalization.baseTone === tone.id && <div className="h-2.5 w-2.5 rounded-full bg-gray-900" />}
@@ -181,8 +181,8 @@ export default function PersonalizationPage({ user, onBack }: PersonalizationPag
                 </button>
               ))}
             </div>
-            <div className="border-t border-gray-100">
-              <button onClick={() => setShowToneDialog(false)} className="w-full py-4 text-[15px] text-gray-500 transition hover:bg-gray-50">
+            <div className="border-t border-gray-100 dark:border-white/10">
+              <button onClick={() => setShowToneDialog(false)} className="w-full py-4 text-[15px] text-gray-500 transition hover:bg-gray-50 dark:hover:bg-white/5">
                 Cancel
               </button>
             </div>
@@ -193,9 +193,9 @@ export default function PersonalizationPage({ user, onBack }: PersonalizationPag
       {/* Characteristics dialog */}
       {showCharDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-8">
-          <div className="w-full max-w-[340px] overflow-hidden rounded-3xl bg-white shadow-2xl">
+          <div className="w-full max-w-[340px] overflow-hidden rounded-3xl bg-white dark:bg-white/5 shadow-2xl">
             <div className="px-5 pt-5 pb-3 text-center">
-              <p className="text-[17px] font-semibold text-gray-900">Add Characteristics</p>
+              <p className="text-[17px] font-semibold text-gray-900 dark:text-white">Add Characteristics</p>
             </div>
             <div className="max-h-[55vh] overflow-y-auto px-4 py-3">
               <div className="flex flex-wrap gap-2">
@@ -218,8 +218,8 @@ export default function PersonalizationPage({ user, onBack }: PersonalizationPag
                 })}
               </div>
             </div>
-            <div className="border-t border-gray-100">
-              <button onClick={() => setShowCharDialog(false)} className="w-full py-4 text-[15px] font-semibold text-[#4D6BFE] transition hover:bg-gray-50">
+            <div className="border-t border-gray-100 dark:border-white/10">
+              <button onClick={() => setShowCharDialog(false)} className="w-full py-4 text-[15px] font-semibold text-[#4D6BFE] transition hover:bg-gray-50 dark:hover:bg-white/5">
                 Done
               </button>
             </div>
@@ -229,4 +229,5 @@ export default function PersonalizationPage({ user, onBack }: PersonalizationPag
     </div>
   )
       }
-      
+
+            

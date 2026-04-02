@@ -148,7 +148,7 @@ export default function PersonalizationPage({ user, onBack }: PersonalizationPag
               'Response Style: Strictly functional and concise.\nTone: No extra excitement or filler words.\nGoal: Only answer what is asked or required for the task.'
             }
             rows={5}
-            className="w-full resize-none bg-transparent px-4 py-4 text-[14px] text-gray-800 outline-none placeholder:text-[13px] placeholder:text-gray-300"
+            className="w-full resize-none bg-transparent px-4 py-4 text-[14px] text-gray-800 dark:text-white/85 outline-none placeholder:text-[13px] placeholder:text-gray-300 dark:placeholder:text-white/20"
           />
         </div>
 
@@ -230,4 +230,5 @@ export default function PersonalizationPage({ user, onBack }: PersonalizationPag
   )
       }
 
-            
+
+    

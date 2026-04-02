@@ -1,6 +1,6 @@
 export interface GrozlSettings {
   language: 'english' | 'hindi' | 'hinglish' | 'tamil' | 'telugu' | 'marathi' | 'gujarati' | 'kannada' | 'malayalam' | 'punjabi' | 'bengali' | 'urdu' | 'spanish' | 'french' | 'arabic' | 'portuguese' | 'russian' | 'indonesian' | 'german' | 'japanese' | 'chinese' | 'turkish'
-  appearance: 'light' | 'dark' | 'system'
+  
   fontSize: number
   voiceLanguage: string
   defaultModel: 'auto' | 'deepseek' | 'groq' | 'gemini'
@@ -21,7 +21,7 @@ export interface GrozlPersonalization {
 
 export const DEFAULT_SETTINGS: GrozlSettings = {
   language:      'hinglish',
-  appearance:    'system',
+  
   fontSize:      15,
   voiceLanguage: 'hi-IN',
   defaultModel:  'auto',
@@ -101,24 +101,6 @@ export function patchPersonalization(patch: Partial<GrozlPersonalization>, userI
   const updated  = { ...current, ...patch }
   savePersonalization(updated, userId)
   return updated
-}
-
-// ── Theme helper (used on app load to restore saved theme) ────────────────
-export function applyTheme(appearance: GrozlSettings['appearance']) {
-  const root = document.documentElement
-  if (appearance === 'dark') {
-    root.classList.add('dark')
-    root.style.colorScheme = 'dark'
-  } else if (appearance === 'light') {
-    root.classList.remove('dark')
-    root.style.colorScheme = 'light'
-  } else {
-    root.classList.remove('dark')
-    root.style.colorScheme = 'normal'
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      root.classList.add('dark')
-    }
-  }
 }
 
 export function applyFontSize(size: number) {

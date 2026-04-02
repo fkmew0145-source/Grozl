@@ -37,9 +37,9 @@ export default function InputBox({
 
   return (
     <div
-      className={`grozl-inputbox grozl-glass w-full rounded-3xl border p-4 transition-all duration-200 ${
+      className={`grozl-inputbox grozl-glass w-full rounded-3xl border p-4 transition-all duration-300 ${
         isActive
-          ? 'border-[#4D6BFE]/60 dark:border-[#4D6BFE]/40 shadow-lg shadow-[#4D6BFE]/10'
+          ? 'border-[#4D6BFE]/60 dark:border-[#4D6BFE]/50 shadow-lg shadow-[#4D6BFE]/10 grozl-inputbox-focused'
           : 'border-black/10 dark:border-white/10 shadow-sm'
       }`}
     >
@@ -79,8 +79,8 @@ export default function InputBox({
               onClick={() => onToggleChip(chip)}
               className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-medium transition-all duration-200 backdrop-blur-md ${
                 activeChips.has(chip)
-                  ? 'border-[#4D6BFE]/50 dark:border-[#93c5fd]/30 bg-[#EEF2FF]/70 dark:bg-[#93c5fd]/[0.08] text-[#4D6BFE] dark:text-[#93c5fd] shadow-sm dark:shadow-[#93c5fd]/10'
-                  : 'border-black/10 dark:border-white/20 bg-white/60 dark:bg-white/[0.08] text-black/60 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/[0.12]'
+                  ? 'border-[#4D6BFE]/60 bg-[#EEF2FF]/80 dark:bg-[#4D6BFE]/20 dark:border-[#4D6BFE]/60 text-[#4D6BFE] dark:text-[#93c5fd] shadow-sm shadow-[#4D6BFE]/20'
+                  : 'border-black/10 dark:border-[#4D6BFE]/30 bg-white/60 dark:bg-[#4D6BFE]/[0.06] text-black/60 dark:text-[#93c5fd]/80 hover:bg-black/5 dark:hover:bg-[#4D6BFE]/[0.12]'
               }`}
             >
               {chip === 'think' ? (
@@ -141,6 +141,4 @@ export default function InputBox({
       <input ref={fileInputRef} type="file" multiple className="hidden" onChange={onFileChange} />
     </div>
   )
-        }
-
-            
+          }

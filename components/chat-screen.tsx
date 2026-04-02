@@ -574,11 +574,11 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       )}
       <textarea
         ref={textareaRef}
-        placeholder=""
+        placeholder={isRecording ? 'Grozl Is Listening...' : 'Ask Grozl anything...'}
         rows={1} value={inputValue} onChange={handleInput}
         onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)}
         disabled={isLoading}
-        className="w-full resize-none bg-transparent text-base text-gray-800 dark:text-[#ececec] outline-none placeholder:text-gray-400 dark:placeholder:text-white/30 disabled:opacity-50 [border:none] [box-shadow:none]"
+        className="w-full resize-none bg-transparent text-base text-gray-800 dark:text-[#ececec] outline-none placeholder:text-gray-400 dark:placeholder:text-white/30 disabled:opacity-50 [border:none] [box-shadow:none] overflow-x-hidden"
         />
       <div className="mt-3.5 flex items-center justify-between">
         <div className="flex gap-2.5">

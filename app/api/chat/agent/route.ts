@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
     } = await req.json()
 
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model:'gemini-2.0-flash',
       systemInstruction: `You are Grozl Agent — an AI that can take REAL ACTIONS.
 You have access to tools: web_search, generate_code, summarize_url, create_todo, send_email_draft.
 When a user asks you to DO something (not just explain), USE the tools.

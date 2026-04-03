@@ -420,7 +420,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       const parts: ContentPart[] = []
       if (text) parts.push({ type: 'text', text })
       for (const file of attachedFiles) {
-        if (file.type.startsWith('image/')) {
+        if (file.type.startsWith('image/') || file.type === 'application/pdf') {
           parts.push({ type: 'image_url', image_url: { url: await fileToBase64(file) } })
         } else {
           try { parts.push({ type: 'text', text: `[File: ${file.name}]\n${await file.text()}` }) }
@@ -506,14 +506,31 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
     }
 
     if (typeof content === 'string') {
-      const artifact  = isAssistant ? parseArtifact(content) : null
-      const cleanText = artifact ? stripArtifactTags(content) : content
+      const artifact    = isAssistant ? parseArtifact(content) : null
+      const cleanText   = artifact ? stripArtifactTags(content) : content
+      const genImgMatch = cleanText.match(/\[GROZL_IMAGE:(https?:\/\/[^\]]+)\]/)
+      const genImageUrl = genImgMatch?.[1]
+      const displayText = genImageUrl ? cleanText.replace(/\[GROZL_IMAGE:[^\]]+\]\n?/, '') : cleanText
       return (
         <div className="flex flex-col gap-3">
-          {cleanText !== '' && (
+          {genImageUrl && (
+            <div className="flex flex-col gap-2">
+              <img
+                src={genImageUrl}
+                alt="Generated image"
+                className="max-w-full rounded-2xl border border-white/10"
+                onError={e => { (e.target as HTMLImageElement).alt = '⚠️ Image load karne mein time lag sakta hai, link open karo.' }}
+              />
+              <a href={genImageUrl} target="_blank" rel="noopener noreferrer"
+                className="text-[12px] text-indigo-400 hover:text-indigo-300 hover:underline">
+                ⬇ Download / Full Size Open Karo
+              </a>
+            </div>
+          )}
+          {displayText !== '' && (
             <span style={{ whiteSpace: 'pre-wrap', fontSize: 'var(--chat-font-size, 15px)' }}>
-              {cleanText}
-              {isAssistant && isLast && isStreaming && cleanText !== '' && (
+              {displayText}
+              {isAssistant && isLast && isStreaming && displayText !== '' && (
                 <span className="ml-0.5 inline-block animate-pulse font-light text-gray-400 dark:text-white/30">▌</span>
               )}
             </span>
@@ -775,4 +792,4 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       )}
     </div>
   )
-            }
+    }

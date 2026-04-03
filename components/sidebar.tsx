@@ -79,8 +79,7 @@ export default function Sidebar({
 }: SidebarProps) {
   return (
     <>
-      {/* Sidebar panel - FIX: added GPU acceleration classes to prevent tearing */}
-      <div 
+      <div
         className={`
           fixed left-0 top-0 z-50 flex h-full w-72 flex-col
           border-r border-gray-200 dark:border-white/[0.07]
@@ -90,9 +89,7 @@ export default function Sidebar({
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
-        {/* Scrollable content - unchanged */}
         <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-6 pb-2">
-          {/* Search */}
           <div className="relative mb-5">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-white/30" />
             <input
@@ -103,8 +100,6 @@ export default function Sidebar({
               className="w-full rounded-xl border border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-white/[0.05] py-2.5 pl-9 pr-3 text-sm text-gray-800 dark:text-[#ececec] outline-none focus:border-indigo-300 dark:focus:border-indigo-500/50 placeholder:text-gray-400 dark:placeholder:text-white/28"
             />
           </div>
-
-          {/* New Chat */}
           <button
             onClick={() => { setActiveMenuItem(activeMenuItem === 'newchat' ? null : 'newchat'); onNewChat() }}
             className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all ${
@@ -116,8 +111,6 @@ export default function Sidebar({
             <MessageSquarePlus className={`h-5 w-5 ${activeMenuItem === 'newchat' ? 'text-[#4D6BFE]' : 'text-gray-400 dark:text-white/30'}`} />
             New Chat
           </button>
-
-          {/* Projects */}
           <button
             onClick={onProjectsClick}
             className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all ${
@@ -129,8 +122,6 @@ export default function Sidebar({
             <FolderOpen className={`h-5 w-5 ${activeMenuItem === 'projects' ? 'text-[#4D6BFE]' : 'text-gray-400 dark:text-white/30'}`} />
             Projects
           </button>
-
-          {/* Artifacts */}
           <button
             onClick={onArtifactsClick}
             className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all ${
@@ -156,16 +147,12 @@ export default function Sidebar({
               </span>
             )}
           </button>
-
-          {/* Artifacts dropdown */}
           {showArtifactsList && (
             <ArtifactsList
               artifacts={allArtifacts}
               onOpen={(art) => { onOpenArtifact(art); setSidebarOpen(false) }}
             />
           )}
-
-          {/* ── Grouped Chat History (unchanged) ── */}
           {(() => {
             const projectSessions = sortedSessions.filter(s => s.projectName)
             const regularSessions = sortedSessions.filter(s => !s.projectName)
@@ -253,8 +240,6 @@ export default function Sidebar({
             )
           })()}
         </div>
-
-        {/* Context Menu - unchanged */}
         {contextMenu && (
           <>
             <div className="fixed inset-0 z-[60]" onClick={() => setContextMenu(null)} />
@@ -277,8 +262,6 @@ export default function Sidebar({
             </div>
           </>
         )}
-
-        {/* Bottom user bar - unchanged */}
         <div className="flex items-center justify-between border-t border-gray-100 dark:border-white/[0.07] px-5 py-4">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-900 dark:bg-white/[0.12] text-[13px] font-bold text-white">
@@ -294,11 +277,9 @@ export default function Sidebar({
           </button>
         </div>
       </div>
-
-      {/* Sidebar backdrop - unchanged */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 bg-black/20 dark:bg-black/50" onClick={() => setSidebarOpen(false)} />
       )}
     </>
   )
-  }
+            }

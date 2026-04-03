@@ -568,7 +568,7 @@ async function callGroq(
 // ── Gemini streaming ─────────────────────────────────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function callGeminiStreaming(parts: any[]): Promise<Response> {
-  const model  = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+  const model  = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
   const result = await model.generateContentStream(parts)
     const encoder = new TextEncoder()
   return new Response(

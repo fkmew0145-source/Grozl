@@ -190,7 +190,7 @@ export default function AccountPage({ user, onBack, onLogout }: AccountPageProps
       {/* Edit Profile Sheet */}
       {showEditProfile && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
-          <div className="w-full max-w-lg rounded-t-3xl bg-white dark:bg-white/5 px-4 pb-8 pt-4">
+          <div className="w-full max-w-lg rounded-t-3xl bg-white dark:bg-[#1a1c24] px-4 pb-8 pt-4">
             <div className="mb-5 flex items-center justify-between">
               <button onClick={() => setShowEditProfile(false)} className="text-[15px] text-gray-500 dark:text-white/50">Cancel</button>
               <p className="text-[17px] font-semibold text-gray-900 dark:text-white">Edit Profile</p>
@@ -227,32 +227,39 @@ export default function AccountPage({ user, onBack, onLogout }: AccountPageProps
             </div>
 
             {/* Fields */}
-            {[
-              { label: 'Full Name', key: 'fullName', placeholder: 'Your full name' },
-              { label: 'Nickname', key: 'nickname', placeholder: 'What should Grozl call you?' },
-            ].map(field => (
-              <div key={field.key} className="mb-4">
-                <p className="mb-1.5 text-[13px] text-gray-500 dark:text-white/50">{field.label}</p>
-                <div className="rounded-2xl bg-gray-100 px-4 py-3">
-                  <input
-                    type="text"
-                    value={editProfile[field.key as 'fullName' | 'nickname']}
-                    onChange={e => setEditProfile(prev => ({ ...prev, [field.key]: e.target.value }))}
-                    placeholder={field.placeholder}
-                    className="w-full bg-transparent text-[15px] text-gray-800 outline-none placeholder:text-gray-400 dark:text-white/30"
-                  />
-                </div>
+            <div className="mb-4">
+              <p className="mb-1.5 text-[13px] text-gray-500 dark:text-white/50">Full Name</p>
+              <div className="rounded-2xl bg-gray-100 dark:bg-[#252833] px-4 py-3">
+                <input
+                  type="text"
+                  value={editProfile.fullName}
+                  onChange={e => setEditProfile(prev => ({ ...prev, fullName: e.target.value }))}
+                  placeholder="Your full name"
+                  className="w-full bg-transparent text-[15px] text-gray-800 dark:text-white outline-none placeholder:text-gray-400 dark:placeholder:text-white/30"
+                />
               </div>
-            ))}
+            </div>
+            <div className="mb-4">
+              <p className="mb-1.5 text-[13px] text-gray-500 dark:text-white/50">Nickname</p>
+              <div className="rounded-2xl bg-gray-100 dark:bg-[#252833] px-4 py-3">
+                <input
+                  type="text"
+                  value={editProfile.nickname}
+                  onChange={e => setEditProfile(prev => ({ ...prev, nickname: e.target.value }))}
+                  placeholder="What should Grozl call you?"
+                  className="w-full bg-transparent text-[15px] text-gray-800 dark:text-white outline-none placeholder:text-gray-400 dark:placeholder:text-white/30"
+                />
+              </div>
+            </div>
             <div className="mb-4">
               <p className="mb-1.5 text-[13px] text-gray-500 dark:text-white/50">Bio</p>
-              <div className="rounded-2xl bg-gray-100 px-4 py-3">
+              <div className="rounded-2xl bg-gray-100 dark:bg-[#252833] px-4 py-3">
                 <textarea
                   value={editProfile.bio}
                   onChange={e => setEditProfile(prev => ({ ...prev, bio: e.target.value }))}
                   placeholder="A little about yourself..."
                   rows={3}
-                  className="w-full resize-none bg-transparent text-[15px] text-gray-800 outline-none placeholder:text-gray-400 dark:text-white/30"
+                  className="w-full resize-none bg-transparent text-[15px] text-gray-800 dark:text-white outline-none placeholder:text-gray-400 dark:placeholder:text-white/30"
                 />
               </div>
             </div>
@@ -315,4 +322,5 @@ export default function AccountPage({ user, onBack, onLogout }: AccountPageProps
   )
   }
 
-    
+
+            

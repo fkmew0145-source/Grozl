@@ -79,17 +79,13 @@ export default function Sidebar({
 }: SidebarProps) {
   return (
     <>
-      <div
-        className={`
-          fixed left-0 top-0 z-50 flex h-full w-72 flex-col
-          border-r border-gray-200 dark:border-white/[0.07]
-          bg-white dark:bg-[#141414] shadow-xl
-          transition-transform duration-300
-          will-change-transform backface-visibility-hidden [transform:translate3d(0,0,0)]
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        `}
-      >
+      {/* Sidebar panel */}
+      <div className={`fixed left-0 top-0 z-50 flex h-full w-72 -translate-x-full flex-col border-r border-gray-200 dark:border-white/[0.07] bg-white dark:bg-[#141414] shadow-xl transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : ''}`}>
+
+        {/* Scrollable content */}
         <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-6 pb-2">
+
+          {/* Search */}
           <div className="relative mb-5">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-white/30" />
             <input
@@ -100,6 +96,8 @@ export default function Sidebar({
               className="w-full rounded-xl border border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-white/[0.05] py-2.5 pl-9 pr-3 text-sm text-gray-800 dark:text-[#ececec] outline-none focus:border-indigo-300 dark:focus:border-indigo-500/50 placeholder:text-gray-400 dark:placeholder:text-white/28"
             />
           </div>
+
+          {/* New Chat */}
           <button
             onClick={() => { setActiveMenuItem(activeMenuItem === 'newchat' ? null : 'newchat'); onNewChat() }}
             className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all ${
@@ -111,6 +109,8 @@ export default function Sidebar({
             <MessageSquarePlus className={`h-5 w-5 ${activeMenuItem === 'newchat' ? 'text-[#4D6BFE]' : 'text-gray-400 dark:text-white/30'}`} />
             New Chat
           </button>
+
+          {/* Projects */}
           <button
             onClick={onProjectsClick}
             className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all ${
@@ -122,6 +122,8 @@ export default function Sidebar({
             <FolderOpen className={`h-5 w-5 ${activeMenuItem === 'projects' ? 'text-[#4D6BFE]' : 'text-gray-400 dark:text-white/30'}`} />
             Projects
           </button>
+
+          {/* Artifacts */}
           <button
             onClick={onArtifactsClick}
             className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all ${
@@ -147,12 +149,16 @@ export default function Sidebar({
               </span>
             )}
           </button>
+
+          {/* Artifacts dropdown */}
           {showArtifactsList && (
             <ArtifactsList
               artifacts={allArtifacts}
               onOpen={(art) => { onOpenArtifact(art); setSidebarOpen(false) }}
             />
           )}
+
+          {/* ── Grouped Chat History ─────────────────────────────── */}
           {(() => {
             const projectSessions = sortedSessions.filter(s => s.projectName)
             const regularSessions = sortedSessions.filter(s => !s.projectName)
@@ -202,6 +208,7 @@ export default function Sidebar({
 
             return (
               <>
+                {/* Project chats */}
                 {projectSessions.length > 0 && (
                   <>
                     <span className="ml-1 mt-4 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-white/28">Projects</span>
@@ -223,6 +230,8 @@ export default function Sidebar({
                     ))}
                   </>
                 )}
+
+                {/* Regular chats */}
                 {regularSessions.length > 0 && (
                   <>
                     <span className="ml-1 mt-4 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-white/28">Recent Chats</span>
@@ -231,6 +240,7 @@ export default function Sidebar({
                     </div>
                   </>
                 )}
+
                 {sortedSessions.length === 0 && (
                   <p className="px-2 py-3 text-[13px] italic text-gray-400 dark:text-white/28">
                     {searchQuery ? 'No matching chats' : 'No recent chats yet'}
@@ -240,6 +250,8 @@ export default function Sidebar({
             )
           })()}
         </div>
+
+        {/* Context Menu */}
         {contextMenu && (
           <>
             <div className="fixed inset-0 z-[60]" onClick={() => setContextMenu(null)} />
@@ -262,6 +274,8 @@ export default function Sidebar({
             </div>
           </>
         )}
+
+        {/* Bottom user bar */}
         <div className="flex items-center justify-between border-t border-gray-100 dark:border-white/[0.07] px-5 py-4">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-900 dark:bg-white/[0.12] text-[13px] font-bold text-white">
@@ -277,9 +291,13 @@ export default function Sidebar({
           </button>
         </div>
       </div>
+
+      {/* Sidebar backdrop */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 bg-black/20 dark:bg-black/50" onClick={() => setSidebarOpen(false)} />
       )}
     </>
   )
-            }
+  }
+
+  

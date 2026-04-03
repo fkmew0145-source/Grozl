@@ -373,7 +373,7 @@ export default function ProjectsPanel({
               {project.knowledge ? (
                 <p className="text-[12px] text-gray-500 dark:text-white/40 line-clamp-2">{project.knowledge}</p>
               ) : (
-                <p className="text-[13px] font-medium text-[#C2714F]">Add knowledge</p>
+                <p className="text-[13px] font-medium text-[#4D6BFE]">Add knowledge</p>
               )}
             </button>
             <button
@@ -384,7 +384,7 @@ export default function ProjectsPanel({
               {project.customInstructions ? (
                 <p className="text-[12px] text-gray-500 dark:text-white/40 line-clamp-2">{project.customInstructions}</p>
               ) : (
-                <p className="text-[13px] font-medium text-[#C2714F]">Add instructions</p>
+                <p className="text-[13px] font-medium text-[#4D6BFE]">Add instructions</p>
               )}
             </button>
           </div>

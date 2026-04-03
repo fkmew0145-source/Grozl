@@ -647,6 +647,13 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
           onArtifactsClick={handleArtifactsClick}
           onOpenArtifact={handleOpenArtifact}
         />
+        {/* Sidebar backdrop */}
+{sidebarOpen && (
+  <div
+    className="fixed inset-0 z-40 bg-black/40 md:hidden"
+    onClick={() => setSidebarOpen(false)}
+  />
+)}
       {/* ── Header ───────────────────────────────────────────────────── */}
         <header className="fixed left-0 right-0 top-0 z-10 flex items-center justify-between p-4">
           <button onClick={() => setSidebarOpen(true)} className="text-gray-500 dark:text-white/50 transition hover:text-gray-700 dark:hover:text-white/70">

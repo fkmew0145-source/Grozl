@@ -1,4 +1,4 @@
-'use client'
+ client'
 
 import { useState, useRef, useEffect } from 'react'
 import { ChevronLeft, Mail, Camera, Loader2 } from 'lucide-react'

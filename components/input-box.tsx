@@ -137,9 +137,9 @@ export default function InputBox({
       </div>
 
       {/* Hidden inputs */}
-      <input ref={cameraInputRef} type="file" className="hidden" onChange={onFileChange} />
-      <input ref={photoInputRef} type="file" multiple className="hidden" onChange={onFileChange} />
-      <input ref={fileInputRef} type="file" multiple className="hidden" onChange={onFileChange} />
+      <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onFileChange} />
+      <input ref={photoInputRef} type="file" accept="image/*" multiple className="hidden" onChange={onFileChange} />
+      <input ref={fileInputRef} type="file" accept="image/*,.pdf,.txt,.md,.csv,.json,.js,.ts,.tsx,.jsx,.py,.html,.css,.docx,.doc,.xlsx" multiple className="hidden" onChange={onFileChange} />
     </div>
   )
-            }
+                  }

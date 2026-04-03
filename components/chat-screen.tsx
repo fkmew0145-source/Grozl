@@ -82,6 +82,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
   const [showSettings, setShowSettings]           = useState(false)
   const [allArtifacts, setAllArtifacts]           = useState<ArtifactData[]>([])
   const [activeProjectName, setActiveProjectName] = useState<string | null>(null)
+  const [activeProject, setActiveProject] = useState<{ name: string; knowledge: string; customInstructions: string } | null>(null)
 
   // ── Context menu state ───────────────────────────────────────────────
   const [contextMenu, setContextMenu] = useState<{ sessionId: string; x: number; y: number } | null>(null)
@@ -278,6 +279,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
     setShowProjectsPanel(false)
     setCurrentSessionId(crypto.randomUUID())
     setActiveProjectName(null)
+    setActiveProject(null)
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
   }, [messages, currentSessionId, saveSession])
 
@@ -444,6 +446,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
           personalization: loadPersonalization(user?.id),
           think: activeChips.has('think'),
           search: activeChips.has('search'),
+          projectContext: activeProject ?? undefined,
         }) })
       if (!res.ok) {
         const err = await res.json()

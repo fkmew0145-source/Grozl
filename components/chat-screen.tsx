@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import {
-  Menu, Plus, Loader2, Code2, ExternalLink, X,
+  Menu, Plus, Loader2, Code2, ExternalLink, X, FolderOpen,
 } from 'lucide-react'
 import ArtifactPanel from './artifact-panel'
 import ProjectsPanel from './projects-panel'
@@ -32,6 +32,7 @@ interface ChatSession {
   timestamp: number
   pinned?: boolean
   favorite?: boolean
+  projectName?: string
 }
 
 interface ChatScreenProps {
@@ -207,7 +208,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
           ? (rawContent.find(p => p.type === 'text')?.text || 'Chat')
           : 'Chat'
     const title = rawTitle.slice(0, 45) + (rawTitle.length > 45 ? '...' : '')
-    const session: ChatSession = { id: sessionId, title, messages: msgs, timestamp: Date.now() }
+    const session: ChatSession = { id: sessionId, title, messages: msgs, timestamp: Date.now(), projectName: activeProject?.name }
 
     if (user) {
       // Logged-in: API ONLY — no localStorage
@@ -636,6 +637,15 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
           <button onClick={() => setSidebarOpen(true)} className="text-gray-500 dark:text-white/50 transition hover:text-gray-700 dark:hover:text-white/70">
             <Menu className="h-6 w-6" />
           </button>
+          {activeProjectName && (
+            <button
+              onClick={() => { setShowProjectsPanel(true); setActiveMenuItem('projects') }}
+              className="flex items-center gap-1.5 rounded-full border border-[#4D6BFE]/40 bg-[#4D6BFE]/10 px-3 py-1 text-[12px] font-medium text-[#4D6BFE] transition active:opacity-70"
+            >
+              <FolderOpen className="h-3.5 w-3.5" />
+              <span className="max-w-[120px] truncate">{activeProjectName}</span>
+            </button>
+          )}
           <button onClick={newChat} className="text-gray-500 dark:text-white/50 transition hover:text-gray-700 dark:hover:text-white/70">
             <Plus className="h-6 w-6" />
           </button>
@@ -742,14 +752,14 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
             <ProjectsPanel
               currentSessionId={currentSessionId}
               onClose={() => { setShowProjectsPanel(false); setActiveMenuItem(null) }}
-              onStartNewChatInProject={(project) => { newChat(); setActiveProjectName(project.name); setShowProjectsPanel(false); setActiveMenuItem(null) }}
+              onStartNewChatInProject={(project) => { newChat(); setActiveProjectName(project.name); setActiveProject({ name: project.name, knowledge: project.knowledge, customInstructions: project.customInstructions }); setShowProjectsPanel(false); setActiveMenuItem(null) }}
             />
           </div>
           <div className="fixed inset-0 z-50 flex flex-col md:hidden bg-white/80 dark:bg-black/80 backdrop-blur-xl">
             <ProjectsPanel
               currentSessionId={currentSessionId}
               onClose={() => { setShowProjectsPanel(false); setActiveMenuItem(null); setSidebarOpen(false) }}
-              onStartNewChatInProject={(project) => { newChat(); setActiveProjectName(project.name); setShowProjectsPanel(false); setActiveMenuItem(null); setSidebarOpen(false) }}
+              onStartNewChatInProject={(project) => { newChat(); setActiveProjectName(project.name); setActiveProject({ name: project.name, knowledge: project.knowledge, customInstructions: project.customInstructions }); setShowProjectsPanel(false); setActiveMenuItem(null); setSidebarOpen(false) }}
             />
           </div>
         </>
@@ -767,4 +777,4 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       )}
     </div>
   )
-          }
+      }

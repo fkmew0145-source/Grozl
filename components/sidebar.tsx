@@ -80,8 +80,7 @@ export default function Sidebar({
   return (
     <>
       {/* Sidebar panel */}
-      <div className={`fixed left-0 top-0 z-50 flex h-full w-72 -translate-x-full flex-col border-r border-gray-200 dark:border-white/[0.07] bg-white dark:bg-[#141414] shadow-xl transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : ''}`}>
-
+      <div className={`fixed left-0 top-0 z-50 flex h-full w-72 -translate-x-full flex-col border-r border-gray-200 dark:border-white/[0.07] bg-white dark:bg-[#141414] shadow-xl transition-transform duration-300 will-change-transform ${sidebarOpen ? 'translate-x-0' : ''}`}>
         {/* Scrollable content */}
         <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-6 pb-2">
 

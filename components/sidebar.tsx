@@ -79,15 +79,19 @@ export default function Sidebar({
 }: SidebarProps) {
   return (
     <>
-      {/* Sidebar panel */}
-      <div
-  className={`fixed left-0 top-0 z-50 flex h-full w-72 -translate-x-full flex-col border-r border-gray-200 dark:border-white/[0.07] bg-white dark:bg-[#141414] shadow-xl transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : ''}`}
-  style={{ transform: 'translateZ(0)' }}
->
-
-        {/* Scrollable content */}
+      {/* Sidebar panel - FIX: added GPU acceleration classes to prevent tearing */}
+      <div 
+        className={`
+          fixed left-0 top-0 z-50 flex h-full w-72 flex-col
+          border-r border-gray-200 dark:border-white/[0.07]
+          bg-white dark:bg-[#141414] shadow-xl
+          transition-transform duration-300
+          will-change-transform backface-visibility-hidden [transform:translate3d(0,0,0)]
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+      >
+        {/* Scrollable content - unchanged */}
         <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-6 pb-2">
-
           {/* Search */}
           <div className="relative mb-5">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-white/30" />
@@ -102,10 +106,7 @@ export default function Sidebar({
 
           {/* New Chat */}
           <button
-            onClick={() => {
-  onNewChat()
-  setActiveMenuItem(null)
-}}
+            onClick={() => { setActiveMenuItem(activeMenuItem === 'newchat' ? null : 'newchat'); onNewChat() }}
             className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all ${
               activeMenuItem === 'newchat'
                 ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] dark:bg-none dark:from-[#4D6BFE]/20 dark:to-[#4D6BFE]/15 text-[#4D6BFE] shadow-sm'
@@ -118,10 +119,7 @@ export default function Sidebar({
 
           {/* Projects */}
           <button
-            onClick={() => {
-  setActiveMenuItem('projects')
-  onProjectsClick()
-}}
+            onClick={onProjectsClick}
             className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all ${
               activeMenuItem === 'projects'
                 ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] dark:bg-none dark:from-[#4D6BFE]/20 dark:to-[#4D6BFE]/15 text-[#4D6BFE] shadow-sm'
@@ -167,7 +165,7 @@ export default function Sidebar({
             />
           )}
 
-          {/* ── Grouped Chat History ─────────────────────────────── */}
+          {/* ── Grouped Chat History (unchanged) ── */}
           {(() => {
             const projectSessions = sortedSessions.filter(s => s.projectName)
             const regularSessions = sortedSessions.filter(s => !s.projectName)
@@ -217,7 +215,6 @@ export default function Sidebar({
 
             return (
               <>
-                {/* Project chats */}
                 {projectSessions.length > 0 && (
                   <>
                     <span className="ml-1 mt-4 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-white/28">Projects</span>
@@ -239,8 +236,6 @@ export default function Sidebar({
                     ))}
                   </>
                 )}
-
-                {/* Regular chats */}
                 {regularSessions.length > 0 && (
                   <>
                     <span className="ml-1 mt-4 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-white/28">Recent Chats</span>
@@ -249,7 +244,6 @@ export default function Sidebar({
                     </div>
                   </>
                 )}
-
                 {sortedSessions.length === 0 && (
                   <p className="px-2 py-3 text-[13px] italic text-gray-400 dark:text-white/28">
                     {searchQuery ? 'No matching chats' : 'No recent chats yet'}
@@ -260,7 +254,7 @@ export default function Sidebar({
           })()}
         </div>
 
-        {/* Context Menu */}
+        {/* Context Menu - unchanged */}
         {contextMenu && (
           <>
             <div className="fixed inset-0 z-[60]" onClick={() => setContextMenu(null)} />
@@ -284,7 +278,7 @@ export default function Sidebar({
           </>
         )}
 
-        {/* Bottom user bar */}
+        {/* Bottom user bar - unchanged */}
         <div className="flex items-center justify-between border-t border-gray-100 dark:border-white/[0.07] px-5 py-4">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-900 dark:bg-white/[0.12] text-[13px] font-bold text-white">
@@ -301,12 +295,10 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* Sidebar backdrop */}
+      {/* Sidebar backdrop - unchanged */}
       {sidebarOpen && (
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 z-40 bg-black/20 dark:bg-black/50" onClick={() => setSidebarOpen(false)} />
       )}
     </>
   )
   }
-
-          

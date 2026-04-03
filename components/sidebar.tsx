@@ -21,6 +21,7 @@ interface ChatSession {
   timestamp: number
   pinned?: boolean
   favorite?: boolean
+  projectName?: string
 }
 
 interface ArtifactData {
@@ -157,58 +158,97 @@ export default function Sidebar({
             />
           )}
 
-          {/* Recent Chats */}
-          <span className="ml-1 mt-4 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-white/28">Recent Chats</span>
-          <div className="flex flex-col gap-1">
-            {sortedSessions.length === 0 ? (
-              <p className="px-2 py-3 text-[13px] italic text-gray-400 dark:text-white/28">
-                {searchQuery ? 'No matching chats' : 'No recent chats yet'}
-              </p>
-            ) : (
-              sortedSessions.map(session => (
-                <div key={session.id} className="relative">
-                  {renamingId === session.id ? (
-                    <div className="flex items-center gap-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/20 px-3 py-2">
-                      <input
-                        autoFocus
-                        value={renameValue}
-                        onChange={e => setRenameValue(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') onConfirmRename(); if (e.key === 'Escape') setRenamingId(null) }}
-                        onBlur={onConfirmRename}
-                        className="flex-1 bg-transparent text-[14px] text-indigo-700 dark:text-indigo-300 outline-none"
-                      />
+          {/* ── Grouped Chat History ─────────────────────────────── */}
+          {(() => {
+            const projectSessions = sortedSessions.filter(s => s.projectName)
+            const regularSessions = sortedSessions.filter(s => !s.projectName)
+
+            const SessionItem = ({ session }: { session: ChatSession }) => (
+              <div key={session.id} className="relative">
+                {renamingId === session.id ? (
+                  <div className="flex items-center gap-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/20 px-3 py-2">
+                    <input
+                      autoFocus
+                      value={renameValue}
+                      onChange={e => setRenameValue(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') onConfirmRename(); if (e.key === 'Escape') setRenamingId(null) }}
+                      onBlur={onConfirmRename}
+                      className="flex-1 bg-transparent text-[14px] text-indigo-700 dark:text-indigo-300 outline-none"
+                    />
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => onLoadSession(session)}
+                    onMouseDown={e => onLongPressStart(e, session.id)}
+                    onMouseUp={onLongPressEnd}
+                    onMouseLeave={onLongPressEnd}
+                    onTouchStart={e => onLongPressStart(e, session.id)}
+                    onTouchEnd={onLongPressEnd}
+                    onContextMenu={e => {
+                      e.preventDefault()
+                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                      setContextMenu({ sessionId: session.id, x: rect.left, y: rect.bottom + 4 })
+                    }}
+                    className={`flex w-full items-start gap-2.5 rounded-xl px-3 py-2.5 text-left text-[14px] text-gray-600 dark:text-white/60 transition hover:bg-indigo-50 dark:hover:bg-white/[0.05] hover:text-indigo-600 dark:hover:text-white/80 ${session.id === currentSessionId ? 'bg-indigo-50 dark:bg-white/[0.07] text-indigo-600 dark:text-white/80' : ''}`}
+                  >
+                    <div className="mt-0.5 shrink-0">
+                      {session.pinned ? (
+                        <svg className="h-4 w-4 text-[#4D6BFE]" viewBox="0 0 24 24" fill="currentColor"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
+                      ) : session.favorite ? (
+                        <svg className="h-4 w-4 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                      ) : (
+                        <MessageSquare className="h-4 w-4 text-gray-400 dark:text-white/28" />
+                      )}
                     </div>
-                  ) : (
-                    <button
-                      onClick={() => onLoadSession(session)}
-                      onMouseDown={e => onLongPressStart(e, session.id)}
-                      onMouseUp={onLongPressEnd}
-                      onMouseLeave={onLongPressEnd}
-                      onTouchStart={e => onLongPressStart(e, session.id)}
-                      onTouchEnd={onLongPressEnd}
-                      onContextMenu={e => {
-                        e.preventDefault()
-                        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-                        setContextMenu({ sessionId: session.id, x: rect.left, y: rect.bottom + 4 })
-                      }}
-                      className={`flex w-full items-start gap-2.5 rounded-xl px-3 py-2.5 text-left text-[14px] text-gray-600 dark:text-white/60 transition hover:bg-indigo-50 dark:hover:bg-white/[0.05] hover:text-indigo-600 dark:hover:text-white/80 ${session.id === currentSessionId ? 'bg-indigo-50 dark:bg-white/[0.07] text-indigo-600 dark:text-white/80' : ''}`}
-                    >
-                      <div className="mt-0.5 shrink-0">
-                        {session.pinned ? (
-                          <svg className="h-4 w-4 text-[#4D6BFE]" viewBox="0 0 24 24" fill="currentColor"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
-                        ) : session.favorite ? (
-                          <svg className="h-4 w-4 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                        ) : (
-                          <MessageSquare className="h-4 w-4 text-gray-400 dark:text-white/28" />
-                        )}
+                    <span className="line-clamp-2 leading-snug">{session.title}</span>
+                  </button>
+                )}
+              </div>
+            )
+
+            return (
+              <>
+                {/* Project chats */}
+                {projectSessions.length > 0 && (
+                  <>
+                    <span className="ml-1 mt-4 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-white/28">Projects</span>
+                    {Object.entries(
+                      projectSessions.reduce((acc, s) => {
+                        const key = s.projectName!
+                        if (!acc[key]) acc[key] = []
+                        acc[key].push(s)
+                        return acc
+                      }, {} as Record<string, ChatSession[]>)
+                    ).map(([projectName, sessions]) => (
+                      <div key={projectName} className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-1.5 px-2 py-1">
+                          <FolderOpen className="h-3.5 w-3.5 text-[#4D6BFE]" />
+                          <span className="text-[12px] font-semibold text-[#4D6BFE] truncate">{projectName}</span>
+                        </div>
+                        {sessions.map(s => <SessionItem key={s.id} session={s} />)}
                       </div>
-                      <span className="line-clamp-2 leading-snug">{session.title}</span>
-                    </button>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
+                    ))}
+                  </>
+                )}
+
+                {/* Regular chats */}
+                {regularSessions.length > 0 && (
+                  <>
+                    <span className="ml-1 mt-4 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-white/28">Recent Chats</span>
+                    <div className="flex flex-col gap-1">
+                      {regularSessions.map(s => <SessionItem key={s.id} session={s} />)}
+                    </div>
+                  </>
+                )}
+
+                {sortedSessions.length === 0 && (
+                  <p className="px-2 py-3 text-[13px] italic text-gray-400 dark:text-white/28">
+                    {searchQuery ? 'No matching chats' : 'No recent chats yet'}
+                  </p>
+                )}
+              </>
+            )
+          })()}
         </div>
 
         {/* Context Menu */}
@@ -259,4 +299,5 @@ export default function Sidebar({
     </>
   )
   }
-        
+
+          

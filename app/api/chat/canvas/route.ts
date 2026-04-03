@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
     // Use Gemini 1.5 Pro for multimodal (supports PDF, audio, video natively)
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-pro',
+      model:'gemini-2.0-flash',
       systemInstruction: CANVAS_SYSTEM,
     })
 

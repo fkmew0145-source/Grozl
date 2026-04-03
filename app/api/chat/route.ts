@@ -571,6 +571,7 @@ export async function POST(req: NextRequest) {
     personalization?: PersonalizationPayload
     think?: boolean
     search?: boolean
+    projectContext?: { name: string; knowledge: string; customInstructions: string }
   } = await req.json()
 
   // Fetch user memory from Supabase
@@ -604,7 +605,7 @@ export async function POST(req: NextRequest) {
     buildPersonalizationBlock(personalization) +
     (userMemory ? `\n\n---\n\n## What You Know About This User\n${userMemory}` : '') +
     buildModeBlock(think, search, searchResults)
-
+  
   const containsImage = hasImageContent(messages)
 
   // ══ ROUTE 1 — Image → Gemini Vision (always, regardless of model pref) ═

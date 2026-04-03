@@ -593,9 +593,8 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
   return (
     <div className="flex h-dvh overflow-hidden bg-transparent">
 
-      {/* ── Chat column ──────────────────────────────────────────────── */}
-      <div className={`flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${rightPanelOpen ? 'flex-1 min-w-0' : 'w-full'}`}>
-
+  {/* ── Chat column ──────────────────────────────────────────────── */}
+      <div className={`flex flex-col overflow-hidden transition-[flex] duration-300 ease-in-out ${rightPanelOpen ? 'flex-1 min-w-0' : 'w-full'}`}>
         {/* ── Sidebar ──────────────────────────────────────────────────── */}
         <Sidebar
           sidebarOpen={sidebarOpen}
@@ -631,9 +630,8 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
           onArtifactsClick={handleArtifactsClick}
           onOpenArtifact={handleOpenArtifact}
         />
-
-        {/* ── Header ───────────────────────────────────────────────────── */}
-        <header className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between p-4">
+      {/* ── Header ───────────────────────────────────────────────────── */}
+        <header className="fixed left-0 right-0 top-0 z-10 flex items-center justify-between p-4">
           <button onClick={() => setSidebarOpen(true)} className="text-gray-500 dark:text-white/50 transition hover:text-gray-700 dark:hover:text-white/70">
             <Menu className="h-6 w-6" />
           </button>

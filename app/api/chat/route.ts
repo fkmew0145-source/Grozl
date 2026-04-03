@@ -309,6 +309,42 @@ function hasImageContent(messages: IncomingMessage[]): boolean {
   return messages.some(m => Array.isArray(m.content) && m.content.some((p: ContentPart) => p.type === 'image_url'))
 }
 
+// ── Image generation detection ────────────────────────────────────────────
+const IMAGE_GEN_KEYWORDS = [
+  'image banao', 'image bana', 'image generate', 'generate image', 'create image',
+  'draw ', 'image bana do', 'photo banao', 'picture banao', 'picture bana',
+  'make an image', 'make a picture', 'create a picture', 'generate a picture',
+  'illustration banao', 'poster banao', 'wallpaper banao', 'logo banao',
+  'ek image', 'ek photo', 'ek picture', 'mujhe image', 'mujhe photo',
+  'show me an image', 'show me a picture', 'generate a photo',
+  'image of ', 'picture of ', 'draw a ', 'draw an ',
+]
+
+function isImageGenRequest(text: string): boolean {
+  const t = text.toLowerCase()
+  return IMAGE_GEN_KEYWORDS.some(kw => t.includes(kw))
+}
+
+function extractImagePrompt(text: string): string {
+  const patterns = [
+    /(?:generate|create|make|draw)\s+(?:an?\s+)?(?:image|picture|photo|illustration|poster|wallpaper|logo)\s+(?:of\s+)?(.+)/i,
+    /(?:image|picture|photo)\s+(?:of\s+)?(.+)\s+(?:banao|bana|generate|create|make)/i,
+    /(?:image|photo|picture)\s+banao[:\s-]+(.+)/i,
+    /(?:draw\s+(?:a|an)\s+)(.+)/i,
+    /(?:ek\s+)?(?:image|picture|photo)\s+(?:of\s+|ka\s+)?(.+)\s+(?:banao|bana|chahiye)/i,
+  ]
+  for (const p of patterns) {
+    const m = text.match(p)
+    if (m?.[1]?.trim().length > 2) return m[1].trim()
+  }
+  // Fallback: strip common trigger words and use rest as prompt
+  return text
+    .replace(/(?:please|zara|ek|mujhe|mera|meri)\s+/gi, '')
+    .replace(/(?:image|photo|picture|illustration|poster|wallpaper|logo)\s+(?:banao|bana do|generate karo|create karo|banana hai)/gi, '')
+    .replace(/(?:generate|create|make|draw|banao|bana do)\s+(?:an?\s+)?(?:image|picture|photo|illustration)\s+(?:of\s+)?/gi, '')
+    .trim() || text
+}
+
 // ── Extract plain text from last user message ─────────────────────────────
 function getLastUserText(messages: IncomingMessage[]): string {
   const last = [...messages].reverse().find(m => m.role === 'user')
@@ -623,6 +659,19 @@ export async function POST(req: NextRequest) {
     buildModeBlock(think, search, searchResults)
   
   const containsImage = hasImageContent(messages)
+  const lastText      = getLastUserText(messages)
+
+  // ── IMAGE GENERATION — Pollinations.ai (free, no API key needed) ──────
+  if (!containsImage && isImageGenRequest(lastText)) {
+    const prompt = extractImagePrompt(lastText)
+    const seed   = Math.floor(Math.random() * 999999)
+    const url    = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&enhance=true&seed=${seed}`
+    const lang   = detectMsgLanguage(lastText)
+    const reply  = lang === 'english'
+      ? `[GROZL_IMAGE:${url}]\nYour image is being generated! 🎨 Prompt: "${prompt}"\n\n_Note: Image may take 5–15 seconds to load._`
+      : `[GROZL_IMAGE:${url}]\nAapka image generate ho raha hai! 🎨 Prompt: "${prompt}"\n\n_Note: Image load hone mein 5–15 seconds lag sakte hain._`
+    return localStream(reply)
+  }
 
   // ══ ROUTE 1 — Image → Gemini Vision (always, regardless of model pref) ═
   if (containsImage) {
@@ -638,7 +687,7 @@ export async function POST(req: NextRequest) {
             else if (part.type === 'image_url' && part.image_url?.url) {
               const match = part.image_url.url.match(/^data:(.+);base64,(.+)$/)
               if (match) {
-                if ((match[2].length * 0.75) / (1024 * 1024) > 4) return NextResponse.json({ error: 'Image too large. Please use an image under 4MB.' }, { status: 400 })
+                if ((match[2].length * 0.75) / (1024 * 1024) > 10) return NextResponse.json({ error: 'File too large. Please use a file under 10MB.' }, { status: 400 })
                 parts.push({ inlineData: { mimeType: match[1], data: match[2] } })
               }
             }
@@ -679,7 +728,6 @@ export async function POST(req: NextRequest) {
 
   // ── TIER 0: Ultra-simple → instant local reply (zero API cost) ─────────
   // Skip local reply if Think or Search is ON — user expects a real response
-  const lastText = getLastUserText(messages)
   if (!think && !search && lastText) {
     const localReply = getUltraSimpleReply(lastText)
     if (localReply) return localStream(localReply)

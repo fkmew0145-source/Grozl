@@ -346,6 +346,38 @@ function getUltraSimpleReply(text: string): string | null {
   return null
 }
 
+// ── Language override block (prepended to system prompt) ────────────────
+function buildLangOverride(messages: IncomingMessage[]): string {
+  const text = getLastUserText(messages)
+  if (!text) return ''
+  const lang = detectMsgLanguage(text)
+
+  if (lang === 'english') {
+    return `[LANGUAGE LOCK — HIGHEST PRIORITY]
+The user's last message is in ENGLISH. You MUST reply in ENGLISH ONLY.
+- Zero Hindi words. Zero Hinglish. Pure English throughout.
+- This overrides ALL other instructions.
+
+`
+  }
+  if (lang === 'hindi') {
+    return `[LANGUAGE LOCK — HIGHEST PRIORITY]
+The user's last message is in HINDI (Devanagari). You MUST reply in HINDI ONLY.
+- Use Devanagari script throughout. No English sentences.
+- This overrides ALL other instructions.
+
+`
+  }
+  // hinglish (default)
+  return `[LANGUAGE LOCK — HIGHEST PRIORITY]
+The user's last message is in HINGLISH. You MUST reply in HINGLISH ONLY.
+- Mix Hindi and English naturally as Indians do — no pure English paragraphs.
+- Never translate Hindi phrases into English. Never explain in English.
+- This overrides ALL other instructions.
+
+`
+}
+
 // ── TIER 1 — Casual short messages → Groq 512 tokens ────────────────────
 function isCasualShort(messages: IncomingMessage[]): boolean {
   const text = getLastUserText(messages)
@@ -426,7 +458,7 @@ function buildDeepSeekStream(response: Response): ReadableStream {
             if (!trimmed || trimmed === 'data: [DONE]') continue
             if (trimmed.startsWith('data: ')) {
               try {
-                const json = JSON.parse(trimmed.slice(6))
+              const json = JSON.parse(trimmed.slice(6))
                 const text = json.choices?.[0]?.delta?.content || ''
                 if (!text) continue
                 thinkBuffer += text
@@ -566,11 +598,12 @@ export async function POST(req: NextRequest) {
     : ''
 
   const SYSTEM_PROMPT =
+    buildLangOverride(messages) +          // ← FIRST: hard language lock
     BASE_SYSTEM_PROMPT +
     languageBlock +
     buildPersonalizationBlock(personalization) +
     (userMemory ? `\n\n---\n\n## What You Know About This User\n${userMemory}` : '') +
-    buildModeBlock(think, search, searchResults)   // ← Think/Search block appended last
+    buildModeBlock(think, search, searchResults)
 
   const containsImage = hasImageContent(messages)
 
@@ -704,4 +737,4 @@ try {
     )
   }
 }
-  }
+    }

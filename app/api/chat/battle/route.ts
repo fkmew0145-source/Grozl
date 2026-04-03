@@ -28,7 +28,7 @@ async function callGroqBattle(messages: { role: string; content: string }[]): Pr
 }
 
 async function callGeminiBattle(messages: { role: string; content: string }[]): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
   const history = messages.slice(0, -1).map(m => ({
     role: m.role === 'assistant' ? 'model' : 'user',
     parts: [{ text: m.content }],

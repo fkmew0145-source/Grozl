@@ -77,21 +77,19 @@ export default function InputBox({
             <button
               key={chip}
               onClick={() => onToggleChip(chip)}
-              style={activeChips.has(chip) ? { boxShadow: '0 0 10px 2px rgba(77,107,254,0.4)' } : {}}
+              style={activeChips.has(chip) ? { boxShadow: '0 0 0px 0px transparent' } : {}}
               className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] font-semibold transition-all duration-200 select-none ${
                 activeChips.has(chip)
-                  ? 'border-[#4D6BFE] bg-[#4D6BFE] text-white'
+                  ? 'border-[#4D6BFE]/70 bg-[#4D6BFE]/20 text-[#7B9FFF]'
                   : 'border-white/10 bg-transparent text-white/35 active:bg-white/[0.06]'
               }`}
             >
               {chip === 'think' ? (
-                /* DeepSeek-style think icon — neural/brain spark */
                 <svg className="h-[14px] w-[14px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v0A2.5 2.5 0 0 1 9.5 7H9a3 3 0 0 0 0 6h.5A2.5 2.5 0 0 1 12 15.5v0A2.5 2.5 0 0 1 9.5 18"/>
-                  <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v0A2.5 2.5 0 0 0 14.5 7H15a3 3 0 0 1 0 6h-.5A2.5 2.5 0 0 0 12 15.5v0A2.5 2.5 0 0 0 14.5 18"/>
-                  <path d="M12 18v4"/>
-                  <path d="M9 22h6"/>
-                  <path d="M12 2v2"/>
+                  <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" />
+                  <path d="M9 21h6" />
+                  <path d="M12 6v1" />
+                  <path d="M9.5 9h5" />
                 </svg>
               ) : (
                 <svg className="h-[14px] w-[14px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -144,5 +142,4 @@ export default function InputBox({
       <input ref={fileInputRef} type="file" multiple className="hidden" onChange={onFileChange} />
     </div>
   )
-          }
-          
+              }

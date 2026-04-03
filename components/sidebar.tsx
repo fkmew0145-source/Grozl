@@ -82,7 +82,7 @@ export default function Sidebar({
       {/* Sidebar panel */}
       <div className={`fixed left-0 top-0 z-50 flex h-full w-72 -translate-x-full flex-col border-r border-gray-200 dark:border-white/[0.07] bg-white dark:bg-[#141414] shadow-xl transition-transform duration-300 will-change-transform ${sidebarOpen ? 'translate-x-0' : ''}`}>
         {/* Scrollable content */}
-        <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-6 pb-2">
+        <div className="flex flex-1 flex-col gap-2 overflow-y-auto overscroll-contain p-6 pb-2">
 
           {/* Search */}
           <div className="relative mb-5">
@@ -111,8 +111,8 @@ export default function Sidebar({
 
           {/* Projects */}
           <button
-            onClick={onProjectsClick}
-            className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all ${
+           onClick={onProjectsClick}
+            className={`touch-manipulation flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition-all ${
               activeMenuItem === 'projects'
                 ? 'border-[#4D6BFE]/60 bg-gradient-to-r from-[#EEF2FF] to-[#F0F4FF] dark:bg-none dark:from-[#4D6BFE]/20 dark:to-[#4D6BFE]/15 text-[#4D6BFE] shadow-sm'
                 : 'border-gray-200 dark:border-white/[0.07] bg-white dark:bg-transparent text-gray-600 dark:text-[#ececec] hover:border-gray-300 dark:hover:border-white/[0.14] hover:bg-gray-50 dark:hover:bg-white/[0.05]'

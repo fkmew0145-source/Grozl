@@ -24,13 +24,14 @@ interface InputBoxProps {
   onBlur: () => void
   onToggleAttachMenu: () => void
   onCloseAttachMenu: () => void
+  placeholder?: string
 }
 
 export default function InputBox({
   inputValue, isRecording, isLoading, attachedFiles, activeChips,
   isFocused, showAttachMenu, textareaRef, cameraInputRef, photoInputRef, fileInputRef,
   onInput, onSend, onMicClick, onFileChange, onRemoveFile, onToggleChip,
-  onFocus, onBlur, onToggleAttachMenu, onCloseAttachMenu,
+  onFocus, onBlur, onToggleAttachMenu, onCloseAttachMenu, placeholder,
 }: InputBoxProps) {
   const hasText  = inputValue.trim().length > 0
   const isActive = isFocused || hasText || attachedFiles.length > 0
@@ -60,7 +61,7 @@ export default function InputBox({
       {/* Textarea */}
       <textarea
         ref={textareaRef}
-        placeholder={isRecording ? 'Grozl Is Listening...' : 'Ask Grozl anything...'}
+        placeholder={isRecording ? 'Grozl Is Listening...' : (placeholder ?? 'Ask Grozl anything...')}
         rows={1}
         value={inputValue}
         onChange={onInput}

@@ -80,7 +80,7 @@ export default function InputBox({
               className={`flex items-center gap-1.5 rounded-full border px-3 py-[5px] text-[12.5px] font-medium transition-all duration-150 select-none ${
                 activeChips.has(chip)
                   ? 'border-[#4D6BFE]/60 bg-[#4D6BFE]/15 text-[#6B8FFF] dark:border-[#4D6BFE]/50 dark:bg-[#4D6BFE]/15 dark:text-[#7B9FFF]'
-                  : 'border-black/10 dark:border-white/[0.08] bg-transparent text-black/35 dark:text-white/30 active:bg-black/[0.04] dark:active:bg-white/[0.05]'
+                  : 'border-black/10 dark:border-white/[0.12] bg-transparent text-[#4D6BFE]/65 dark:text-[#7B9FFF]/65 active:bg-black/[0.03] dark:active:bg-white/[0.04]'
               }`}
             >
               {chip === 'think' ? (

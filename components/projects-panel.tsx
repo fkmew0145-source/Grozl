@@ -319,7 +319,7 @@ export default function ProjectsPanel({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 pb-6">
+        <div className="flex-1 overflow-y-auto px-5 pb-28">
           {/* Title — tap to rename inline */}
           {renamingId === project.id ? (
             <input
@@ -389,15 +389,6 @@ export default function ProjectsPanel({
             </button>
           </div>
 
-          {/* New Chat button — sidebar style */}
-          <button
-            onClick={() => onStartNewChatInProject(project)}
-            className="mb-5 flex w-full items-center gap-3 rounded-xl border border-gray-200 dark:border-white/[0.07] bg-white dark:bg-transparent px-4 py-3 text-left text-[15px] font-medium text-gray-600 dark:text-[#ececec] transition active:bg-gray-50 dark:active:bg-white/[0.05]"
-          >
-            <MessageSquarePlus className="h-5 w-5 text-gray-400 dark:text-white/30" />
-            New chat in this project
-          </button>
-
           {/* Chats list */}
           {project.sessionIds.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
@@ -429,6 +420,17 @@ export default function ProjectsPanel({
               ))}
             </div>
           )}
+        </div>
+
+        {/* New Chat FAB — bottom right */}
+        <div className="absolute bottom-6 right-5 z-20">
+          <button
+            onClick={() => onStartNewChatInProject(project)}
+            className="flex items-center gap-2.5 rounded-full bg-[#4D6BFE] px-5 py-3.5 text-[15px] font-semibold text-white shadow-lg shadow-[#4D6BFE]/30 transition active:bg-[#3d5bfe] active:scale-95"
+          >
+            <MessageSquarePlus className="h-5 w-5" />
+            New chat
+          </button>
         </div>
       </div>
     )

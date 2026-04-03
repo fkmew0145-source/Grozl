@@ -105,12 +105,46 @@ export default function InputBox({
 
         <div className="flex items-center gap-4">
           {/* Attach */}
-          <button
-            onClick={onToggleAttachMenu}
-            className="text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white transition"
-          >
-            <Plus className="h-5 w-5" />
-          </button>
+          <div className="relative">
+            <button
+              onClick={onToggleAttachMenu}
+              className="text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white transition"
+            >
+              <Plus className="h-5 w-5" />
+            </button>
+
+            {/* Attach Menu Popup */}
+            {showAttachMenu && (
+              <>
+                {/* Backdrop */}
+                <div className="fixed inset-0 z-10" onClick={onCloseAttachMenu} />
+                {/* Menu */}
+                <div className="absolute bottom-9 right-0 z-20 min-w-[170px] rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#1c1c1e] shadow-xl overflow-hidden">
+                  <button
+                    onClick={() => { cameraInputRef.current?.click(); onCloseAttachMenu(); }}
+                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition"
+                  >
+                    <Camera className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                    Camera
+                  </button>
+                  <button
+                    onClick={() => { photoInputRef.current?.click(); onCloseAttachMenu(); }}
+                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition"
+                  >
+                    <Image className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                    Photos
+                  </button>
+                  <button
+                    onClick={() => { fileInputRef.current?.click(); onCloseAttachMenu(); }}
+                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition"
+                  >
+                    <FileText className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                    Files
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
 
           {/* Mic / Send */}
           {!hasText && attachedFiles.length === 0 ? (
@@ -142,4 +176,5 @@ export default function InputBox({
       <input ref={fileInputRef} type="file" accept="image/*,.pdf,.txt,.md,.csv,.json,.js,.ts,.tsx,.jsx,.py,.html,.css,.docx,.doc,.xlsx" multiple className="hidden" onChange={onFileChange} />
     </div>
   )
-                  }
+                }
+                  

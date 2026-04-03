@@ -217,10 +217,10 @@ export default function ProjectsPanel({
 
     if (editingField === 'knowledge') {
       return (
-        <div className="flex h-full flex-col bg-[#F5F3EF]">
+        <div className="flex h-full flex-col bg-[#F2F2F7] dark:bg-[#0d0f14]">
           <div className="flex items-center justify-between px-4 py-4 pt-6">
-            <button onClick={() => setEditingField(null)} className="text-[15px] text-gray-600">Cancel</button>
-            <h1 className="text-[17px] font-semibold text-gray-900">Project knowledge</h1>
+            <button onClick={() => setEditingField(null)} className="text-[15px] text-gray-600 dark:text-white/50">Cancel</button>
+            <h1 className="text-[17px] font-semibold text-gray-900 dark:text-white">Project knowledge</h1>
             <button onClick={() => saveProjectField('knowledge', editKnowledge)} className="text-[15px] font-semibold text-[#4D6BFE]">Save</button>
           </div>
           <div className="flex-1 px-4">
@@ -229,7 +229,7 @@ export default function ProjectsPanel({
               value={editKnowledge}
               onChange={e => setEditKnowledge(e.target.value)}
               placeholder="Add knowledge, context, or documents for this project..."
-              className="h-full w-full resize-none rounded-2xl bg-white px-4 py-4 text-[15px] text-gray-800 outline-none placeholder:text-gray-400"
+              className="h-full w-full resize-none rounded-2xl bg-white dark:bg-white/[0.05] px-4 py-4 text-[15px] text-gray-800 dark:text-white/90 outline-none placeholder:text-gray-400 dark:placeholder:text-white/28"
             />
           </div>
         </div>
@@ -238,10 +238,10 @@ export default function ProjectsPanel({
 
     if (editingField === 'instructions') {
       return (
-        <div className="flex h-full flex-col bg-[#F5F3EF]">
+        <div className="flex h-full flex-col bg-[#F2F2F7] dark:bg-[#0d0f14]">
           <div className="flex items-center justify-between px-4 py-4 pt-6">
-            <button onClick={() => setEditingField(null)} className="text-[15px] text-gray-600">Cancel</button>
-            <h1 className="text-[17px] font-semibold text-gray-900">Custom instructions</h1>
+            <button onClick={() => setEditingField(null)} className="text-[15px] text-gray-600 dark:text-white/50">Cancel</button>
+            <h1 className="text-[17px] font-semibold text-gray-900 dark:text-white">Custom instructions</h1>
             <button onClick={() => saveProjectField('customInstructions', editInstructions)} className="text-[15px] font-semibold text-[#4D6BFE]">Save</button>
           </div>
           <div className="flex-1 px-4">
@@ -250,7 +250,7 @@ export default function ProjectsPanel({
               value={editInstructions}
               onChange={e => setEditInstructions(e.target.value)}
               placeholder="Add custom instructions for Grozl to follow in this project..."
-              className="h-full w-full resize-none rounded-2xl bg-white px-4 py-4 text-[15px] text-gray-800 outline-none placeholder:text-gray-400"
+              className="h-full w-full resize-none rounded-2xl bg-white dark:bg-white/[0.05] px-4 py-4 text-[15px] text-gray-800 dark:text-white/90 outline-none placeholder:text-gray-400 dark:placeholder:text-white/28"
             />
           </div>
         </div>
@@ -258,12 +258,12 @@ export default function ProjectsPanel({
     }
 
     return (
-      <div className="relative flex h-full flex-col bg-[#F5F3EF]">
+      <div className="relative flex h-full flex-col bg-[#F2F2F7] dark:bg-[#0d0f14]">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-4 pt-6">
           <button
             onClick={() => { setView('list'); setSelected(null) }}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition active:bg-gray-100"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 dark:text-white/60 transition active:bg-gray-100 dark:active:bg-white/10"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -272,7 +272,7 @@ export default function ProjectsPanel({
           <div className="relative">
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition active:bg-gray-100"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 dark:text-white/60 transition active:bg-gray-100 dark:active:bg-white/10"
             >
               <MoreVertical className="h-5 w-5" />
             </button>
@@ -328,17 +328,17 @@ export default function ProjectsPanel({
               onChange={e => setRenameValue(e.target.value)}
               onBlur={confirmRename}
               onKeyDown={e => { if (e.key === 'Enter') confirmRename(); if (e.key === 'Escape') setRenamingId(null) }}
-              className="mb-3 w-full rounded-xl bg-white px-3 py-1 text-[28px] font-bold text-gray-900 outline-none"
+              className="mb-3 w-full rounded-xl bg-white dark:bg-white/10 px-3 py-1 text-[28px] font-bold text-gray-900 dark:text-white outline-none"
             />
           ) : (
-            <h1 className="mb-3 text-[28px] font-bold text-gray-900">{project.name}</h1>
+            <h1 className="mb-3 text-[28px] font-bold text-gray-900 dark:text-white">{project.name}</h1>
           )}
 
           {/* Badges */}
           <div className="mb-4 flex items-center gap-2 flex-wrap">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-gray-300 px-3 py-1">
-              <Lock className="h-3.5 w-3.5 text-gray-500" />
-              <span className="text-[13px] text-gray-600">Private</span>
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-gray-300 dark:border-white/20 px-3 py-1">
+              <Lock className="h-3.5 w-3.5 text-gray-500 dark:text-white/40" />
+              <span className="text-[13px] text-gray-600 dark:text-white/50">Private</span>
             </div>
             {project.pinned && (
               <div className="inline-flex items-center gap-1.5 rounded-full border border-[#4D6BFE]/40 bg-[#4D6BFE]/10 px-3 py-1">
@@ -355,8 +355,8 @@ export default function ProjectsPanel({
           </div>
 
           {/* Memory */}
-          <div className="mb-4 rounded-2xl border border-gray-200 bg-white px-4 py-3.5">
-            <p className="text-[13px] text-gray-400">
+          <div className="mb-4 rounded-2xl border border-gray-200 dark:border-white/[0.07] bg-white dark:bg-white/[0.05] px-4 py-3.5">
+            <p className="text-[13px] text-gray-400 dark:text-white/30">
               {project.sessionIds.length > 0
                 ? `Project has ${project.sessionIds.length} chat${project.sessionIds.length !== 1 ? 's' : ''}.`
                 : 'Project memory will appear after a few chats.'}
@@ -367,49 +367,49 @@ export default function ProjectsPanel({
           <div className="mb-5 grid grid-cols-2 gap-3">
             <button
               onClick={() => { setEditKnowledge(project.knowledge); setEditingField('knowledge') }}
-              className="rounded-2xl bg-[#F0EDE8] px-4 py-4 text-left transition active:bg-[#E8E4DE]"
+              className="rounded-2xl bg-[#F0EDE8] dark:bg-white/[0.06] px-4 py-4 text-left transition active:bg-[#E8E4DE] dark:active:bg-white/[0.09]"
             >
-              <p className="mb-2 text-[14px] font-semibold text-gray-800">Project knowledge</p>
+              <p className="mb-2 text-[14px] font-semibold text-gray-800 dark:text-white/90">Project knowledge</p>
               {project.knowledge ? (
-                <p className="text-[12px] text-gray-500 line-clamp-2">{project.knowledge}</p>
+                <p className="text-[12px] text-gray-500 dark:text-white/40 line-clamp-2">{project.knowledge}</p>
               ) : (
                 <p className="text-[13px] font-medium text-[#C2714F]">Add knowledge</p>
               )}
             </button>
             <button
               onClick={() => { setEditInstructions(project.customInstructions); setEditingField('instructions') }}
-              className="rounded-2xl bg-[#F0EDE8] px-4 py-4 text-left transition active:bg-[#E8E4DE]"
+              className="rounded-2xl bg-[#F0EDE8] dark:bg-white/[0.06] px-4 py-4 text-left transition active:bg-[#E8E4DE] dark:active:bg-white/[0.09]"
             >
-              <p className="mb-2 text-[14px] font-semibold text-gray-800">Custom instructions</p>
+              <p className="mb-2 text-[14px] font-semibold text-gray-800 dark:text-white/90">Custom instructions</p>
               {project.customInstructions ? (
-                <p className="text-[12px] text-gray-500 line-clamp-2">{project.customInstructions}</p>
+                <p className="text-[12px] text-gray-500 dark:text-white/40 line-clamp-2">{project.customInstructions}</p>
               ) : (
                 <p className="text-[13px] font-medium text-[#C2714F]">Add instructions</p>
               )}
             </button>
           </div>
 
-          {/* New Chat button — sidebar style (replaces FAB) */}
+          {/* New Chat button — sidebar style */}
           <button
             onClick={() => onStartNewChatInProject(project)}
-            className="mb-5 flex w-full items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3.5 text-left text-[15px] font-medium text-gray-700 transition active:bg-gray-50"
+            className="mb-5 flex w-full items-center gap-3 rounded-xl border border-gray-200 dark:border-white/[0.07] bg-white dark:bg-transparent px-4 py-3 text-left text-[15px] font-medium text-gray-600 dark:text-[#ececec] transition active:bg-gray-50 dark:active:bg-white/[0.05]"
           >
-            <MessageSquarePlus className="h-5 w-5 text-gray-400" />
+            <MessageSquarePlus className="h-5 w-5 text-gray-400 dark:text-white/30" />
             New chat in this project
           </button>
 
           {/* Chats list */}
           {project.sessionIds.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
-              <MessageSquare className="mb-3 h-12 w-12 text-gray-300 stroke-[1.2]" />
-              <p className="text-[14px] text-gray-400">Chats you&apos;ve had with Grozl will show up here.</p>
+              <MessageSquare className="mb-3 h-12 w-12 text-gray-300 dark:text-white/20 stroke-[1.2]" />
+              <p className="text-[14px] text-gray-400 dark:text-white/30">Chats you&apos;ve had with Grozl will show up here.</p>
             </div>
           ) : (
             <div className="flex flex-col gap-2">
               {project.sessionIds.map((sid, i) => (
-                <div key={sid} className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3.5">
-                  <MessageSquare className="h-4 w-4 shrink-0 text-gray-400" />
-                  <span className="flex-1 truncate text-[14px] text-gray-700">
+                <div key={sid} className="flex items-center gap-3 rounded-2xl bg-white dark:bg-white/[0.05] px-4 py-3.5">
+                  <MessageSquare className="h-4 w-4 shrink-0 text-gray-400 dark:text-white/30" />
+                  <span className="flex-1 truncate text-[14px] text-gray-700 dark:text-white/80">
                     {sid === currentSessionId ? currentSessionTitle : `Chat ${i + 1}`}
                   </span>
                   <button
@@ -421,7 +421,7 @@ export default function ProjectsPanel({
                       save(updated)
                       setSelected(fresh)
                     }}
-                    className="shrink-0 p-1 text-gray-300 transition active:text-red-400"
+                    className="shrink-0 p-1 text-gray-300 dark:text-white/20 transition active:text-red-400"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
@@ -430,29 +430,18 @@ export default function ProjectsPanel({
             </div>
           )}
         </div>
-
-        {/* FAB — New chat in project */}
-        <div className="absolute bottom-6 right-5 z-10">
-          <button
-            onClick={() => onStartNewChatInProject(project)}
-            className="flex items-center gap-2 rounded-full bg-gray-900 px-4 py-3 text-[14px] font-semibold text-white shadow-lg transition active:bg-gray-700"
-          >
-            <MessageSquarePlus className="h-4 w-4" />
-            New chat
-          </button>
-        </div>
       </div>
     )
   }
 
   // ── List view ─────────────────────────────────────────────────────────
   return (
-    <div className="flex h-full flex-col bg-[#F5F3EF]">
+    <div className="flex h-full flex-col bg-[#F2F2F7] dark:bg-[#0d0f14]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-4 pt-6">
         <button
           onClick={onClose}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition active:bg-gray-100"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 dark:text-white/60 transition active:bg-gray-100 dark:active:bg-white/10"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="16" y2="12"/><line x1="3" y1="18" x2="11" y2="18"/>
@@ -460,26 +449,26 @@ export default function ProjectsPanel({
         </button>
         <button
           onClick={() => setShowCreate(true)}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-gray-700 transition active:bg-gray-100"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-gray-700 dark:text-white/60 transition active:bg-gray-100 dark:active:bg-white/10"
         >
           <Plus className="h-5 w-5" />
         </button>
       </div>
 
       <div className="px-4 pb-4">
-        <h1 className="mb-4 text-[28px] font-bold text-gray-900">Projects</h1>
+        <h1 className="mb-4 text-[28px] font-bold text-gray-900 dark:text-white">Projects</h1>
 
         {/* Search — sidebar style */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-white/30" />
           <input
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search projects"
-            className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-9 text-[14px] text-gray-800 outline-none focus:border-indigo-300 placeholder:text-gray-400"
+            className="w-full rounded-xl border border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-white/[0.05] py-2.5 pl-9 pr-9 text-[14px] text-gray-800 dark:text-white/90 outline-none focus:border-indigo-300 dark:focus:border-indigo-500/50 placeholder:text-gray-400 dark:placeholder:text-white/28"
           />
           {searchQuery.length > 0 && (
-            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 transition active:text-gray-500">
+            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 dark:text-white/20 transition active:text-gray-500">
               <X className="h-4 w-4" />
             </button>
           )}
@@ -489,11 +478,11 @@ export default function ProjectsPanel({
       <div className="flex-1 overflow-y-auto px-4 pb-8">
         {filteredProjects.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <svg className="mb-4 h-14 w-14 text-gray-300 stroke-[1.2]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="mb-4 h-14 w-14 text-gray-300 dark:text-white/20 stroke-[1.2]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
               <line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/>
             </svg>
-            <p className="text-[14px] leading-relaxed text-gray-400">
+            <p className="text-[14px] leading-relaxed text-gray-400 dark:text-white/30">
               {searchQuery
                 ? 'No projects found.'
                 : 'Create a project to organize and customize chats\nwith Grozl around a topic or set of documents.'}
@@ -505,24 +494,24 @@ export default function ProjectsPanel({
               <button
                 key={p.id}
                 onClick={() => { setSelected(p); setView('detail') }}
-                className="flex items-center gap-3 rounded-2xl bg-white px-4 py-4 text-left shadow-sm transition active:bg-gray-50"
+                className="flex items-center gap-3 rounded-2xl bg-white dark:bg-white/[0.05] border border-transparent dark:border-white/[0.07] px-4 py-4 text-left shadow-sm dark:shadow-none transition active:bg-gray-50 dark:active:bg-white/[0.08]"
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-white/10">
                   {p.pinned ? (
                     <Pin className="h-5 w-5 text-[#4D6BFE]" />
                   ) : p.favorite ? (
                     <Star className="h-5 w-5 text-amber-400" />
                   ) : (
-                    <svg className="h-5 w-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                    <svg className="h-5 w-5 text-gray-500 dark:text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                     </svg>
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[15px] font-semibold text-gray-800">{p.name}</p>
-                  <p className="text-[12px] text-gray-400">{p.sessionIds.length} chat{p.sessionIds.length !== 1 ? 's' : ''}</p>
+                  <p className="truncate text-[15px] font-semibold text-gray-800 dark:text-white/90">{p.name}</p>
+                  <p className="text-[12px] text-gray-400 dark:text-white/30">{p.sessionIds.length} chat{p.sessionIds.length !== 1 ? 's' : ''}</p>
                 </div>
-                <ChevronLeft className="h-4 w-4 shrink-0 rotate-180 text-gray-300" />
+                <ChevronLeft className="h-4 w-4 shrink-0 rotate-180 text-gray-300 dark:text-white/20" />
               </button>
             ))}
           </div>
@@ -532,4 +521,4 @@ export default function ProjectsPanel({
       {showCreate && <CreateSheet />}
     </div>
   )
-            }
+}

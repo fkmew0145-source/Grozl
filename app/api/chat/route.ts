@@ -74,6 +74,20 @@ function buildPersonalizationBlock(p: PersonalizationPayload | undefined): strin
   return `\n\n---\n## USER PERSONALIZATION SETTINGS (Follow strictly)\n${lines.join('\n\n')}`
 }
 
+// ── Build project context block ───────────────────────────────────────────
+function buildProjectContextBlock(p: { name: string; knowledge: string; customInstructions: string } | undefined): string {
+  if (!p) return ''
+  const lines: string[] = []
+  lines.push(`You are currently working inside a project called **"${p.name}"**.`)
+  if (p.knowledge?.trim()) {
+    lines.push(`**Project Knowledge / Context:**\n${p.knowledge.trim()}`)
+  }
+  if (p.customInstructions?.trim()) {
+    lines.push(`**Project Custom Instructions (follow strictly):**\n${p.customInstructions.trim()}`)
+  }
+  return `\n\n---\n## ACTIVE PROJECT CONTEXT\n${lines.join('\n\n')}`
+}
+
 // ── System prompt ────────────────────────────────────────────────────────
 const BASE_SYSTEM_PROMPT = `
 ## CORE IDENTITY
@@ -564,6 +578,7 @@ export async function POST(req: NextRequest) {
     personalization,
     think  = false,   // Think Mode — step-by-step reasoning
     search = false,   // Search Mode — real-time web results
+    projectContext,   // Active project context (knowledge + instructions)
   }: {
     messages: IncomingMessage[]
     model?: string
@@ -603,6 +618,7 @@ export async function POST(req: NextRequest) {
     BASE_SYSTEM_PROMPT +
     languageBlock +
     buildPersonalizationBlock(personalization) +
+    buildProjectContextBlock(projectContext) +
     (userMemory ? `\n\n---\n\n## What You Know About This User\n${userMemory}` : '') +
     buildModeBlock(think, search, searchResults)
   
@@ -738,4 +754,4 @@ try {
     )
   }
 }
-    }
+        }

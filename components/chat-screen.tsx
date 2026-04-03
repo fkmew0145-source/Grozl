@@ -81,6 +81,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
   const [showProjectsPanel, setShowProjectsPanel] = useState(false)
   const [showSettings, setShowSettings]           = useState(false)
   const [allArtifacts, setAllArtifacts]           = useState<ArtifactData[]>([])
+  const [activeProjectName, setActiveProjectName] = useState<string | null>(null)
 
   // ── Context menu state ───────────────────────────────────────────────
   const [contextMenu, setContextMenu] = useState<{ sessionId: string; x: number; y: number } | null>(null)
@@ -276,6 +277,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
     setShowArtifactsList(false)
     setShowProjectsPanel(false)
     setCurrentSessionId(crypto.randomUUID())
+    setActiveProjectName(null)
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
   }, [messages, currentSessionId, saveSession])
 
@@ -480,7 +482,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
 
   const stripArtifactTags = (text: string) => text.replace(/<artifact[\s\S]*?<\/artifact>/g, '').trim()
 
-  // ── Render message content ───────────────────────────────────────────
+    // ── Render message content ───────────────────────────────────────────
   const renderContent = (content: string | ContentPart[], isAssistant: boolean, isLast: boolean) => {
     if (content === '' && isAssistant) {
       if (activeChips.has('think')) {
@@ -645,7 +647,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
                   <img src="/logo.png" alt="Grozl" className="h-full w-full object-contain" />
                 </div>
                 <h1 className="mb-7 bg-gradient-to-b from-gray-900 to-gray-700 bg-clip-text text-center text-[28px] font-semibold tracking-tight text-transparent dark:from-white dark:to-white/60">
-                  Your Mind, Amplified By Grozl
+                  {activeProjectName ? `How can I help with ${activeProjectName}?` : 'Your Mind, Amplified By Grozl'}
                 </h1>
                 <InputBox
                   inputValue={inputValue}
@@ -737,12 +739,14 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
             <ProjectsPanel
               currentSessionId={currentSessionId}
               onClose={() => { setShowProjectsPanel(false); setActiveMenuItem(null) }}
+              onStartNewChatInProject={(project) => { newChat(); setActiveProjectName(project.name); setShowProjectsPanel(false); setActiveMenuItem(null) }}
             />
           </div>
           <div className="fixed inset-0 z-50 flex flex-col md:hidden bg-white/80 dark:bg-black/80 backdrop-blur-xl">
             <ProjectsPanel
               currentSessionId={currentSessionId}
               onClose={() => { setShowProjectsPanel(false); setActiveMenuItem(null); setSidebarOpen(false) }}
+              onStartNewChatInProject={(project) => { newChat(); setActiveProjectName(project.name); setShowProjectsPanel(false); setActiveMenuItem(null); setSidebarOpen(false) }}
             />
           </div>
         </>
@@ -760,4 +764,4 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       )}
     </div>
   )
-    }
+          }

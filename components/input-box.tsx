@@ -81,7 +81,7 @@ export default function InputBox({
               className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] font-semibold transition-all duration-200 select-none ${
                 activeChips.has(chip)
                   ? 'border-[#4D6BFE]/70 bg-[#4D6BFE]/20 text-[#7B9FFF]'
-                  : 'border-white/10 bg-transparent text-white/35 active:bg-white/[0.06]'
+                  : 'border-black/15 dark:border-white/10 bg-transparent text-black/40 dark:text-white/35 active:bg-black/[0.04] dark:active:bg-white/[0.06]'
               }`}
             >
               {chip === 'think' ? (
@@ -142,4 +142,5 @@ export default function InputBox({
       <input ref={fileInputRef} type="file" multiple className="hidden" onChange={onFileChange} />
     </div>
   )
-              }
+      }
+                    

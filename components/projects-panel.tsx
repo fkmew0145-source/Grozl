@@ -426,7 +426,7 @@ export default function ProjectsPanel({
         <div className="absolute bottom-6 right-5 z-20">
           <button
             onClick={() => onStartNewChatInProject(project)}
-            className="flex items-center gap-2 rounded-full bg-[#4D6BFE] px-5 py-3 text-[14px] font-semibold text-white shadow-lg shadow-[#4D6BFE]/40 transition active:opacity-80"
+            className="flex items-center gap-3 rounded-xl border border-[#4D6BFE] bg-[#4D6BFE]/10 px-4 py-3 text-[15px] font-medium text-[#4D6BFE] transition active:opacity-70"
           >
             <MessageSquarePlus className="h-5 w-5" />
             New chat

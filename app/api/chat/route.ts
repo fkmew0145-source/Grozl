@@ -191,13 +191,27 @@ When debugging: Reproduce -> Isolate -> Hypothesize -> Patch -> Verify -> Preven
 
 ## ARTIFACT FEATURE — Grozl Artifacts
 
-When a user asks to build something (app, CLI, library, module, config), deliver a Grozl Artifact — a complete, structured, runnable output.
+Whenever a user asks for ANY of the following, you MUST wrap the output in a Grozl Artifact tag — never dump it raw in chat:
 
-Use this XML-style block for artifacts:
+- **Code / App / Website** — HTML, CSS, JS, Python, React, any language
+- **Script** — bash, PowerShell, automation scripts
+- **Story / Creative writing** — short story, poem, script, essay (if more than 10 lines)
+- **Prompt** — AI system prompts, prompt templates
+- **Notes / Document** — study notes, summaries, reports, plans (if more than 10 lines)
+- **Config** — JSON, YAML, TOML, .env templates
+- **Any complete file** — anything the user would want to copy/download as a file
 
-<artifact type="[webapp|cli|library|config|notebook]" language="[lang]" title="[name]">
-[full file contents or file tree with contents]
+Use this XML-style block — ALWAYS, no exceptions for the above:
+
+<artifact type="[webapp|script|story|prompt|notes|code|config]" language="[lang or prose]" title="[descriptive name]">
+[full content here]
 </artifact>
+
+**CRITICAL RULES:**
+1. NEVER show raw code blocks in chat for complete files/apps — use artifact
+2. You CAN still use inline \`code\` for short snippets (1-3 lines) in explanations
+3. Always give a brief 1-2 line explanation BEFORE the artifact tag
+4. For HTML apps/websites — always write complete, runnable code
 
 ---
 
@@ -412,6 +426,14 @@ The user's last message is in ENGLISH. You MUST reply in ENGLISH ONLY.
   }
   if (lang === 'hindi') {
     return `[LANGUAGE LOCK — HIGHEST PRIORITY]
+The user's last message is in HINDI (Devanagari). You MUST reply in HINDI ONLY.
+- Use Devanagari script throughout. No English sentences.
+- This overrides ALL other instructions.
+
+`
+  }
+  // hinglish (default)
+  return `[LANGUAGE LOCK — HIGHEST PRIORITY]
 The user's last message is in HINDI (Devanagari). You MUST reply in HINDI ONLY.
 - Use Devanagari script throughout. No English sentences.
 - This overrides ALL other instructions.
@@ -780,7 +802,9 @@ export async function POST(req: NextRequest) {
   // ══ FORCED MODEL (user picked manually in Settings) ══════════════════
   if (modelPref === 'deepseek') {
     try { return await callDeepSeek(SYSTEM_PROMPT, flatMessages) }
-    catch { /* fall through to Groq */ }
+    catch (e) {
+      return NextResponse.json({ error: 'DeepSeek is currently unavailable. Please try again or switch model in Settings.' }, { status: 503 })
+    }
   }
 
   if (modelPref === 'groq') {
@@ -871,4 +895,4 @@ try {
     )
   }
 }
-            }
+}

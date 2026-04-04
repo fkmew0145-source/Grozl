@@ -79,8 +79,7 @@ export default function Sidebar({
 }: SidebarProps) {
   return (
     <div
-      className={`fixed inset-0 z-40 ${sidebarOpen ? '' : 'pointer-events-none'}`}
-      style={{ isolation: 'isolate' }}
+      className={`fixed inset-0 z-[100] ${sidebarOpen ? '' : 'pointer-events-none'}`}
     >
       {/* Backdrop */}
       <div
@@ -308,4 +307,4 @@ export default function Sidebar({
 
 
 
-  
+                        

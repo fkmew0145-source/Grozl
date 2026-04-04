@@ -484,4 +484,342 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
         while (true) {
           const { done, value } = await reader.read()
           if (done) break
-          
+          assistantText += decoder.decode(value, { stream: true })
+          setMessages([...newMessages, { role: 'assistant', content: assistantText }])
+        }
+      }
+    } catch {
+      setMessages([...newMessages, { role: 'assistant', content: 'Network error. Please check your connection.' }])
+    } finally {
+      setIsLoading(false); setIsStreaming(false)
+      if (user) {
+        memoryCallCount.current += 1
+        if (memoryCallCount.current === 1 || memoryCallCount.current % 5 === 0) {
+          fetch('/api/memory/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: newMessages }) }).catch(() => { /* ignore */ })
+        }
+      }
+    }
+  }
+
+  // ── Artifact helpers ─────────────────────────────────────────────────
+  const parseArtifact = (text: string): ArtifactData | null => {
+    const regex = /<artifact\s+type="([^"]+)"(?:\s+language="([^"]+)")?(?:\s+title="([^"]+)")?[^>]*>([\s\S]*?)<\/artifact>/
+    const match = text.match(regex)
+    if (!match) return null
+    return { type: match[1] as 'html' | 'react' | 'code', language: match[2], title: match[3] || 'Artifact', content: match[4].trim() }
+  }
+
+  const stripArtifactTags = (text: string) => text.replace(/<artifact[\s\S]*?<\/artifact>/g, '').trim()
+
+    // ── Render message content ───────────────────────────────────────────
+  const renderContent = (content: string | ContentPart[], isAssistant: boolean, isLast: boolean) => {
+    if (content === '' && isAssistant) {
+      if (activeChips.has('think')) {
+        return (
+          <div className="flex items-center gap-1.5 py-0.5">
+            <span className="text-[13px] font-medium text-indigo-400">Thinking</span>
+            <span className="flex gap-[3px]">
+              {[0, 1, 2].map(i => (
+                <span key={i} className="h-1.5 w-1.5 rounded-full bg-indigo-400" style={{ animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }} />
+              ))}
+            </span>
+            <style>{`@keyframes bounce { 0%, 80%, 100% { transform: translateY(0); opacity: 0.5; } 40% { transform: translateY(-5px); opacity: 1; } }`}</style>
+          </div>
+        )
+      }
+      return <Loader2 className="h-4 w-4 animate-spin text-gray-400 dark:text-white/30" />
+    }
+
+    if (typeof content === 'string') {
+      const artifact    = isAssistant ? parseArtifact(content) : null
+      const cleanText   = artifact ? stripArtifactTags(content) : content
+      const genImgMatch = cleanText.match(/\[GROZL_IMAGE:(https?:\/\/[^\]]+)\]/)
+      const genImageUrl = genImgMatch?.[1]
+      const displayText = genImageUrl ? cleanText.replace(/\[GROZL_IMAGE:[^\]]+\]\n?/, '') : cleanText
+      return (
+        <div className="flex flex-col gap-3">
+          {genImageUrl && (
+            <div className="flex flex-col gap-2">
+              <img
+                src={genImageUrl}
+                alt="Generated image"
+                className="max-w-full rounded-2xl border border-white/10"
+                onError={e => { (e.target as HTMLImageElement).alt = '⚠️ Image load karne mein time lag sakta hai, link open karo.' }}
+              />
+              <a href={genImageUrl} target="_blank" rel="noopener noreferrer"
+                className="text-[12px] text-indigo-400 hover:text-indigo-300 hover:underline">
+                ⬇ Download / Full Size Open Karo
+              </a>
+            </div>
+          )}
+          {displayText !== '' && (
+            <span style={{ whiteSpace: 'pre-wrap', fontSize: 'var(--chat-font-size, 15px)' }}>
+              {displayText}
+              {isAssistant && isLast && isStreaming && displayText !== '' && (
+                <span className="ml-0.5 inline-block animate-pulse font-light text-gray-400 dark:text-white/30">▌</span>
+              )}
+            </span>
+          )}
+          {isAssistant && isLast && isStreaming && !artifact && content.includes('<artifact') && (
+            <div className="flex items-center gap-2 rounded-xl border border-indigo-100 dark:border-indigo-500/30 bg-indigo-50 dark:bg-indigo-500/15 px-4 py-2.5 text-[13px] text-indigo-500 dark:text-indigo-400">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Building artifact...
+            </div>
+          )}
+          {artifact && !isStreaming && (
+            <button
+              onClick={() => { setActiveArtifact(artifact); setShowArtifactModal(true); setShowProjectsPanel(false) }}
+              className="flex items-center gap-2.5 rounded-xl border border-indigo-200 dark:border-indigo-500/30 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-500/10 dark:to-blue-500/10 px-4 py-3 text-left text-[13px] font-medium text-indigo-700 dark:text-indigo-300 transition hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:shadow-sm"
+            >
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-500/20">
+                <Code2 className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-semibold">{artifact.title}</div>
+                <div className="text-[11px] font-normal capitalize text-indigo-400">
+                  {artifact.type === 'code' ? artifact.language : artifact.type} · Tap to open
+                </div>
+              </div>
+              <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-60" />
+            </button>
+          )}
+        </div>
+      )
+    }
+
+    return (
+      <div className="flex flex-col gap-2">
+        {content.map((part, i) => {
+          if (part.type === 'text' && part.text) return <span key={i} style={{ whiteSpace: 'pre-wrap' }}>{part.text}</span>
+          if (part.type === 'image_url' && part.image_url?.url) return <img key={i} src={part.image_url.url} alt="Attached image" className="max-h-[200px] max-w-full rounded-xl object-contain" />
+          return null
+        })}
+      </div>
+    )
+  }
+
+  // ── User profile helpers ─────────────────────────────────────────────
+  const displayName = userProfile?.nickname || user?.email?.split('@')[0] || 'You'
+  const initials    = userProfile?.fullName
+    ? userProfile.fullName.split(' ').filter(Boolean).slice(0, 2).map((w: string) => w[0].toUpperCase()).join('')
+    : displayName.slice(0, 2).toUpperCase()
+
+  // ── Derived flags ────────────────────────────────────────────────────
+  const hasMessages     = messages.length > 0
+  const rightPanelOpen  = (activeArtifact && showArtifactModal) || showProjectsPanel
+
+  // ── Sidebar callbacks ─────────────────────────────────────────────────
+  const handleProjectsClick = () => {
+    const isOpen = activeMenuItem === 'projects'
+    setSidebarOpen(false)
+    setTimeout(() => {
+      setActiveMenuItem(isOpen ? null : 'projects')
+      setShowProjectsPanel(!isOpen)
+      setShowArtifactsList(false)
+      setActiveArtifact(null)
+      setShowArtifactModal(false)
+    }, 0)
+  }
+
+  const handleArtifactsClick = () => {
+    const isOpen = activeMenuItem === 'artifacts'
+    setSidebarOpen(false)
+    setTimeout(() => {
+      setActiveMenuItem(isOpen ? null : 'artifacts')
+      setShowArtifactsList(prev => !prev)
+      setShowProjectsPanel(false)
+    }, 0)
+  }
+
+  const handleOpenArtifact = (art: ArtifactData) => {
+    setActiveArtifact(art)
+    setShowArtifactModal(true)
+    setShowProjectsPanel(false)
+  }
+
+  // ── Render ───────────────────────────────────────────────────────────
+  return (
+    <div className="flex h-dvh overflow-hidden bg-transparent">
+
+  {/* ── Chat column ──────────────────────────────────────────────── */}
+      <div className={`flex flex-col overflow-hidden transition-[flex] duration-300 ease-in-out ${rightPanelOpen ? 'flex-1 min-w-0' : 'w-full'}`}>
+        {/* ── Sidebar ──────────────────────────────────────────────────── */}
+        <Sidebar
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          sortedSessions={sortedSessions}
+          currentSessionId={currentSessionId}
+          renamingId={renamingId}
+          setRenamingId={setRenamingId}
+          renameValue={renameValue}
+          setRenameValue={setRenameValue}
+          contextMenu={contextMenu}
+          setContextMenu={setContextMenu}
+          displayName={displayName}
+          initials={initials}
+          chatSessions={chatSessions}
+          activeMenuItem={activeMenuItem}
+          setActiveMenuItem={setActiveMenuItem}
+          allArtifacts={allArtifacts}
+          showArtifactsList={showArtifactsList}
+          onNewChat={newChat}
+          onLoadSession={loadSession}
+          onStartRename={startRename}
+          onConfirmRename={confirmRename}
+          onPin={handlePin}
+          onFavorite={handleFavorite}
+          onDelete={handleDelete}
+          onLongPressStart={handleLongPressStart}
+          onLongPressEnd={handleLongPressEnd}
+          onOpenSettings={() => setShowSettings(true)}
+          onProjectsClick={handleProjectsClick}
+          onArtifactsClick={handleArtifactsClick}
+          onOpenArtifact={handleOpenArtifact}
+        />
+      {/* ── Header ───────────────────────────────────────────────────── */}
+        <header className="fixed left-0 right-0 top-0 z-10 flex items-center justify-between p-4">
+          <button onClick={() => setSidebarOpen(true)} className="text-gray-500 dark:text-white/50 transition hover:text-gray-700 dark:hover:text-white/70">
+            <Menu className="h-6 w-6" />
+          </button>
+          {activeProjectName && (
+            <button
+              onClick={() => { setShowProjectsPanel(true); setActiveMenuItem('projects') }}
+              className="flex items-center gap-1.5 rounded-full border border-[#4D6BFE]/40 bg-[#4D6BFE]/10 px-3 py-1 text-[12px] font-medium text-[#4D6BFE] transition active:opacity-70"
+            >
+              <FolderOpen className="h-3.5 w-3.5" />
+              <span className="max-w-[120px] truncate">{activeProjectName}</span>
+            </button>
+          )}
+          <button onClick={newChat} className="text-gray-500 dark:text-white/50 transition hover:text-gray-700 dark:hover:text-white/70">
+            <Plus className="h-6 w-6" />
+          </button>
+        </header>
+
+        {/* ── Main Content ─────────────────────────────────────────────── */}
+        <main className="flex flex-1 flex-col overflow-hidden">
+          {!hasMessages ? (
+            <div className="flex flex-1 flex-col items-center justify-center px-4 pb-8">
+              <div className="flex w-full max-w-[650px] flex-col items-center">
+                <div className="mb-5 h-[90px] w-[90px]">
+                  <img src="/logo.png" alt="Grozl" className="h-full w-full object-contain" />
+                </div>
+                <h1 className="mb-7 bg-gradient-to-b from-gray-900 to-gray-700 bg-clip-text text-center text-[28px] font-semibold tracking-tight text-transparent dark:from-white dark:to-white/60">
+                  {activeProjectName ? `How can I help with ${activeProjectName}?` : 'Your Mind, Amplified By Grozl'}
+                </h1>
+                <InputBox
+                  inputValue={inputValue}
+                  isRecording={isRecording}
+                  isLoading={isLoading}
+                  attachedFiles={attachedFiles}
+                  activeChips={activeChips}
+                  isFocused={isFocused}
+                  showAttachMenu={showAttachMenu}
+                  textareaRef={textareaRef}
+                  cameraInputRef={cameraInputRef}
+                  photoInputRef={photoInputRef}
+                  fileInputRef={fileInputRef}
+                  onInput={handleInput}
+                  onSend={handleSend}
+                  onMicClick={handleMicClick}
+                  onFileChange={handleFileChange}
+                  onRemoveFile={removeFile}
+                  onToggleChip={toggleChip}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                  onToggleAttachMenu={() => setShowAttachMenu(!showAttachMenu)}
+                  onCloseAttachMenu={() => setShowAttachMenu(false)}
+                />
+              </div>
+            </div>
+          ) : (
+            <MessageList
+              messages={messages}
+              messagesEndRef={messagesEndRef}
+              renderContent={renderContent}
+            />
+          )}
+
+          {hasMessages && (
+            <div className="w-full px-4 pb-4">
+              <div className="mx-auto w-full max-w-[650px]">
+                <InputBox
+                  inputValue={inputValue}
+                  isRecording={isRecording}
+                  isLoading={isLoading}
+                  attachedFiles={attachedFiles}
+                  activeChips={activeChips}
+                  isFocused={isFocused}
+                  showAttachMenu={showAttachMenu}
+                  textareaRef={textareaRef}
+                  cameraInputRef={cameraInputRef}
+                  photoInputRef={photoInputRef}
+                  fileInputRef={fileInputRef}
+                  onInput={handleInput}
+                  onSend={handleSend}
+                  onMicClick={handleMicClick}
+                  onFileChange={handleFileChange}
+                  onRemoveFile={removeFile}
+                  onToggleChip={toggleChip}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                  onToggleAttachMenu={() => setShowAttachMenu(!showAttachMenu)}
+                  onCloseAttachMenu={() => setShowAttachMenu(false)}
+                />
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* Artifact Right Panel */}
+      {activeArtifact && showArtifactModal && (
+        <>
+          <div className="hidden md:flex md:w-[46%] shrink-0 flex-col border-l border-white/10">
+            <ArtifactPanel
+              artifact={activeArtifact}
+              onClose={() => { setActiveArtifact(null); setShowArtifactModal(false) }}
+            />
+          </div>
+          <div className="fixed inset-0 z-50 flex flex-col md:hidden bg-[#0f1117]">
+            <ArtifactPanel
+              artifact={activeArtifact}
+              onClose={() => { setActiveArtifact(null); setShowArtifactModal(false) }}
+            />
+          </div>
+        </>
+      )}
+
+      {/* Projects Right Panel */}
+      {showProjectsPanel && (
+        <>
+          <div className="hidden md:flex md:w-[380px] shrink-0 flex-col border-l border-black/5 dark:border-white/10 bg-white/70 dark:bg-black/80 backdrop-blur-xl shadow-xl">
+            <ProjectsPanel
+              currentSessionId={currentSessionId}
+              onClose={() => { setShowProjectsPanel(false); setActiveMenuItem(null) }}
+              onStartNewChatInProject={(project) => { newChat(); setActiveProjectName(project.name); setActiveProject({ name: project.name, knowledge: project.knowledge, customInstructions: project.customInstructions }); setShowProjectsPanel(false); setActiveMenuItem(null) }}
+            />
+          </div>
+          <div className="fixed inset-0 z-50 flex flex-col md:hidden bg-white/80 dark:bg-black/80 backdrop-blur-xl">
+            <ProjectsPanel
+              currentSessionId={currentSessionId}
+              onClose={() => { setShowProjectsPanel(false); setActiveMenuItem(null); setSidebarOpen(false) }}
+              onStartNewChatInProject={(project) => { newChat(); setActiveProjectName(project.name); setActiveProject({ name: project.name, knowledge: project.knowledge, customInstructions: project.customInstructions }); setShowProjectsPanel(false); setActiveMenuItem(null); setSidebarOpen(false) }}
+            />
+          </div>
+        </>
+      )}
+
+      {/* ── Settings Screen ───────────────────────────────────────────── */}
+      {showSettings && (
+        <SettingsScreen
+          user={user}
+          chatCount={chatSessions.length}
+          onClose={() => setShowSettings(false)}
+          onClearChats={handleClearChats}
+          onLogout={() => { setShowSettings(false); onLogout?.() }}
+        />
+      )}
+    </div>
+  )
+  }

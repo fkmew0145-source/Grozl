@@ -262,7 +262,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
 
   const loadSession = (session: ChatSession) => {
     setSidebarOpen(false)
-    setTimeout(() => {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
       setMessages(session.messages)
       setCurrentSessionId(session.id)
       setInputValue('')
@@ -271,14 +271,14 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       setShowArtifactModal(false)
       setShowArtifactsList(false)
       setShowProjectsPanel(false)
-    }, 0)
+    }))
   }
 
   const newChat = useCallback(() => {
     // FIRST: close sidebar alone so its CSS animation gets a clean GPU frame
     setSidebarOpen(false)
     // THEN: all heavy state changes in next tick — no GPU conflict
-    setTimeout(() => {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
       if (messages.length >= 2) saveSession(messages, currentSessionId)
       setMessages([])
       setInputValue('')
@@ -294,7 +294,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       setActiveProjectName(null)
       setActiveProject(null)
       if (textareaRef.current) textareaRef.current.style.height = 'auto'
-    }, 0)
+    }))
   }, [messages, currentSessionId, saveSession])
 
   const handleClearChats = useCallback(async () => {
@@ -611,23 +611,23 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
   const handleProjectsClick = () => {
     const isOpen = activeMenuItem === 'projects'
     setSidebarOpen(false)
-    setTimeout(() => {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
       setActiveMenuItem(isOpen ? null : 'projects')
       setShowProjectsPanel(!isOpen)
       setShowArtifactsList(false)
       setActiveArtifact(null)
       setShowArtifactModal(false)
-    }, 0)
+    }))
   }
 
   const handleArtifactsClick = () => {
     const isOpen = activeMenuItem === 'artifacts'
     setSidebarOpen(false)
-    setTimeout(() => {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
       setActiveMenuItem(isOpen ? null : 'artifacts')
       setShowArtifactsList(prev => !prev)
       setShowProjectsPanel(false)
-    }, 0)
+    }))
   }
 
   const handleOpenArtifact = (art: ArtifactData) => {
@@ -678,7 +678,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
           onOpenArtifact={handleOpenArtifact}
         />
       {/* ── Header ───────────────────────────────────────────────────── */}
-        <header className="fixed left-0 right-0 top-0 z-10 flex items-center justify-between p-4">
+        <header className="fixed left-0 right-0 top-0 z-10 flex items-center justify-between p-4 bg-white dark:bg-[#0d0f14]">
           <button onClick={() => setSidebarOpen(true)} className="text-gray-500 dark:text-white/50 transition hover:text-gray-700 dark:hover:text-white/70">
             <Menu className="h-6 w-6" />
           </button>
@@ -822,4 +822,4 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       )}
     </div>
   )
-  }
+              }

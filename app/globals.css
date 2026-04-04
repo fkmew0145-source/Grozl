@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@plugin "@tailwindcss/typography";
 
 /* ── CRITICAL: Tell Tailwind v4 to use .dark CLASS for dark: utilities ── */
 @variant dark (&:where(.dark, .dark *));
@@ -79,7 +80,7 @@ html.dark .grozl-inputbox {
 }
 
 .grozl-inputbox-focused {
-  box-shadow: 0 0 0 3px rgba(77,107,254,0.15), 0 4px 20px rgba(77,107,254,0.10);
+  animation: grozl-focus-pulse 2s ease-in-out infinite;
 }
 
 /* ── Scrollbar ───────────────────────────────────────────────────────── */
@@ -91,4 +92,4 @@ html.dark .grozl-inputbox {
 }
 .dark ::-webkit-scrollbar-thumb {
   background: rgba(255,255,255,0.12);
-}
+               }

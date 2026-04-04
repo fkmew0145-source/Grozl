@@ -44,6 +44,11 @@ body {
 @layer base {
   * {
     @apply outline-none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button, a {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 }
 

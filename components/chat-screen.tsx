@@ -85,6 +85,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
   const [allArtifacts, setAllArtifacts]           = useState<ArtifactData[]>([])
   const [activeProjectName, setActiveProjectName] = useState<string | null>(null)
   const [activeProject, setActiveProject] = useState<{ name: string; knowledge: string; customInstructions: string } | null>(null)
+  const [lastProvider, setLastProvider]           = useState<string | undefined>(undefined)
 
   // ── Limit state ───────────────────────────────────────────────────────
   const [limitInfo, setLimitInfo] = useState<{
@@ -274,6 +275,48 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
     }))
   }
 
+  // ── Regenerate ───────────────────────────────────────────────────────
+  const handleRegenerate = useCallback((index: number) => {
+    // Remove the assistant message at index and all after it, then resend
+    const messagesUpToUser = messages.slice(0, index)
+    if (messagesUpToUser.length === 0) return
+    setMessages(messagesUpToUser)
+    // Trigger send with existing messages
+    const lastUser = [...messagesUpToUser].reverse().find(m => m.role === 'user')
+    if (!lastUser) return
+    setIsLoading(true); setIsStreaming(true)
+    setMessages([...messagesUpToUser, { role: 'assistant', content: '' }])
+    fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: messagesUpToUser,
+        model: loadSettings().defaultModel,
+        language: loadSettings().language,
+        personalization: loadPersonalization(user?.id),
+        think: activeChips.has('think'),
+        search: activeChips.has('search'),
+        projectContext: activeProject ?? undefined,
+      })
+    }).then(async res => {
+      const provider = res.headers.get('X-Provider') ?? undefined
+      if (provider) setLastProvider(provider)
+      const reader = res.body?.getReader(); const decoder = new TextDecoder(); let text = ''
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          text += decoder.decode(value, { stream: true })
+          setMessages([...messagesUpToUser, { role: 'assistant', content: text, provider }])
+        }
+      }
+    }).catch(() => {
+      setMessages([...messagesUpToUser, { role: 'assistant', content: 'Network error. Please try again.' }])
+    }).finally(() => {
+      setIsLoading(false); setIsStreaming(false)
+    })
+  }, [messages, activeChips, activeProject, user])
+
   const newChat = useCallback(() => {
     // FIRST: close sidebar alone so its CSS animation gets a clean GPU frame
     setSidebarOpen(false)
@@ -436,7 +479,6 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
         if (file.type.startsWith('image/') || file.type === 'application/pdf') {
           parts.push({ type: 'image_url', image_url: { url: await fileToBase64(file) } })
         } else {
-          try { parts.push({ type: 'text', text: `[File: ${file.name}]\n${await file.text()}` }) }
           catch { parts.push({ type: 'text', text: `[Attached file: ${file.name}]` }) }
         }
       }
@@ -480,12 +522,14 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
         return
       }
       const reader = res.body?.getReader(); const decoder = new TextDecoder(); let assistantText = ''
+      const provider = res.headers.get('X-Provider') ?? undefined
+      if (provider) setLastProvider(provider)
       if (reader) {
         while (true) {
           const { done, value } = await reader.read()
           if (done) break
           assistantText += decoder.decode(value, { stream: true })
-          setMessages([...newMessages, { role: 'assistant', content: assistantText }])
+          setMessages([...newMessages, { role: 'assistant', content: assistantText, provider }])
         }
       }
     } catch {
@@ -737,6 +781,8 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
               messages={messages}
               messagesEndRef={messagesEndRef}
               renderContent={renderContent}
+              isStreaming={isStreaming}
+              onRegenerate={handleRegenerate}
             />
           )}
 

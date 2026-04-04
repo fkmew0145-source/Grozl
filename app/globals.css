@@ -79,7 +79,7 @@ html.dark .grozl-inputbox {
 }
 
 .grozl-inputbox-focused {
-  animation: grozl-focus-pulse 2s ease-in-out infinite;
+  box-shadow: 0 0 0 3px rgba(77,107,254,0.15), 0 4px 20px rgba(77,107,254,0.10);
 }
 
 /* ── Scrollbar ───────────────────────────────────────────────────────── */

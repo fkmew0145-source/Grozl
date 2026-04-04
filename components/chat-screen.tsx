@@ -800,7 +800,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
               onStartNewChatInProject={(project) => { newChat(); setActiveProjectName(project.name); setActiveProject({ name: project.name, knowledge: project.knowledge, customInstructions: project.customInstructions }); setShowProjectsPanel(false); setActiveMenuItem(null) }}
             />
           </div>
-          <div className="fixed inset-0 z-50 flex flex-col md:hidden bg-white/80 dark:bg-black/80 backdrop-blur-xl">
+          <div className="fixed inset-0 z-50 flex flex-col md:hidden bg-white dark:bg-[#0d0f14]">
             <ProjectsPanel
               currentSessionId={currentSessionId}
               onClose={() => { setShowProjectsPanel(false); setActiveMenuItem(null); setSidebarOpen(false) }}

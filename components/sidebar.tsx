@@ -88,7 +88,7 @@ export default function Sidebar({
       />
 
       {/* Sidebar panel */}
-      <div className={`absolute left-0 top-0 flex h-full w-72 flex-col border-r border-gray-200 dark:border-white/[0.07] bg-white dark:bg-[#141414] transition-transform duration-250 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`} style={{ willChange: 'transform', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
+      <div className={`absolute left-0 top-0 flex h-full w-72 flex-col border-r border-gray-200 dark:border-white/[0.07] bg-white dark:bg-[#141414] transition-transform duration-250 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         {/* Scrollable content */}
         <div className="flex flex-1 flex-col gap-2 overflow-y-auto overscroll-contain p-6 pb-2" style={{ touchAction: 'pan-y' }}>
 
@@ -303,8 +303,3 @@ export default function Sidebar({
     </div>
   )
   }
-
-
-
-
-                        

@@ -479,6 +479,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
         if (file.type.startsWith('image/') || file.type === 'application/pdf') {
           parts.push({ type: 'image_url', image_url: { url: await fileToBase64(file) } })
         } else {
+          try { parts.push({ type: 'text', text: `[File: ${file.name}]\n${await file.text()}` }) }
           catch { parts.push({ type: 'text', text: `[Attached file: ${file.name}]` }) }
         }
       }
@@ -868,4 +869,4 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       )}
     </div>
   )
-              }
+                                                                         }

@@ -13,6 +13,7 @@ import { profileKey, sessionsKey, loadSettings, loadPersonalization } from './se
 import InputBox from './input-box'
 import MessageList from './message-list'
 import Sidebar from './sidebar'
+import LimitBanner from './limit-banner'
 
 interface ContentPart {
   type: 'text' | 'image_url'
@@ -84,6 +85,12 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
   const [allArtifacts, setAllArtifacts]           = useState<ArtifactData[]>([])
   const [activeProjectName, setActiveProjectName] = useState<string | null>(null)
   const [activeProject, setActiveProject] = useState<{ name: string; knowledge: string; customInstructions: string } | null>(null)
+
+  // ── Limit state ───────────────────────────────────────────────────────
+  const [limitInfo, setLimitInfo] = useState<{
+    plan: string; daily_used?: number; daily_limit?: number | null
+    weekly_used?: number; weekly_limit?: number
+  } | null>(null)
 
   // ── Context menu state ───────────────────────────────────────────────
   const [contextMenu, setContextMenu] = useState<{ sessionId: string; x: number; y: number } | null>(null)
@@ -451,6 +458,18 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
         }) })
       if (!res.ok) {
         const err = await res.json()
+        // Limit exceeded — show paywall banner instead of error in chat
+        if (err.error === 'limit_exceeded') {
+          setMessages(newMessages) // remove the blank assistant message
+          setLimitInfo({
+            plan:         err.plan,
+            daily_used:   err.daily_used,
+            daily_limit:  err.daily_limit,
+            weekly_used:  err.weekly_used,
+            weekly_limit: err.weekly_limit,
+          })
+          return
+        }
         setMessages([...newMessages, { role: 'assistant', content: err.error || 'Something went wrong.' }])
         return
       }
@@ -647,13 +666,6 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
           onArtifactsClick={handleArtifactsClick}
           onOpenArtifact={handleOpenArtifact}
         />
-        {/* Sidebar backdrop */}
-{sidebarOpen && (
-  <div
-    className="fixed inset-0 z-40 bg-black/40 md:hidden"
-    onClick={() => setSidebarOpen(false)}
-  />
-)}
       {/* ── Header ───────────────────────────────────────────────────── */}
         <header className="fixed left-0 right-0 top-0 z-10 flex items-center justify-between p-4">
           <button onClick={() => setSidebarOpen(true)} className="text-gray-500 dark:text-white/50 transition hover:text-gray-700 dark:hover:text-white/70">

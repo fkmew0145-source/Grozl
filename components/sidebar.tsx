@@ -80,7 +80,7 @@ export default function Sidebar({
   return (
     <>
       {/* Sidebar panel */}
-      <div className={`fixed left-0 top-0 z-50 flex h-full w-72 -translate-x-full flex-col border-r border-gray-200 dark:border-white/[0.07] bg-white dark:bg-[#141414] shadow-xl transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : ''}`} style={{ isolation: 'isolate', WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden' }}>
+       <div className={`fixed left-0 top-0 z-50 flex h-full w-72 flex-col border-r border-gray-200 dark:border-white/[0.07] bg-white dark:bg-[#141414] shadow-xl ${sidebarOpen ? 'animate-in slide-in-from-left duration-200' : 'hidden'}`} style={{ isolation: 'isolate' }}> style={{ isolation: 'isolate', WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden' }}>
         {/* Scrollable content */}
         <div className="flex flex-1 flex-col gap-2 overflow-y-auto overscroll-contain p-6 pb-2">
 

@@ -607,6 +607,75 @@ export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
   if (!checkRateLimit(ip)) return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 })
 
+  // ── Server-side subscription limit gate ──────────────────────────────
+  try {
+    const supabaseLimit = await createClient()
+    const { data: { user: authUser } } = await supabaseLimit.auth.getUser()
+
+    if (authUser) {
+      // Authenticated user — check plan limits via atomic RPC
+      const { data: sub } = await supabaseLimit
+        .from('subscriptions')
+        .select('plan')
+        .eq('user_id', authUser.id)
+        .single()
+
+      const plan = (sub?.plan ?? 'free') as string
+
+      const { data: limitData, error: limitError } = await supabaseLimit.rpc(
+        'increment_and_check_usage',
+        { p_user_id: authUser.id, p_plan: plan }
+      )
+
+      if (!limitError && limitData) {
+        const d = limitData as { allowed: boolean; daily_used: number; weekly_used: number; daily_limit: number | null; weekly_limit: number }
+        if (!d.allowed) {
+          return NextResponse.json({
+            error:        'limit_exceeded',
+            plan,
+            daily_used:   d.daily_used,
+            weekly_used:  d.weekly_used,
+            daily_limit:  d.daily_limit,
+            weekly_limit: d.weekly_limit,
+          }, { status: 429 })
+        }
+      }
+    } else {
+      // Guest user — simple IP-based daily limit (10 messages/day)
+      const guestKey  = `guest_limit_${ip}`
+      const guestDate = `guest_date_${ip}`
+      const today     = new Date().toISOString().split('T')[0]
+
+      const { data: guestDateRow } = await supabaseLimit
+        .from('guest_usage')
+        .select('date, count')
+        .eq('ip', ip)
+        .single()
+        .catch(() => ({ data: null }))
+
+      let guestCount = 0
+      if (guestDateRow && guestDateRow.date === today) {
+        guestCount = guestDateRow.count ?? 0
+      }
+
+      if (guestCount >= 5) {
+        return NextResponse.json({
+          error:       'limit_exceeded',
+          plan:        'guest',
+          daily_used:  guestCount,
+          daily_limit: 5,
+        }, { status: 429 })
+      }
+
+      // Upsert guest usage
+      await supabaseLimit.from('guest_usage').upsert(
+        { ip, date: today, count: guestCount + 1 },
+        { onConflict: 'ip' }
+      ).catch(() => {})
+    }
+  } catch { /* fail open — never block a message due to limit check error */ }
+  // ─────────────────────────────────────────────────────────────────────
+
   const {
     messages,
     model: modelPref = 'auto',
@@ -802,4 +871,4 @@ try {
     )
   }
 }
-        }
+            }

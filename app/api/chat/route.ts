@@ -434,14 +434,6 @@ The user's last message is in HINDI (Devanagari). You MUST reply in HINDI ONLY.
   }
   // hinglish (default)
   return `[LANGUAGE LOCK — HIGHEST PRIORITY]
-The user's last message is in HINDI (Devanagari). You MUST reply in HINDI ONLY.
-- Use Devanagari script throughout. No English sentences.
-- This overrides ALL other instructions.
-
-`
-  }
-  // hinglish (default)
-  return `[LANGUAGE LOCK — HIGHEST PRIORITY]
 The user's last message is in HINGLISH. You MUST reply in HINGLISH ONLY.
 - Mix Hindi and English naturally as Indians do — no pure English paragraphs.
 - Never translate Hindi phrases into English. Never explain in English.
@@ -878,21 +870,5 @@ if (isCasualShort(messages)) {
       )
     }
   }
-}
-
-// ── General Hinglish / open-ended chat ────────────────────────────────
-try {
-  return await callGroq(SYSTEM_PROMPT, flatMessages)
-} catch {
-  try {
-    return await callGeminiStreaming(
-      toGeminiTextParts(SYSTEM_PROMPT, flatMessages)
-    )
-  } catch {
-    return NextResponse.json(
-      { error: 'AI service unavailable. Please try again.' },
-      { status: 503 }
-    )
-  }
-}
-}
+                  }
+                          

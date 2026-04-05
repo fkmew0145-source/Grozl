@@ -921,14 +921,14 @@ async function shareArt(art: ArtifactData) {
             <ProjectsPanel
               currentSessionId={currentSessionId}
               onClose={() => { setShowProjectsPanel(false); setActiveMenuItem(null) }}
-              onStartNewChatInProject={(project) => { newChat(); setActiveProjectName(project.name); setActiveProject({ name: project.name, knowledge: project.knowledge, customInstructions: project.customInstructions }); setShowProjectsPanel(false); setActiveMenuItem(null) }}
+              onStartNewChatInProject={(project) => { newChat(); requestAnimationFrame(() => requestAnimationFrame(() => { setActiveProjectName(project.name); setActiveProject({ name: project.name, knowledge: project.knowledge, customInstructions: project.customInstructions }) })); setShowProjectsPanel(false); setActiveMenuItem(null) }}
             />
           </div>
           <div className="fixed inset-0 z-50 flex flex-col md:hidden bg-white dark:bg-[#0d0f14]">
             <ProjectsPanel
               currentSessionId={currentSessionId}
               onClose={() => { setShowProjectsPanel(false); setActiveMenuItem(null); setSidebarOpen(false) }}
-              onStartNewChatInProject={(project) => { newChat(); setActiveProjectName(project.name); setActiveProject({ name: project.name, knowledge: project.knowledge, customInstructions: project.customInstructions }); setShowProjectsPanel(false); setActiveMenuItem(null); setSidebarOpen(false) }}
+              onStartNewChatInProject={(project) => { newChat(); requestAnimationFrame(() => requestAnimationFrame(() => { setActiveProjectName(project.name); setActiveProject({ name: project.name, knowledge: project.knowledge, customInstructions: project.customInstructions }) })); setShowProjectsPanel(false); setActiveMenuItem(null); setSidebarOpen(false) }}
             />
           </div>
         </>

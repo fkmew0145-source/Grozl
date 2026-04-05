@@ -247,7 +247,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       })
     }
   }, [user, chatSessions, SESSIONS_KEY])
-
+  
   // updateSessions — writes localStorage only for guests
   const updateSessions = (updater: (sessions: ChatSession[]) => ChatSession[]) => {
     setChatSessions(prev => {
@@ -577,8 +577,7 @@ async function shareArt(art: ArtifactData) {
     try { await navigator.share({ files: [file], title: art.title }); return } catch {}
   }
   navigator.clipboard.writeText(art.content)
-}
-  
+        }
   // ── Artifact helpers ─────────────────────────────────────────────────
   const parseArtifact = (text: string): ArtifactData | null => {
     const regex = /<artifact\s+type="([^"]+)"(?:\s+language="([^"]+)")?(?:\s+title="([^"]+)")?[^>]*>([\s\S]*?)<\/artifact>/
@@ -891,7 +890,7 @@ async function shareArt(art: ArtifactData) {
               </div>
             </div>
           )}
-   </main>
+        </main>
       </div>
 
       {/* Artifact Right Panel */}
@@ -944,4 +943,4 @@ async function shareArt(art: ArtifactData) {
       )}
     </div>
   )
-              
+  

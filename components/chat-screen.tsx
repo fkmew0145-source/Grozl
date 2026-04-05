@@ -3,9 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
-import {
-  Menu, Plus, Loader2, Code2, ExternalLink, X, FolderOpen,
-} from 'lucide-react'
+import { Menu, Plus, Loader2, Code2, ExternalLink, X, FolderOpen, MoreVertical, Download, Copy, Share2 } from 'lucide-react'
 import ArtifactPanel from './artifact-panel'
 import ProjectsPanel from './projects-panel'
 import SettingsScreen from './settings/settings-screen'
@@ -42,7 +40,7 @@ interface ChatScreenProps {
 }
 
 interface ArtifactData {
-  type: 'html' | 'react' | 'code'
+  type: 'webapp' | 'html' | 'react' | 'code' | 'script' | 'notes' | 'prompt' | 'config' | 'story'
   language?: string
   title: string
   content: string
@@ -68,7 +66,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
   const [isFocused, setIsFocused]           = useState(false)
   const [activeArtifact, setActiveArtifact] = useState<ArtifactData | null>(null)
   const [showArtifactModal, setShowArtifactModal] = useState(false)
-
+  const [artifactMenuOpen, setArtifactMenuOpen] = useState<string | null>(null)
   // ── User profile ─────────────────────────────────────────────────────
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
 
@@ -545,15 +543,49 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       }
     }
   }
+function getArtifactExt(type: string, language?: string): string {
+  const langMap: Record<string, string> = {
+    python: 'py', typescript: 'ts', javascript: 'js', tsx: 'tsx', jsx: 'jsx',
+    bash: 'sh', shell: 'sh', json: 'json', yaml: 'yaml', yml: 'yml', css: 'css',
+    sql: 'sql', rust: 'rs', go: 'go', cpp: 'cpp', java: 'java', md: 'md',
+  }
+  const lang = language?.toLowerCase() || ''
+  if (lang && langMap[lang]) return langMap[lang]
+  const typeMap: Record<string, string> = {
+    webapp: 'html', html: 'html', react: 'jsx', script: 'sh',
+    notes: 'md', prompt: 'txt', config: 'json', story: 'md', code: 'txt',
+  }
+  return typeMap[type] || 'txt'
+}
 
+function downloadArt(art: ArtifactData) {
+  const ext  = getArtifactExt(art.type, art.language)
+  const blob = new Blob([art.content], { type: 'text/plain' })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
+  a.href = url
+  a.download = `${art.title.replace(/[^a-z0-9\-_. ]/gi, '_')}.${ext}`
+  document.body.appendChild(a); a.click()
+  document.body.removeChild(a); URL.revokeObjectURL(url)
+}
+
+async function shareArt(art: ArtifactData) {
+  const ext = getArtifactExt(art.type, art.language)
+  if (navigator.share) {
+    const blob = new Blob([art.content], { type: 'text/plain' })
+    const file = new File([blob], `${art.title}.${ext}`, { type: 'text/plain' })
+    try { await navigator.share({ files: [file], title: art.title }); return } catch {}
+  }
+  navigator.clipboard.writeText(art.content)
+}
+  
   // ── Artifact helpers ─────────────────────────────────────────────────
   const parseArtifact = (text: string): ArtifactData | null => {
     const regex = /<artifact\s+type="([^"]+)"(?:\s+language="([^"]+)")?(?:\s+title="([^"]+)")?[^>]*>([\s\S]*?)<\/artifact>/
     const match = text.match(regex)
     if (!match) return null
-    return { type: match[1] as 'html' | 'react' | 'code', language: match[2], title: match[3] || 'Artifact', content: match[4].trim() }
-  }
-
+    return { type: match[1], ...
+      
   const stripArtifactTags = (text: string) => text.replace(/<artifact[\s\S]*?<\/artifact>/g, '').trim()
 
     // ── Render message content ───────────────────────────────────────────
@@ -611,25 +643,67 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
             </div>
           )}
           {artifact && !isStreaming && (
-            <button
-              onClick={() => { setActiveArtifact(artifact); setShowArtifactModal(true); setShowProjectsPanel(false) }}
-              className="flex items-center gap-2.5 rounded-xl border border-indigo-200 dark:border-indigo-500/30 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-500/10 dark:to-blue-500/10 px-4 py-3 text-left text-[13px] font-medium text-indigo-700 dark:text-indigo-300 transition hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:shadow-sm"
-            >
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-500/20">
-                <Code2 className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="truncate font-semibold">{artifact.title}</div>
-                <div className="text-[11px] font-normal capitalize text-indigo-400">
-                  {artifact.type === 'code' ? artifact.language : artifact.type} · Tap to open
-                </div>
-              </div>
-              <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-60" />
-            </button>
-          )}
+  <div className="relative">
+    <div className="flex items-center gap-2.5 rounded-xl border border-indigo-200 dark:border-indigo-500/30 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-500/10 dark:to-blue-500/10 px-4 py-3 text-[13px] overflow-hidden">
+      {/* Clickable main area */}
+      <button
+        onClick={() => { setActiveArtifact(artifact); setShowArtifactModal(true); setShowProjectsPanel(false) }}
+        className="flex flex-1 items-center gap-2.5 text-left min-w-0"
+      >
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-500/20">
+          <Code2 className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400" />
         </div>
-      )
-    }
+        <div className="min-w-0 flex-1">
+          <div className="truncate font-semibold text-indigo-700 dark:text-indigo-300">{artifact.title}</div>
+          <div className="text-[11px] font-normal capitalize text-indigo-400">
+            {artifact.type === 'code' ? artifact.language : artifact.type} · {getArtifactExt(artifact.type, artifact.language).toUpperCase()}
+          </div>
+        </div>
+      </button>
+
+      {/* 3-dot menu button */}
+      <button
+        onClick={(e) => { e.stopPropagation(); setArtifactMenuOpen(artifactMenuOpen === artifact.title ? null : artifact.title) }}
+        className="shrink-0 rounded-lg p-1.5 text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition"
+      >
+        <MoreVertical className="h-4 w-4" />
+      </button>
+    </div>
+
+    {/* Dropdown menu */}
+    {artifactMenuOpen === artifact.title && (
+      <div
+        className="absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1d27] shadow-xl overflow-hidden"
+        onMouseLeave={() => setArtifactMenuOpen(null)}
+      >
+        <button
+          onClick={() => { navigator.clipboard.writeText(artifact.content); setArtifactMenuOpen(null) }}
+          className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[13px] text-gray-700 dark:text-white/80 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition"
+        >
+          <Copy className="h-4 w-4 text-gray-400 dark:text-white/40" /> Copy
+        </button>
+        <button
+          onClick={() => { downloadArt(artifact); setArtifactMenuOpen(null) }}
+          className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[13px] text-gray-700 dark:text-white/80 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition"
+        >
+          <Download className="h-4 w-4 text-gray-400 dark:text-white/40" /> Download .{getArtifactExt(artifact.type, artifact.language)}
+        </button>
+        <button
+          onClick={() => { shareArt(artifact); setArtifactMenuOpen(null) }}
+          className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[13px] text-gray-700 dark:text-white/80 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition"
+        >
+          <Share2 className="h-4 w-4 text-gray-400 dark:text-white/40" /> Share
+        </button>
+        <button
+          onClick={() => { setActiveArtifact(artifact); setShowArtifactModal(true); setShowProjectsPanel(false); setArtifactMenuOpen(null) }}
+          className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[13px] text-gray-700 dark:text-white/80 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition"
+        >
+          <ExternalLink className="h-4 w-4 text-gray-400 dark:text-white/40" /> Open
+        </button>
+      </div>
+    )}
+  </div>
+)}
 
     return (
       <div className="flex flex-col gap-2">

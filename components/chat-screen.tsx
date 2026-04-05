@@ -315,7 +315,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
     })
   }, [messages, activeChips, activeProject, user])
 
-  const newChat = useCallback(() => {
+  const newChat = useCallback((keepProject = false) => {
     // FIRST: close sidebar alone so its CSS animation gets a clean GPU frame
     setSidebarOpen(false)
     // THEN: all heavy state changes in next tick — no GPU conflict
@@ -332,8 +332,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
       setShowArtifactsList(false)
       setShowProjectsPanel(false)
       setCurrentSessionId(crypto.randomUUID())
-      setActiveProjectName(null)
-      setActiveProject(null)
+      if (!keepProject) { setActiveProjectName(null); setActiveProject(null) }
       if (textareaRef.current) textareaRef.current.style.height = 'auto'
     }))
   }, [messages, currentSessionId, saveSession])
@@ -921,14 +920,14 @@ async function shareArt(art: ArtifactData) {
             <ProjectsPanel
               currentSessionId={currentSessionId}
               onClose={() => { setShowProjectsPanel(false); setActiveMenuItem(null) }}
-              onStartNewChatInProject={(project) => { newChat(); requestAnimationFrame(() => requestAnimationFrame(() => { setActiveProjectName(project.name); setActiveProject({ name: project.name, knowledge: project.knowledge, customInstructions: project.customInstructions }) })); setShowProjectsPanel(false); setActiveMenuItem(null) }}
+              onStartNewChatInProject={(project) => { setActiveProjectName(project.name); setActiveProject({ name: project.name, knowledge: project.knowledge, customInstructions: project.customInstructions }); newChat(true); setShowProjectsPanel(false); setActiveMenuItem(null) }}
             />
           </div>
           <div className="fixed inset-0 z-50 flex flex-col md:hidden bg-white dark:bg-[#0d0f14]">
             <ProjectsPanel
               currentSessionId={currentSessionId}
               onClose={() => { setShowProjectsPanel(false); setActiveMenuItem(null); setSidebarOpen(false) }}
-              onStartNewChatInProject={(project) => { newChat(); requestAnimationFrame(() => requestAnimationFrame(() => { setActiveProjectName(project.name); setActiveProject({ name: project.name, knowledge: project.knowledge, customInstructions: project.customInstructions }) })); setShowProjectsPanel(false); setActiveMenuItem(null); setSidebarOpen(false) }}
+              onStartNewChatInProject={(project) => { setActiveProjectName(project.name); setActiveProject({ name: project.name, knowledge: project.knowledge, customInstructions: project.customInstructions }); newChat(true); setShowProjectsPanel(false); setActiveMenuItem(null); setSidebarOpen(false) }}
             />
           </div>
         </>

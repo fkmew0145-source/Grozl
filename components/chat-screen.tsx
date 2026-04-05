@@ -946,4 +946,4 @@ async function shareArt(art: ArtifactData) {
       )}
     </div>
   )
-      
+}

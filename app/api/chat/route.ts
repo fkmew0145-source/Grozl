@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 const groq  = new Groq({ apiKey: process.env.GROQ_API_KEY })
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
-// ── Simple in-memory rate limiter ────────────────────────────────────────
+// ── Simple in-memory rate limiter (upgrade to Upstash Redis for 10M+ scale) ──
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
 const RATE_LIMIT   = 30
 const RATE_WINDOW  = 60_000
@@ -289,7 +289,7 @@ Keep the response structured (e.g., Step 1, Step 2, …).`
   return block
 }
 
-// ── Routing keywords for auto-detect (used when model = 'auto') ──────────
+// ── Routing keywords for auto-detect ──────────────────────────────────────
 const CODE_KEYWORDS = [
   'code', 'coding', 'debug', 'error', 'bug', 'fix', 'function', 'class',
   'component', 'api', 'script', 'program', 'algorithm', 'database', 'sql',
@@ -351,7 +351,6 @@ function extractImagePrompt(text: string): string {
     const m = text.match(p)
     if (m?.[1]?.trim().length > 2) return m[1].trim()
   }
-  // Fallback: strip common trigger words and use rest as prompt
   return text
     .replace(/(?:please|zara|ek|mujhe|mera|meri)\s+/gi, '')
     .replace(/(?:image|photo|picture|illustration|poster|wallpaper|logo)\s+(?:banao|bana do|generate karo|create karo|banana hai)/gi, '')
@@ -371,8 +370,6 @@ function getLastUserText(messages: IncomingMessage[]): string {
 }
 
 // ── TIER 0 — Ultra-simple local replies (zero API cost) ──────────────────
-
-// Detect language of user message
 function detectMsgLanguage(text: string): 'hindi' | 'hinglish' | 'english' {
   if (/[\u0900-\u097F]/.test(text)) return 'hindi'
   const hinglishWords = ['bhai', 'yaar', 'kya', 'hai', 'ho', 'karo', 'nahi', 'haan', 'kese', 'kaise', 'theek', 'acha', 'bilkul', 'bolo', 'batao', 'chal', 'mera', 'tera', 'kuch', 'toh', 'abhi', 'scene', 'zarurat', 'assalamualaikum', 'walaikum', 'shukriya', 'alvida', 'namaste', 'salaam']
@@ -410,7 +407,7 @@ function getUltraSimpleReply(text: string): string | null {
   return null
 }
 
-// ── Language override block (prepended to system prompt) ────────────────
+// ── Language override block ────────────────────────────────────────────────
 function buildLangOverride(messages: IncomingMessage[]): string {
   const text = getLastUserText(messages)
   if (!text) return ''
@@ -432,7 +429,6 @@ The user's last message is in HINDI (Devanagari). You MUST reply in HINDI ONLY.
 
 `
   }
-  // hinglish (default)
   return `[LANGUAGE LOCK — HIGHEST PRIORITY]
 The user's last message is in HINGLISH. You MUST reply in HINGLISH ONLY.
 - Mix Hindi and English naturally as Indians do — no pure English paragraphs.
@@ -442,7 +438,7 @@ The user's last message is in HINGLISH. You MUST reply in HINGLISH ONLY.
 `
 }
 
-// ── TIER 1 — Casual short messages → Groq 512 tokens ────────────────────
+// ── TIER 4 — Casual short detection ──────────────────────────────────────
 function isCasualShort(messages: IncomingMessage[]): boolean {
   const text = getLastUserText(messages)
   if (!text) return false
@@ -452,8 +448,6 @@ function isCasualShort(messages: IncomingMessage[]): boolean {
 }
 
 // ── Web search via Tavily ─────────────────────────────────────────────────
-// Add TAVILY_API_KEY to your Vercel environment variables.
-// Free tier: 1000 searches/month → https://tavily.com
 interface TavilyResult {
   title: string
   url: string
@@ -485,12 +479,10 @@ async function webSearch(query: string): Promise<string> {
     const data = await res.json()
     const parts: string[] = []
 
-    // Tavily's own AI-generated answer (concise summary)
     if (data.answer) {
       parts.push(`**Quick Answer:** ${data.answer}\n`)
     }
 
-    // Individual results
     if (data.results?.length) {
       data.results.forEach((r: TavilyResult, i: number) => {
         const date = r.published_date ? ` (${r.published_date.slice(0, 10)})` : ''
@@ -522,7 +514,7 @@ function buildDeepSeekStream(response: Response): ReadableStream {
             if (!trimmed || trimmed === 'data: [DONE]') continue
             if (trimmed.startsWith('data: ')) {
               try {
-              const json = JSON.parse(trimmed.slice(6))
+                const json = JSON.parse(trimmed.slice(6))
                 const text = json.choices?.[0]?.delta?.content || ''
                 if (!text) continue
                 thinkBuffer += text
@@ -540,20 +532,28 @@ function buildDeepSeekStream(response: Response): ReadableStream {
   })
 }
 
-// ── DeepSeek R1 via direct API (streaming) ───────────────────────────────
+// ── DeepSeek R1 — Coding + Reasoning + Thinking ──────────────────────────
 async function callDeepSeek(systemPrompt: string, messages: { role: string; content: string }[]): Promise<Response> {
+  const apiKey = process.env.DEEPSEEK_R1_API_KEY
+  if (!apiKey) throw new Error('DEEPSEEK_R1_API_KEY not set')
+
   const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_R1_API_KEY}` },
-    body: JSON.stringify({ model: 'deepseek-reasoner', messages: [{ role: 'system', content: systemPrompt }, ...messages], stream: true, max_tokens: 8192 }),
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: 'deepseek-reasoner',
+      messages: [{ role: 'system', content: systemPrompt }, ...messages],
+      stream: true,
+      max_tokens: 8192,
+    }),
   })
   if (!response.ok) throw new Error(`DeepSeek API error: ${response.status}`)
-  return new Response(buildDeepSeekStream(response), { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Provider': 'deepseek-r1' } })
+  return new Response(buildDeepSeekStream(response), {
+    headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Provider': 'deepseek-r1' },
+  })
 }
 
-// ── Groq Llama streaming ─────────────────────────────────────────────────
-// maxTokens: 4096 default | 512 for casual short chat
-// temperature: 0.7 default | 0.2 for Think mode (more deterministic)
+// ── Groq Llama — Fast Casual Conversation ────────────────────────────────
 async function callGroq(
   systemPrompt: string,
   messages: { role: string; content: string }[],
@@ -579,12 +579,12 @@ async function callGroq(
   )
 }
 
-// ── Gemini streaming ─────────────────────────────────────────────────────
+// ── Gemini — Latest Data + News + Search Synthesis + Vision ──────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function callGeminiStreaming(parts: any[]): Promise<Response> {
   const model  = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
   const result = await model.generateContentStream(parts)
-    const encoder = new TextEncoder()
+  const encoder = new TextEncoder()
   return new Response(
     new ReadableStream({
       async start(controller) {
@@ -596,7 +596,6 @@ async function callGeminiStreaming(parts: any[]): Promise<Response> {
   )
 }
 
-// ── Gemini text parts helper ─────────────────────────────────────────────
 function toGeminiTextParts(systemPrompt: string, messages: { role: string; content: string }[]) {
   return [
     { text: `System: ${systemPrompt}` },
@@ -627,7 +626,6 @@ export async function POST(req: NextRequest) {
     const { data: { user: authUser } } = await supabaseLimit.auth.getUser()
 
     if (authUser) {
-      // Authenticated user — check plan limits via atomic RPC
       const { data: sub } = await supabaseLimit
         .from('subscriptions')
         .select('plan')
@@ -655,11 +653,8 @@ export async function POST(req: NextRequest) {
         }
       }
     } else {
-      // Guest user — simple IP-based daily limit (10 messages/day)
-      const guestKey  = `guest_limit_${ip}`
-      const guestDate = `guest_date_${ip}`
-      const today     = new Date().toISOString().split('T')[0]
-
+      // Guest user — IP-based daily limit
+      const today = new Date().toISOString().split('T')[0]
       const { data: guestDateRow } = await supabaseLimit
         .from('guest_usage')
         .select('date, count')
@@ -681,23 +676,21 @@ export async function POST(req: NextRequest) {
         }, { status: 429 })
       }
 
-      // Upsert guest usage
       await supabaseLimit.from('guest_usage').upsert(
         { ip, date: today, count: guestCount + 1 },
         { onConflict: 'ip' }
       ).catch(() => {})
     }
-  } catch { /* fail open — never block a message due to limit check error */ }
-  // ─────────────────────────────────────────────────────────────────────
+  } catch { /* fail open — never block due to limit check error */ }
 
   const {
     messages,
     model: modelPref = 'auto',
     language,
     personalization,
-    think  = false,   // Think Mode — step-by-step reasoning
-    search = false,   // Search Mode — real-time web results
-    projectContext,   // Active project context (knowledge + instructions)
+    think  = false,
+    search = false,
+    projectContext,
   }: {
     messages: IncomingMessage[]
     model?: string
@@ -708,7 +701,7 @@ export async function POST(req: NextRequest) {
     projectContext?: { name: string; knowledge: string; customInstructions: string }
   } = await req.json()
 
-  // Fetch user memory from Supabase
+  // Fetch user memory
   let userMemory = ''
   try {
     const supabase = await createClient()
@@ -720,7 +713,6 @@ export async function POST(req: NextRequest) {
   } catch { /* ignore */ }
 
   // ── Run web search if Search Mode is ON ────────────────────────────────
-  // Runs in parallel with nothing (we await here before building prompt)
   let searchResults = ''
   if (search) {
     const query = getLastUserText(messages)
@@ -733,18 +725,18 @@ export async function POST(req: NextRequest) {
     : ''
 
   const SYSTEM_PROMPT =
-    buildLangOverride(messages) +          // ← FIRST: hard language lock
+    buildLangOverride(messages) +
     BASE_SYSTEM_PROMPT +
     languageBlock +
     buildPersonalizationBlock(personalization) +
     buildProjectContextBlock(projectContext) +
     (userMemory ? `\n\n---\n\n## What You Know About This User\n${userMemory}` : '') +
     buildModeBlock(think, search, searchResults)
-  
+
   const containsImage = hasImageContent(messages)
   const lastText      = getLastUserText(messages)
 
-  // ── IMAGE GENERATION — Pollinations.ai (free, no API key needed) ──────
+  // ── IMAGE GENERATION ─────────────────────────────────────────────────
   if (!containsImage && isImageGenRequest(lastText)) {
     const prompt = extractImagePrompt(lastText)
     const seed   = Math.floor(Math.random() * 999999)
@@ -756,7 +748,7 @@ export async function POST(req: NextRequest) {
     return localStream(reply)
   }
 
-  // ══ ROUTE 1 — Image → Gemini Vision (always, regardless of model pref) ═
+  // ══ ROUTE 1 — Image → Gemini Vision ══════════════════════════════════
   if (containsImage) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -794,8 +786,10 @@ export async function POST(req: NextRequest) {
   // ══ FORCED MODEL (user picked manually in Settings) ══════════════════
   if (modelPref === 'deepseek') {
     try { return await callDeepSeek(SYSTEM_PROMPT, flatMessages) }
-    catch (e) {
-      return NextResponse.json({ error: 'DeepSeek is currently unavailable. Please try again or switch model in Settings.' }, { status: 503 })
+    catch {
+      // Fallback to Groq if DeepSeek unavailable
+      try { return await callGroq(SYSTEM_PROMPT, flatMessages, 4096, 0.2) }
+      catch { return NextResponse.json({ error: 'DeepSeek is currently unavailable. Please try again or switch model in Settings.' }, { status: 503 }) }
     }
   }
 
@@ -812,19 +806,15 @@ export async function POST(req: NextRequest) {
   // ══ AUTO ROUTING ══════════════════════════════════════════════════════
 
   // ── TIER 0: Ultra-simple → instant local reply (zero API cost) ─────────
-  // Skip local reply if Think or Search is ON — user expects a real response
   if (!think && !search && lastText) {
     const localReply = getUltraSimpleReply(lastText)
     if (localReply) return localStream(localReply)
   }
 
-  // ── Think Mode ON → DeepSeek R1 (purpose-built reasoning model) ────────
-  // DeepSeek R1 is ideal here — it does chain-of-thought natively.
-  // Search results are already in SYSTEM_PROMPT so both modes work together.
+  // ── TIER 1: Think Mode ON → DeepSeek R1 (chain-of-thought reasoning) ───
   if (think) {
     try { return await callDeepSeek(SYSTEM_PROMPT, flatMessages) }
     catch {
-      // Fallback: Groq with low temperature for structured reasoning
       try { return await callGroq(SYSTEM_PROMPT, flatMessages, 4096, 0.2) }
       catch {
         try { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_PROMPT, flatMessages)) }
@@ -833,17 +823,17 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── Search Mode ON (Think OFF) → Groq for fast factual response ─────────
-  // Results already injected in prompt. Groq is faster than DeepSeek here.
+  // ── TIER 2: Search Mode ON → Tavily results → Gemini synthesis ──────────
+  // Gemini is better at synthesizing real-time search data into coherent answers
   if (search) {
-    try { return await callGroq(SYSTEM_PROMPT, flatMessages, 4096, 0.5) }
+    try { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_PROMPT, flatMessages)) }
     catch {
-      try { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_PROMPT, flatMessages)) }
+      try { return await callGroq(SYSTEM_PROMPT, flatMessages, 4096, 0.5) }
       catch { return NextResponse.json({ error: 'AI service unavailable. Please try again.' }, { status: 503 }) }
     }
   }
 
-  // ── TIER 2: Code / reasoning → DeepSeek → Groq → Gemini ───────────────
+  // ── TIER 3: Code / Reasoning → DeepSeek R1 → Groq → Gemini ────────────
   if (isCodeOrReasoningRequest(messages)) {
     try { return await callDeepSeek(SYSTEM_PROMPT, flatMessages) }
     catch {
@@ -854,22 +844,21 @@ export async function POST(req: NextRequest) {
       }
     }
   }
-// ── TIER 1: Casual short chat → Groq 512 tokens ────────────────────────
-if (isCasualShort(messages)) {
-  try {
-    return await callGroq(SYSTEM_PROMPT, flatMessages, 512)
-  } catch {
-    try {
-      return await callGeminiStreaming(
-        toGeminiTextParts(SYSTEM_PROMPT, flatMessages)
-      )
-    } catch {
-      return NextResponse.json(
-        { error: 'AI service unavailable. Please try again.' },
-        { status: 503 }
-      )
+
+  // ── TIER 4: Casual short chat → Groq (fast, cheap) ─────────────────────
+  if (isCasualShort(messages)) {
+    try { return await callGroq(SYSTEM_PROMPT, flatMessages, 512) }
+    catch {
+      try { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_PROMPT, flatMessages)) }
+      catch { return NextResponse.json({ error: 'AI service unavailable. Please try again.' }, { status: 503 }) }
     }
   }
+
+  // ── TIER 5: CATCH-ALL — Everything else → Groq → Gemini ────────────────
+  // This was the missing fallthrough bug — now fixed!
+  try { return await callGroq(SYSTEM_PROMPT, flatMessages, 4096) }
+  catch {
+    try { return await callGeminiStreaming(toGeminiTextParts(SYSTEM_PROMPT, flatMessages)) }
+    catch { return NextResponse.json({ error: 'AI service unavailable. Please try again.' }, { status: 503 }) }
   }
-                  }
-                          
+    }

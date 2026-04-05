@@ -141,7 +141,7 @@ export default function ChatScreen({ user, onLogout }: ChatScreenProps) {
         const title = m[3] || 'Artifact'
         if (!seen.has(title + m[1])) {
           seen.add(title + m[1])
-          found.push({ type: m[1] as 'html' | 'react' | 'code', language: m[2], title, content: m[4].trim() })
+          found.push({ type: m[1] as ArtifactData['type'], language: m[2], title, content: m[4].trim() })
         }
       }
     }
@@ -584,8 +584,9 @@ async function shareArt(art: ArtifactData) {
     const regex = /<artifact\s+type="([^"]+)"(?:\s+language="([^"]+)")?(?:\s+title="([^"]+)")?[^>]*>([\s\S]*?)<\/artifact>/
     const match = text.match(regex)
     if (!match) return null
-    return { type: match[1], ...
-      
+    return { type: match[1] as ArtifactData['type'], language: match[2], title: match[3] || 'Artifact', content: match[4].trim() }
+  }
+
   const stripArtifactTags = (text: string) => text.replace(/<artifact[\s\S]*?<\/artifact>/g, '').trim()
 
     // ── Render message content ───────────────────────────────────────────
@@ -890,7 +891,7 @@ async function shareArt(art: ArtifactData) {
               </div>
             </div>
           )}
-        </main>
+   </main>
       </div>
 
       {/* Artifact Right Panel */}
@@ -943,4 +944,4 @@ async function shareArt(art: ArtifactData) {
       )}
     </div>
   )
-                                                                         }
+              
